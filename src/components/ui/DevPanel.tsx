@@ -1,9 +1,12 @@
 // src/components/ui/DevPanel.tsx
 "use client";
 import { useEffect, useState } from "react";
-import luaService from "@/logic/lua/lua.service"; // Import instance mới
+import luaService from "@/logic/lua/lua.service";
 import { GameAPI } from "@/logic/core/game.api";
-import useGameStore from "@/store/gameStore"; // Đảm bảo đường dẫn đúng
+import useGameStore from "@/store/gameStore";
+
+// Import Button từ component vừa tạo
+import { Button } from "@/components/ui/button";
 
 export default function DevPanel() {
   const [isLuaReady, setIsLuaReady] = useState(false);
@@ -36,16 +39,16 @@ export default function DevPanel() {
   };
 
   return (
-    <div className="absolute top-4 left-4 bg-gray-800 p-4 rounded-lg shadow-lg z-10">
-      <h2 className="text-lg font-bold mb-2">Dev Panel</h2>
-      <p>Current Turn (from Zustand): {turn}</p>
-      <button
+    <div className="absolute top-4 left-4 bg-card p-4 rounded-lg shadow-lg z-10 border">
+      <h2 className="text-lg font-bold mb-2 text-card-foreground">Dev Panel</h2>
+      <p className="text-muted-foreground">Current Turn: {turn}</p>
+      <Button
         onClick={runTestScript}
         disabled={!isLuaReady}
-        className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded disabled:bg-gray-500"
+        className="mt-2 w-full"
       >
         {isLuaReady ? "Run Lua Test Script" : "Initializing Lua..."}
-      </button>
+      </Button>
     </div>
   );
 }
