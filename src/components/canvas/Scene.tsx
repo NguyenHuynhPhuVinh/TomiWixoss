@@ -2,32 +2,56 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import GameBoard from "./GameBoard"; // Import component bàn đấu
+import {
+  OrbitControls,
+  PerspectiveCamera,
+  Environment,
+} from "@react-three/drei";
+import GameBoard from "./GameBoard";
 
 export default function Scene() {
+  const boardWidth = 12;
+  const boardHeight = boardWidth / (4961 / 3508);
+  // const gap = 0.2; // <--- XÓA DÒNG NÀY HOẶC ĐẶT BẰNG 0
+
   return (
     <Canvas>
-      {/* Camera: Điều chỉnh vị trí để nhìn bàn đấu từ trên xuống */}
-      <PerspectiveCamera makeDefault position={[0, 8, 10]} fov={60} />
+      {/* 1. Điều chỉnh Camera để bao quát cả hai bàn */}
+      <PerspectiveCamera makeDefault position={[0, 15, 0.1]} fov={60} />
       <OrbitControls
-        minDistance={5} // Giới hạn zoom gần nhất
-        maxDistance={20} // Giới hạn zoom xa nhất
-        maxPolarAngle={Math.PI / 2.1} // Giới hạn góc nhìn, không cho nhìn xuống dưới gầm bàn
+        minDistance={8}
+        maxDistance={25}
+        // Giới hạn góc nhìn để không bị lật ngược
+        minPolarAngle={0}
+        maxPolarAngle={Math.PI / 2.2}
+        // Cho phép di chuyển camera song song với bàn đấu
+        enablePan={true}
       />
 
-      {/* Ánh sáng: Tăng cường độ để bàn đấu sáng rõ */}
-      <ambientLight intensity={1.5} />
-      <directionalLight position={[0, 10, 5]} intensity={1.5} />
+      {/* 2. Ánh sáng và Môi trường */}
+      {/* Environment giúp cảnh có ánh sáng và phản chiếu tự nhiên hơn */}
+      <Environment preset="city" />
+      <ambientLight intensity={1} />
+      <directionalLight
+        position={[0, 20, 10]}
+        intensity={1.5}
+        castShadow // Bật đổ bóng
+      />
 
-      {/* Render bàn đấu của chúng ta */}
-      <GameBoard />
+      {/* 3. Bàn đấu của Người chơi 1 (phía dưới) */}
+      {/* Loại bỏ 'gap / 2' khỏi phép tính */}
+      <GameBoard
+        position={[0, 0, boardHeight / 2]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      />
 
-      {/* (Optional) Thêm một vài khối hộp để làm lá bài mẫu */}
-      <mesh position={[-2, 0, 0]}>
-        <boxGeometry args={[0.6, 0.1, 0.88]} />
-        <meshStandardMaterial color="blue" />
-      </mesh>
+      {/* 4. Bàn đấu của Người chơi 2 (phía trên) */}
+      {/* Loại bỏ 'gap / 2' khỏi phép tính */}
+      <GameBoard
+        position={[0, 0, -(boardHeight / 2)]}
+        // Xoay 180 độ quanh trục Y để nó đối diện với người chơi 1
+        rotation={[-Math.PI / 2, 0, Math.PI]}
+      />
     </Canvas>
   );
 }
