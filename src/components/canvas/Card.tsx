@@ -53,24 +53,17 @@ export default function Card({ card, position, rotation, onClick }: CardProps) {
 
   // === GIẢI PHÁP SỬA LỖI HIỂN THỊ ===
   // Vật liệu cho các mặt của lá bài
-  const materials = useMemo(() => {
-    const frontMaterial = new THREE.MeshStandardMaterial({ map: frontTexture });
-    const backMaterial = new THREE.MeshStandardMaterial({ map: backTexture });
-    const edgeMaterial = new THREE.MeshStandardMaterial({ color: "black" });
-
-    // Khi lá bài úp (isFaceUp = false), chúng ta muốn mặt sau hiển thị ở cả hai phía
-    // để khi xoay lên xem, mặt trước sẽ hiện ra đúng.
-    // Khi lá bài ngửa, mặt trước sẽ hiển thị.
-    return [
-      edgeMaterial, // right
-      edgeMaterial, // left
-      edgeMaterial, // top
-      edgeMaterial, // bottom
-      card.isFaceUp ? frontMaterial : backMaterial, // front face
-      card.isFaceUp ? backMaterial : frontMaterial, // back face <--- Lỗi nằm ở đây, phải tráo đổi
-    ];
-  }, [frontTexture, backTexture, card.isFaceUp]);
-  // Chúng ta sẽ điều khiển việc úp/ngửa bằng state isFaceUp và góc xoay.
+  const materials = useMemo(
+    () => [
+      new THREE.MeshStandardMaterial({ color: "black" }), // right
+      new THREE.MeshStandardMaterial({ color: "black" }), // left
+      new THREE.MeshStandardMaterial({ color: "black" }), // top
+      new THREE.MeshStandardMaterial({ color: "black" }), // bottom
+      new THREE.MeshStandardMaterial({ map: frontTexture }), // front face
+      new THREE.MeshStandardMaterial({ map: backTexture }), // back face
+    ],
+    [frontTexture, backTexture]
+  );
 
   const width = card.isHorizontal ? CARD_HEIGHT : CARD_WIDTH;
   const height = card.isHorizontal ? CARD_WIDTH : CARD_HEIGHT;

@@ -7,7 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 interface PlayerState {
   mainDeck: CardInstance[];
   lrigDeck: CardInstance[];
-  // Thêm các zone khác sau: hand, enerZone, signiZone, trash...
+  hand: CardInstance[]; // <-- THÊM HAND
+  // Thêm các zone khác sau: enerZone, signiZone, trash...
 }
 
 interface GameState {
@@ -20,6 +21,8 @@ interface GameState {
   increaseTurn: () => void;
   setPlayerEner: (amount: number) => void;
   initializeGame: () => void;
+  drawCard: (amount: number) => void; // <-- THÊM ACTION RÚT BÀI
+  returnAllCardsFromHand: () => void; // <-- THÊM ACTION TRẢ BÀI
 }
 
 // Hàm helper để tạo một instance từ card data
@@ -41,8 +44,8 @@ const useGameStore = create<GameState>((set, get) => ({
   turn: 1,
   phase: "draw",
   playerEner: 0,
-  player: { mainDeck: [], lrigDeck: [] },
-  ai: { mainDeck: [], lrigDeck: [] },
+  player: { mainDeck: [], lrigDeck: [], hand: [] }, // Thêm hand rỗng
+  ai: { mainDeck: [], lrigDeck: [], hand: [] },
 
   // Actions (hàm để thay đổi state)
   increaseTurn: () => set((state) => ({ turn: state.turn + 1 })),
@@ -73,6 +76,7 @@ const useGameStore = create<GameState>((set, get) => ({
       player: {
         mainDeck: playerMainDeck,
         lrigDeck: playerLrigDeck,
+        hand: [], // Thêm hand rỗng
       },
       // Tạm thời AI dùng chung bộ bài
       ai: {
@@ -82,7 +86,54 @@ const useGameStore = create<GameState>((set, get) => ({
         lrigDeck: divaDebutDeckEn
           .filter((c) => c.backType === "LRIG" || c.backType === "PIECE")
           .map((c) => createCardInstance(c, "ai")),
+        hand: [], // Thêm hand rỗng cho AI
       },
+    });
+  },
+
+  drawCard: (amount: number) => {
+    set((state) => {
+      const playerDeck = [...state.player.mainDeck];
+      const playerHand = [...state.player.hand];
+
+      // Rút 'amount' lá bài từ trên cùng của bộ bài
+      for (let i = 0; i < amount; i++) {
+        if (playerDeck.length > 0) {
+          const drawnCard = playerDeck.pop()!; // Lấy lá bài trên cùng
+          drawnCard.isFaceUp = true; // Lật ngửa lá bài khi lên tay
+          playerHand.push(drawnCard);
+        }
+      }
+
+      return {
+        player: {
+          ...state.player,
+          mainDeck: playerDeck,
+          hand: playerHand,
+        },
+      };
+    });
+  },
+
+  returnAllCardsFromHand: () => {
+    set((state) => {
+      // Logic này sẽ phức tạp hơn nếu cần giữ đúng thứ tự bộ bài,
+      // nhưng tạm thời chúng ta chỉ cần đưa chúng về lại bộ bài và xáo trộn.
+      const handCards = state.player.hand.map((card) => ({
+        ...card,
+        isFaceUp: false,
+      }));
+      const newMainDeck = [...state.player.mainDeck, ...handCards];
+
+      // TODO: Xáo trộn (shuffle) newMainDeck ở đây
+
+      return {
+        player: {
+          ...state.player,
+          mainDeck: newMainDeck,
+          hand: [], // Dọn sạch tay
+        },
+      };
     });
   },
 }));
