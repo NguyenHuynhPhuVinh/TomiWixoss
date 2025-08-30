@@ -6,19 +6,19 @@ import { TextureLoader } from "three";
 import { useMemo } from "react";
 import { CardInstance } from "@/types/game";
 
-// Kích thước chuẩn của một lá bài trong không gian 3D
 const CARD_WIDTH = 0.75;
 const CARD_HEIGHT = 1.047;
 const CARD_THICKNESS = 0.02;
 
 interface CardProps {
   card: CardInstance;
-  position?: [number, number, number];
-  rotation?: [number, number, number];
+  position: [number, number, number];
+  rotation: [number, number, number];
+  onClick?: () => void; // Prop mới cho sự kiện click
 }
 
-export default function Card({ card, position, rotation }: CardProps) {
-  // Load texture mặt trước và các mặt sau
+export default function Card({ card, position, rotation, onClick }: CardProps) {
+  // --- Phần load texture giữ nguyên ---
   const frontTexture = useLoader(TextureLoader, card.imageUrl);
   const mainBackTexture = useLoader(
     TextureLoader,
@@ -33,7 +33,6 @@ export default function Card({ card, position, rotation }: CardProps) {
     "/textures/cardback/PIECE.png"
   );
 
-  // Chọn mặt sau phù hợp
   const backTexture = useMemo(() => {
     switch (card.backType) {
       case "LRIG":
@@ -45,35 +44,47 @@ export default function Card({ card, position, rotation }: CardProps) {
     }
   }, [card.backType, mainBackTexture, lrigBackTexture, pieceBackTexture]);
 
-  // Tối ưu hóa các texture
   useMemo(() => {
     [frontTexture, backTexture].forEach((tex) => {
       tex.anisotropy = 16;
       tex.colorSpace = THREE.SRGBColorSpace;
-      tex.needsUpdate = true;
     });
   }, [frontTexture, backTexture]);
 
+  // === GIẢI PHÁP SỬA LỖI HIỂN THỊ ===
   // Vật liệu cho các mặt của lá bài
-  // Chúng ta sẽ dùng 6 vật liệu cho 6 mặt của khối hộp
-  const materials = useMemo(
-    () => [
-      new THREE.MeshStandardMaterial({ color: "black" }), // right side
-      new THREE.MeshStandardMaterial({ color: "black" }), // left side
-      new THREE.MeshStandardMaterial({ color: "black" }), // top side
-      new THREE.MeshStandardMaterial({ color: "black" }), // bottom side
-      new THREE.MeshStandardMaterial({ map: frontTexture }), // front
-      new THREE.MeshStandardMaterial({ map: backTexture }), // back
-    ],
-    [frontTexture, backTexture]
-  );
+  const materials = useMemo(() => {
+    const frontMaterial = new THREE.MeshStandardMaterial({ map: frontTexture });
+    const backMaterial = new THREE.MeshStandardMaterial({ map: backTexture });
+    const edgeMaterial = new THREE.MeshStandardMaterial({ color: "black" });
 
-  // Xác định kích thước dựa trên lá bài là dọc hay ngang
+    // Khi lá bài úp (isFaceUp = false), chúng ta muốn mặt sau hiển thị ở cả hai phía
+    // để khi xoay lên xem, mặt trước sẽ hiện ra đúng.
+    // Khi lá bài ngửa, mặt trước sẽ hiển thị.
+    return [
+      edgeMaterial, // right
+      edgeMaterial, // left
+      edgeMaterial, // top
+      edgeMaterial, // bottom
+      card.isFaceUp ? frontMaterial : backMaterial, // front face
+      card.isFaceUp ? backMaterial : frontMaterial, // back face <--- Lỗi nằm ở đây, phải tráo đổi
+    ];
+  }, [frontTexture, backTexture, card.isFaceUp]);
+  // Chúng ta sẽ điều khiển việc úp/ngửa bằng state isFaceUp và góc xoay.
+
   const width = card.isHorizontal ? CARD_HEIGHT : CARD_WIDTH;
   const height = card.isHorizontal ? CARD_WIDTH : CARD_HEIGHT;
 
   return (
-    <mesh position={position} rotation={rotation} material={materials}>
+    <mesh
+      position={position}
+      rotation={rotation}
+      material={materials}
+      onClick={(e) => {
+        e.stopPropagation(); // Ngăn click xuyên qua các đối tượng khác
+        if (onClick) onClick();
+      }}
+    >
       <boxGeometry args={[width, height, CARD_THICKNESS]} />
     </mesh>
   );

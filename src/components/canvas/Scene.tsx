@@ -1,20 +1,77 @@
 // src/components/canvas/Scene.tsx
 "use client";
 
-import { useEffect } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useEffect, useState, Suspense, useMemo } from "react"; // Thêm useState, Suspense, useMemo
+import { Canvas, useThree } from "@react-three/fiber"; // Thêm useThree
 import {
   OrbitControls,
   PerspectiveCamera,
   Environment,
+  Preload, // Thêm Preload
 } from "@react-three/drei";
 import GameBoard from "./GameBoard";
-import Card from "./Card";
+import Card from "./Card"; // Sẽ dùng AnimatedCard sau
 import useGameStore from "@/store/gameStore";
-import { CardInstance } from "@/types/game";
-
-// === GIẢI PHÁP MỚI ===
 import { useStore } from "zustand";
+import { CardInstance } from "@/types/game";
+import * as THREE from "three";
+import { useSpring, animated } from "@react-spring/three"; // Cài lại @react-spring/three
+
+// --- TẠO COMPONENT CARD CÓ ANIMATION ---
+interface AnimatedCardProps {
+  card: CardInstance;
+  isViewing: boolean;
+  deckPosition: [number, number, number];
+  deckRotation: [number, number, number];
+}
+
+function AnimatedCard({
+  card,
+  isViewing,
+  deckPosition,
+  deckRotation,
+}: AnimatedCardProps) {
+  const { camera } = useThree();
+
+  // Tính toán vị trí/góc xoay mục tiêu
+  const target = useMemo(() => {
+    if (isViewing) {
+      const vec = new THREE.Vector3(0, -0.2, -2.5).unproject(camera);
+      const euler = new THREE.Euler().setFromQuaternion(
+        camera.quaternion,
+        "XYZ"
+      );
+      return {
+        position: [vec.x, vec.y, vec.z] as [number, number, number],
+        rotation: [euler.x, euler.y, euler.z] as [number, number, number],
+        scale: 1.8,
+      };
+    } else {
+      return {
+        position: deckPosition,
+        rotation: deckRotation,
+        scale: 1,
+      };
+    }
+  }, [isViewing, camera, deckPosition, deckRotation]);
+
+  // Tạo hiệu ứng spring
+  const spring = useSpring({
+    to: {
+      position: target.position,
+      scale: target.scale,
+    },
+    config: { mass: 1, tension: 200, friction: 25 },
+  });
+
+  return (
+    <animated.group position={spring.position} scale={spring.scale}>
+      <Card card={card} position={[0, 0, 0]} rotation={target.rotation} />
+    </animated.group>
+  );
+}
+
+// --- COMPONENT SCENE CHÍNH ---
 
 export default function Scene() {
   // === GIẢI PHÁP MỚI ===
@@ -36,10 +93,23 @@ export default function Scene() {
     (state) => state.initializeGame
   );
 
-  // 3. useEffect vẫn giữ nguyên logic guard (chống khởi tạo lại)
+  // State để quản lý lá bài nào đang được xem
+  const [viewingCard, setViewingCard] = useState<CardInstance | null>(null);
+
   useEffect(() => {
     initializeGame();
   }, [initializeGame]);
+
+  const handleDeckClick = (deck: CardInstance[]) => {
+    if (viewingCard) {
+      // Nếu đang xem bài, click vào bộ bài sẽ cất bài đi
+      setViewingCard(null);
+    } else if (deck.length > 0) {
+      // Nếu không, lấy lá bài trên cùng để xem
+      const topCard = deck[deck.length - 1];
+      setViewingCard(topCard);
+    }
+  };
 
   // === KẾT THÚC GIẢI PHÁP ===
 
@@ -61,15 +131,7 @@ export default function Scene() {
     <Canvas>
       {/* 1. Điều chỉnh Camera để bao quát cả hai bàn */}
       <PerspectiveCamera makeDefault position={[0, 15, 0.1]} fov={60} />
-      <OrbitControls
-        minDistance={8}
-        maxDistance={25}
-        // Giới hạn góc nhìn để không bị lật ngược
-        minPolarAngle={0}
-        maxPolarAngle={Math.PI / 2.2}
-        // Cho phép di chuyển camera song song với bàn đấu
-        enablePan={true}
-      />
+      <OrbitControls minDistance={5} maxDistance={25} />
 
       {/* 2. Ánh sáng và Môi trường */}
       {/* Environment giúp cảnh có ánh sáng và phản chiếu tự nhiên hơn */}
@@ -96,28 +158,51 @@ export default function Scene() {
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
 
-      {/* Render Main Deck của người chơi dựa trên state đã chọn */}
-      {playerMainDeck.map((card: CardInstance, index: number) => (
-        <Card
+      {/* Vùng click vô hình cho Main Deck */}
+      <mesh
+        position={[5.2, 0.1, 2.5]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        visible={false} // Vô hình
+        onClick={() => handleDeckClick(playerMainDeck)}
+      >
+        <planeGeometry args={[1, 1.2]} />
+      </mesh>
+
+      {/* Render các lá bài của Main Deck */}
+      {playerMainDeck.map((card, index) => (
+        <AnimatedCard
           key={card.uuid}
           card={card}
-          // Vị trí của Main Deck trên playmat (cần tinh chỉnh tọa độ)
-          // Mỗi lá bài chồng lên nhau với một khoảng cách nhỏ
-          position={[5.2, 0.01 * index, 2.5]}
-          rotation={[0, Math.PI / 2, 0]} // Xoay lá bài để nằm nghiêng
+          isViewing={viewingCard?.uuid === card.uuid}
+          deckPosition={[5.2, 0.01 * index, 2.5]}
+          deckRotation={[-Math.PI / 2, 0, 0]} // Góc xoay đúng để nằm úp
         />
       ))}
 
-      {/* Render LRIG Deck của người chơi */}
-      {playerLrigDeck.map((card: CardInstance, index: number) => (
-        <Card
+      {/* Vùng click vô hình cho LRIG Deck */}
+      <mesh
+        position={[5.2, 0.1, 0.5]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        visible={false}
+        onClick={() => handleDeckClick(playerLrigDeck)}
+      >
+        <planeGeometry args={[1, 1.2]} />
+      </mesh>
+
+      {/* Render các lá bài của LRIG Deck */}
+      {playerLrigDeck.map((card, index) => (
+        <AnimatedCard
           key={card.uuid}
           card={card}
-          // Vị trí của LRIG Deck trên playmat (cần tinh chỉnh tọa độ)
-          position={[5.2, 0.01 * index, 0.5]}
-          rotation={[0, Math.PI / 2, 0]}
+          isViewing={viewingCard?.uuid === card.uuid}
+          deckPosition={[5.2, 0.01 * index, 0.5]}
+          deckRotation={[-Math.PI / 2, 0, 0]}
         />
       ))}
+
+      <Suspense fallback={null}>
+        <Preload all />
+      </Suspense>
     </Canvas>
   );
 }
