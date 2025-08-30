@@ -11,7 +11,8 @@ import GameBoard from "./GameBoard";
 
 export default function Scene() {
   const boardWidth = 12;
-  const boardHeight = boardWidth / (4961 / 3508);
+  // THAY ĐỔI Ở ĐÂY: Cập nhật lại phép tính tỉ lệ
+  const boardHeight = boardWidth / (4962 / 3509);
   // const gap = 0.2; // <--- XÓA DÒNG NÀY HOẶC ĐẶT BẰNG 0
 
   return (

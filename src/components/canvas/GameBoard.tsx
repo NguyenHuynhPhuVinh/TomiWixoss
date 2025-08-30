@@ -17,10 +17,9 @@ export default function GameBoard({
   position = [0, -0.5, 0],
   rotation = [-Math.PI / 2, 0, 0],
 }: GameBoardProps) {
-  // Bọc việc load texture trong useMemo để nó chỉ load một lần
-  // ngay cả khi component được render lại. Điều này rất quan trọng
-  // khi có nhiều instance của GameBoard.
-  const texture = useLoader(TextureLoader, "/textures/playmat.jpg");
+  // Phần load texture và tối ưu hóa giữ nguyên
+  // Chỉ cần đảm bảo đường dẫn đúng với file PNG mới của bạn
+  const texture = useLoader(TextureLoader, "/textures/playmat.png"); // <-- Đảm bảo tên file đúng
 
   // Tương tự, bọc các thiết lập texture trong useMemo
   useMemo(() => {
@@ -34,7 +33,8 @@ export default function GameBoard({
     texture.needsUpdate = true;
   }, [texture]);
 
-  const imageAspectRatio = 4961 / 3508;
+  // THAY ĐỔI Ở ĐÂY: Cập nhật tỉ lệ khung hình mới
+  const imageAspectRatio = 4962 / 3509; // Tỉ lệ mới ~1.41407
   const boardWidth = 12;
   const boardHeight = boardWidth / imageAspectRatio;
 
