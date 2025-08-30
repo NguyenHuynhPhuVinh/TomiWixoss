@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -15,6 +15,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "three": "^0.179.1",
+    "wasmoon": "^1.16.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

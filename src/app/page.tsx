@@ -1,11 +1,14 @@
 // src/app/page.tsx
-import Scene from "@/components/canvas/Scene";
 
+// Import component "ranh giới" của chúng ta
+import ClientOnlyLoader from "@/components/ui/ClientOnlyLoader";
+
+// page.tsx vẫn là một Server Component, điều này hoàn toàn ổn.
 export default function Home() {
   return (
     <main className="w-screen h-screen">
-      {/* Canvas sẽ chiếm toàn bộ màn hình */}
-      <Scene />
+      {/* Render component loader, tất cả logic client sẽ nằm bên trong nó */}
+      <ClientOnlyLoader />
     </main>
   );
 }
