@@ -1,6 +1,7 @@
 // src/store/gameStore.ts
 import { create } from "zustand";
 import { GameStore, TURN_PHASES, LogEntry, LogType } from "./types"; // <-- IMPORT TYPE TỔNG HỢP
+import { createLogSlice } from "./slices/logSlice"; // <-- IMPORT SLICE
 import { CardInstance, CardData } from "@/types/game";
 import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import { v4 as uuidv4 } from "uuid";
@@ -21,6 +22,10 @@ const createCardInstance = (
 });
 
 const useGameStore = create<GameStore>((set, get) => ({
+  // === 2. GỌI SLICE VÀ SPREAD KẾT QUẢ VÀO ĐÂY ===
+  ...createLogSlice(set, get, {} as any),
+  // ===========================================
+
   gameStarted: false,
   phase: "pre_game",
   turn: 0,
@@ -30,7 +35,8 @@ const useGameStore = create<GameStore>((set, get) => ({
   playerAction: null, // Ban đầu không có hành động nào
   isZoneViewerOpen: false, // Giá trị ban đầu
   viewingLrigDeckForGrow: null, // Giá trị ban đầu
-  logs: [], // Khởi tạo mảng log rỗng
+  // === 3. XÓA STATE VÀ ACTION CŨ CỦA LOG ===
+  // logs: [], // <--- XÓA
 
   player: {
     mainDeck: [],
@@ -769,17 +775,8 @@ const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  // --- LOG SYSTEM ---
-  addLog: (message, type = "info") => {
-    const newLog: LogEntry = {
-      id: uuidv4(),
-      message,
-      type,
-      timestamp: Date.now(),
-    };
-    // Thêm log mới vào đầu mảng để hiển thị từ trên xuống
-    set((state) => ({ logs: [newLog, ...state.logs] }));
-  },
+  // === 3. XÓA STATE VÀ ACTION CŨ CỦA LOG ===
+  // addLog: (message, type = 'info') => { ... }, // <--- XÓA
 }));
 
 export default useGameStore;
