@@ -30,11 +30,26 @@ export default function SideCardPreview({ card }: SideCardPreviewProps) {
           <h3 className="text-lg font-bold text-card-foreground">
             {card.name}
           </h3>
-          <p className="text-sm text-muted-foreground">
-            {card.type} - Level {card.level ?? "N/A"}
-          </p>
-          <div className="mt-2 text-xs text-foreground/80">
-            <p>Mô tả chi tiết và hiệu ứng của lá bài...</p>
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
+            <span>
+              {card.type}
+              {card.level !== undefined ? ` - Lv ${card.level}` : ""}
+            </span>
+            {card.power !== undefined && (
+              <span className="font-bold">{card.power}</span>
+            )}
+          </div>
+          {card.class && (
+            <p className="text-xs text-muted-foreground">{card.class}</p>
+          )}
+
+          <div className="mt-4 space-y-2 text-xs text-foreground/90">
+            {card.abilities?.map((ability, index) => (
+              <div key={index} className="border-t pt-2">
+                <p className="font-bold">[{ability.type}]</p>
+                <p>{ability.description}</p>
+              </div>
+            ))}
           </div>
         </motion.div>
       )}

@@ -4,7 +4,6 @@ import { CardData } from "@/types/game";
 const DECK_ID = "WXDi-D01";
 const IMG_PATH = `/textures/cards/${DECK_ID}`;
 
-// Định nghĩa một bộ bài hoàn chỉnh
 export const divaDebutDeckEn: CardData[] = [
   // --- LRIG Deck ---
   {
@@ -12,7 +11,10 @@ export const divaDebutDeckEn: CardData[] = [
     name: "At =Noll=, the Opened Gate",
     type: "LRIG",
     level: 0,
+    limit: 0,
     colors: ["Green"],
+    lrigType: "At",
+    growCost: { Colorless: 0 },
     imageUrl: `${IMG_PATH}/WXDi-D01-001[EN].webp`,
     backType: "LRIG",
   },
@@ -21,7 +23,11 @@ export const divaDebutDeckEn: CardData[] = [
     name: "At =Ett=, the Opened Gate",
     type: "LRIG",
     level: 1,
+    limit: 2,
     colors: ["Green"],
+    lrigType: "At",
+    team: "Ancient Surprise",
+    growCost: { Green: 0 },
     imageUrl: `${IMG_PATH}/WXDi-D01-002[EN].webp`,
     backType: "LRIG",
   },
@@ -30,7 +36,11 @@ export const divaDebutDeckEn: CardData[] = [
     name: "At =Tva=, the Opened Gate",
     type: "LRIG",
     level: 2,
+    limit: 5,
     colors: ["Green"],
+    lrigType: "At",
+    team: "Ancient Surprise",
+    growCost: { Green: 1 },
     imageUrl: `${IMG_PATH}/WXDi-D01-003[EN].webp`,
     backType: "LRIG",
   },
@@ -39,7 +49,25 @@ export const divaDebutDeckEn: CardData[] = [
     name: "At =Tre=, the Opened Gate",
     type: "LRIG",
     level: 3,
+    limit: 6,
     colors: ["Green"],
+    lrigType: "At",
+    team: "Ancient Surprise",
+    growCost: { Green: 2 },
+    abilities: [
+      {
+        type: "Action",
+        turnLimit: 1,
+        description:
+          "Target three SIGNI on your field with different classes get +3000 power until end of turn.",
+      },
+      {
+        type: "Enter",
+        cost: { Green: 1, Colorless: 1 },
+        description:
+          "If the cards put into your Ener Zone this way do not share a class, [Ener Charge 1].",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-004[EN].webp`,
     backType: "LRIG",
   },
@@ -48,7 +76,11 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Tawil =Noll=, Awakened One",
     type: "LRIG",
     level: 0,
+    limit: 0,
     colors: ["Red"],
+    lrigType: "Tawil",
+    team: "Ancient Surprise",
+    growCost: { Colorless: 0 },
     imageUrl: `${IMG_PATH}/WXDi-D01-005[EN].webp`,
     backType: "LRIG",
   },
@@ -57,7 +89,19 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Tawil =Screech=",
     type: "ASSIST LRIG",
     level: 1,
+    limit: 0,
     colors: ["Red"],
+    lrigType: "Tawil",
+    team: "Ancient Surprise",
+    growCost: { Red: 0 },
+    abilities: [
+      {
+        type: "Enter",
+        timing: ["Main Phase"],
+        description:
+          "Vanish target SIGNI on your opponent's field with power 8000 or less. Draw a card, and discard a card.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-006[EN].webp`,
     backType: "LRIG",
   },
@@ -66,7 +110,19 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Tawil =Rainbow=",
     type: "ASSIST LRIG",
     level: 2,
+    limit: "+1",
     colors: ["Red"],
+    lrigType: "Tawil",
+    team: "Ancient Surprise",
+    growCost: { Red: 1 },
+    abilities: [
+      {
+        type: "Enter",
+        timing: ["Main Phase"],
+        description:
+          "If there is a red SIGNI on your field, vanish target SIGNI on your opponent's field with power 10000 or less. If there is a blue SIGNI on your field, draw two cards. If there is a green SIGNI on your field, [Ener Charge 2].",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-007[EN].webp`,
     backType: "LRIG",
   },
@@ -75,7 +131,11 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Umr =Noll=, Key to Salvation",
     type: "LRIG",
     level: 0,
+    limit: 0,
     colors: ["Blue"],
+    lrigType: "Umr",
+    team: "Ancient Surprise",
+    growCost: { Colorless: 0 },
     imageUrl: `${IMG_PATH}/WXDi-D01-008[EN].webp`,
     backType: "LRIG",
   },
@@ -84,7 +144,14 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Umr =Draw=",
     type: "ASSIST LRIG",
     level: 1,
+    limit: 0,
     colors: ["Blue"],
+    lrigType: "Umr",
+    team: "Ancient Surprise",
+    growCost: { Blue: 0 },
+    abilities: [
+      { type: "Enter", timing: ["Main Phase"], description: "Draw two cards." },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-009[EN].webp`,
     backType: "LRIG",
   },
@@ -93,7 +160,19 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Umr =Down=",
     type: "ASSIST LRIG",
     level: 2,
+    limit: "+1",
     colors: ["Blue"],
+    lrigType: "Umr",
+    team: "Ancient Surprise",
+    growCost: { Blue: 1 },
+    abilities: [
+      {
+        type: "Enter",
+        timing: ["Main Phase", "Attack Phase"],
+        cost: { Blue: 1 },
+        description: "Down target SIGNI on your opponent's field.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-010[EN].webp`,
     backType: "LRIG",
   },
@@ -102,18 +181,36 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Harmonic Call",
     type: "PIECE",
     colors: ["Green", "Red", "Blue"],
+    cost: { Colorless: 8 },
+    abilities: [
+      {
+        type: "Use Conditions",
+        timing: ["Main Phase"],
+        description:
+          "You have <Ancient Surprise> on your field with all members level one or more. Look at the top eight cards of your deck. Put up to one level one SIGNI, one level two SIGNI, and one level three SIGNI from among them onto your field. Put the rest on the bottom of your deck in a random order. Then, target level one SIGNI gains [Assassin], target level two SIGNI gains [Lancer], and target level three SIGNI gains [Double Crush] until end of turn.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-011[EN].webp`,
     backType: "PIECE",
     isHorizontal: true,
   },
 
-  // --- Main Deck --- (Các lá bài này sẽ cần được nhân lên để đủ 40 lá, tạm thời để 1 lá mỗi loại)
+  // --- Main Deck ---
   {
     id: "WXDi-D01-012",
     name: "Camelopar, Natural Planet",
     type: "SIGNI",
     level: 1,
+    power: 3000,
     colors: ["Green"],
+    class: "Nature Tone: Cosmos",
+    abilities: [
+      {
+        type: "Const",
+        description:
+          "As long as there are three or more different classes among SIGNI in your Ener Zone, this SIGNI gets +4000 power.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-012[EN].webp`,
     backType: "MAIN",
   },
@@ -122,7 +219,11 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Sen no Rikyu, Jade General",
     type: "SIGNI",
     level: 2,
+    power: 10000,
     colors: ["Green"],
+    class: "Idle Tone: Brave",
+    hasBurstIcon: true,
+    abilities: [{ type: "Enter", description: "[Ener Charge 3]." }],
     imageUrl: `${IMG_PATH}/WXDi-D01-013[EN].webp`,
     backType: "MAIN",
   },
@@ -131,7 +232,23 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Zwei =Slow Loris=",
     type: "SIGNI",
     level: 2,
+    power: 3000,
     colors: ["Green"],
+    class: "War Tone: Venom",
+    abilities: [
+      {
+        type: "Const",
+        description:
+          "As long as there are three or more different classes among SIGNI in your Ener Zone, this SIGNI gets +5000 power.",
+      },
+      {
+        type: "Action",
+        turnLimit: 1,
+        cost: { Green: 1, Red: 1, Blue: 1 },
+        description:
+          "Another target SIGNI on your field with power 15000 or more gains [Lancer] until end of turn.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-014[EN].webp`,
     backType: "MAIN",
   },
@@ -140,7 +257,23 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Tobiel, Full Armed",
     type: "SIGNI",
     level: 3,
+    power: 12000,
     colors: ["Red"],
+    class: "War Tone: Armed",
+    hasBurstIcon: true,
+    abilities: [
+      {
+        type: "Auto",
+        description:
+          "Whenever this SIGNI attacks, another target SIGNI on your field gets +5000 power until end of turn.",
+      },
+      { type: "Enter", description: "Discard two cards: Draw two cards." },
+      {
+        type: "Action",
+        description:
+          "Choose one - 1. Vanish target upped SIGNI on your opponent's field. 2. Draw a card.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-015[EN].webp`,
     backType: "MAIN",
   },
@@ -149,7 +282,22 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Assylen, Natural Crystal",
     type: "SIGNI",
     level: 3,
+    power: 12000,
     colors: ["Blue"],
+    class: "Nature Tone: Jewel",
+    hasBurstIcon: true,
+    abilities: [
+      {
+        type: "Auto",
+        description:
+          "Whenever this SIGNI attacks, if its power is 15000 or more, your opponent discards a card. If its power is 20000 or more, your opponent instead discards a card at random.",
+      },
+      {
+        type: "Action",
+        description:
+          "Down target SIGNI on your opponent's field and freeze it. Draw a card.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-016[EN].webp`,
     backType: "MAIN",
   },
@@ -158,7 +306,16 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Atalanta, Jade Angel",
     type: "SIGNI",
     level: 3,
+    power: 12000,
     colors: ["Green"],
+    class: "Idle Tone: Angel",
+    abilities: [
+      {
+        type: "Enter",
+        description:
+          "Put three SIGNI with different classes from your Ener Zone into their owner's trash: Vanish target SIGNI on your opponent's field with power 8000 or more.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-017[EN].webp`,
     backType: "MAIN",
   },
@@ -167,7 +324,16 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Water Buffalo, Phantom Aquatic Beast",
     type: "SIGNI",
     level: 1,
+    power: 5000,
     colors: ["Blue", "Green"],
+    class: "Living Tone: Aquatic Beast",
+    abilities: [
+      {
+        type: "Const",
+        description:
+          "(When paying costs, this card can be used as blue or green.)",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-018[EN].webp`,
     backType: "MAIN",
   },
@@ -176,16 +342,43 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Koalala, Phantom Terra Beast",
     type: "SIGNI",
     level: 2,
+    power: 10000,
     colors: ["Red", "Green"],
+    class: "Living Tone: Terra Beast",
+    abilities: [
+      {
+        type: "Const",
+        description:
+          "(When paying costs, this card can be used as red or green.)",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-019[EN].webp`,
     backType: "MAIN",
   },
   {
     id: "WXDi-D01-020",
-    name: "Servant ♯",
+    name: "Servant #",
     type: "SIGNI",
     level: 1,
+    power: 1000,
     colors: ["Colorless"],
+    class: "Primal Tone",
+    abilities: [
+      {
+        type: "Guard",
+        description:
+          "(You may discard this card to prevent damage from a single LRIG attack.)",
+      },
+      {
+        type: "Const",
+        description:
+          "[Multi Ener] (When paying costs, this card can be used as any color.)",
+      },
+      {
+        type: "Action",
+        description: "Add target SIGNI from your trash to your hand.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-020[EN].webp`,
     backType: "MAIN",
   },
@@ -194,6 +387,19 @@ export const divaDebutDeckEn: CardData[] = [
     name: "Polygenesis",
     type: "SPELL",
     colors: ["Green"],
+    cost: { Green: 1 },
+    hasBurstIcon: true,
+    abilities: [
+      {
+        type: "Action",
+        description:
+          "Add target green SIGNI from your Ener Zone to your hand. If there are three <Ancient Surprise> LRIG on your field, instead add target SIGNI from your Ener Zone to your hand.",
+      },
+      {
+        type: "Action",
+        description: "Vanish target upped SIGNI on your opponent's field.",
+      },
+    ],
     imageUrl: `${IMG_PATH}/WXDi-D01-021[EN].webp`,
     backType: "MAIN",
   },

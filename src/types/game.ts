@@ -12,33 +12,48 @@ export type CardColor =
   | "Black"
   | "Colorless";
 
-// Cấu trúc của một lá bài
+// Định nghĩa cấu trúc cho cost
+export interface CardCost {
+  [color: string]: number; // Ví dụ: { "Green": 2, "Colorless": 1 }
+}
+
+// Định nghĩa cấu trúc cho các kỹ năng
+export interface CardAbility {
+  type: "Action" | "Auto" | "Enter" | "Const" | "Guard" | "Use Conditions";
+  timing?: ("Main Phase" | "Attack Phase")[]; // Thời điểm sử dụng
+  cost?: CardCost;
+  description: string;
+  turnLimit?: number; // Giới hạn mỗi lượt
+}
+
+// Cấu trúc của một lá bài (đã mở rộng)
 export interface CardData {
   id: string; // Mã định danh duy nhất, ví dụ: "WXDi-D01-001"
-  name: string; // Tên lá bài
+  name: string;
   type: CardType;
-  level?: number; // Level của LRIG/SIGNI
+  level?: number;
+  limit?: number | string; // Có thể là số hoặc "+1"
+  power?: number;
   colors: CardColor[];
-  imageUrl: string; // Đường dẫn đến ảnh mặt trước
-  backType: "MAIN" | "LRIG" | "PIECE"; // Loại mặt sau để chọn ảnh
-  isHorizontal?: boolean; // Đánh dấu nếu là lá bài nằm ngang (PIECE)
-  // Thêm các thuộc tính khác sau này: power, abilities, cost...
+  lrigType?: string; // Ví dụ: "At", "Tawil", "Umr"
+  team?: string; // Ví dụ: "Ancient Surprise"
+  class?: string; // Ví dụ: "Nature Tone: Cosmos"
+  growCost?: CardCost;
+  cost?: CardCost;
+  abilities?: CardAbility[];
+  hasBurstIcon?: boolean; // Biểu tượng Burst
+  imageUrl: string;
+  backType: "MAIN" | "LRIG" | "PIECE";
+  isHorizontal?: boolean;
 }
 
 // Cấu trúc cho một lá bài trong game (có thêm trạng thái)
 export interface CardInstance extends CardData {
-  uuid: string; // ID duy nhất cho instance này trong ván đấu
-  isFaceUp: boolean; // Đang úp hay ngửa
-  isDowned: boolean; // Đang tapped/downed hay không
-  owner: "player" | "ai"; // Thuộc về người chơi nào
+  uuid: string;
+  isFaceUp: boolean;
+  isDowned: boolean;
+  owner: "player" | "ai";
 }
-
-// Định nghĩa các hành động mà người chơi có thể đang thực hiện
-export type PlayerAction =
-  | { type: "place_signi"; card: CardInstance; fromZone: ZoneKey }
-  | { type: "place_lrig"; card: CardInstance; fromZone: ZoneKey }
-  | { type: "charge_ener"; card: CardInstance; fromZone: ZoneKey }
-  | { type: "attack"; card: CardInstance; fromZone: ZoneKey };
 
 // Key cho các vùng có thể chứa bài
 export type ZoneKey =
@@ -50,4 +65,5 @@ export type ZoneKey =
   | "lifeCloth"
   | "enerZone"
   | "trash"
-  | "lrigTrash";
+  | "lrigTrash"
+  | "checkZone";
