@@ -6,6 +6,8 @@ import { CardInstance } from "@/types/game";
 import Hand from "./Hand";
 import CardPreview from "./CardPreview";
 import useGameStore from "@/store/gameStore";
+// IMPORT LOADER MỚI
+import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 
 // Dynamic import cho các component nặng
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
@@ -31,10 +33,13 @@ export default function ClientOnlyLoader() {
 
   return (
     <>
+      {/* DevPanel có thể nằm ngoài vì nó không phụ thuộc vào tài nguyên 3D */}
       <DevPanel />
 
-      {/* Truyền action `handleDeckClick` vào Scene */}
-      <Scene onDeckClick={handleDeckClick} />
+      {/* BỌC TOÀN BỘ SCENE VÀO TRONG LOADER MỚI */}
+      <TomiwixossSceneLoader>
+        <Scene onDeckClick={handleDeckClick} />
+      </TomiwixossSceneLoader>
 
       {/* Giao diện 2D */}
       <Hand
