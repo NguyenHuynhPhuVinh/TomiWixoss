@@ -25,6 +25,11 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
   const handRef = useRef<HTMLDivElement>(null);
 
+  // Lấy phase và actions
+  const phase = useGameStore((state) => state.phase);
+  const chargeEnerAction = useGameStore((state) => state.chargeEner);
+  const playSigniAction = useGameStore((state) => state.playSigni);
+
   useOnClickOutside(handRef, () => {
     setSelectedCardUuid(null);
     onCardSelect(null);
@@ -46,6 +51,19 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
       setSelectedCardUuid(null);
       onCardSelect(null);
     }
+  };
+
+  const handleChargeEner = (cardUuid: string) => {
+    chargeEnerAction(cardUuid, "hand");
+    setSelectedCardUuid(null);
+    onCardSelect(null);
+  };
+
+  const handlePlaySigni = (cardUuid: string) => {
+    // Tạm thời đặt vào zone 0, sau này sẽ có logic chọn zone
+    playSigniAction(cardUuid, 0);
+    setSelectedCardUuid(null);
+    onCardSelect(null);
   };
 
   if (numCards === 0) return null;
@@ -99,7 +117,15 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
                 onClick={() => handleCardClick(card)}
               >
                 {/* Hiển thị ContextMenu nếu lá bài này đang được chọn */}
-                {isSelected && <ContextMenu onDiscard={handleDiscard} />}
+                {isSelected && (
+                  <ContextMenu
+                    onDiscard={handleDiscard}
+                    showChargeEner={phase === "ener"}
+                    onChargeEner={() => handleChargeEner(card.uuid)}
+                    showPlaySigni={phase === "main"}
+                    onPlaySigni={() => handlePlaySigni(card.uuid)}
+                  />
+                )}
 
                 <div
                   className="relative"

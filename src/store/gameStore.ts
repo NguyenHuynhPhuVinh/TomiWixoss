@@ -5,6 +5,8 @@ import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array"; // Cài đặt: npm install shuffle-array
 
+const PHASES: GameState["phase"][] = ["draw", "ener", "main", "attack", "end"];
+
 interface PlayerState {
   mainDeck: CardInstance[];
   lrigDeck: CardInstance[];
@@ -32,6 +34,13 @@ interface GameState {
   drawCard: (amount: number) => void; // <-- THÊM ACTION RÚT BÀI
   returnAllCardsFromHand: () => void; // <-- THÊM ACTION TRẢ BÀI
   returnSingleCardFromHand: (cardUuid: string) => void; // <-- THÊM ACTION MỚI
+  goToNextPhase: () => void;
+  chargeEner: (
+    cardUuid: string,
+    from: "hand" | "signiZone",
+    signiIndex?: number
+  ) => void;
+  playSigni: (cardUuid: string, zoneIndex: number) => void;
 }
 
 // Hàm helper để tạo một instance từ card data
@@ -132,50 +141,51 @@ const useGameStore = create<GameState>((set, get) => ({
     );
 
     // === CẬP NHẬT DỮ LIỆU GIẢ LẬP ===
-    const mockSigniZone: (CardInstance | null)[] = [null, null, null];
-    const mockEnerZone: CardInstance[] = [];
-    const mockTrash: CardInstance[] = [];
-    const mockLrigTrash: CardInstance[] = []; // <-- Thêm Lrig Trash
-    const mockCheckZone: (CardInstance | null)[] = [null]; // Check zone thường chỉ có 1 lá
+    // XÓA TOÀN BỘ PHẦN NÀY
+    // const mockSigniZone: (CardInstance | null)[] = [null, null, null];
+    // const mockEnerZone: CardInstance[] = [];
+    // const mockTrash: CardInstance[] = [];
+    // const mockLrigTrash: CardInstance[] = []; // <-- Thêm Lrig Trash
+    // const mockCheckZone: (CardInstance | null)[] = [null]; // Check zone thường chỉ có 1 lá
 
     // Lấp đầy 3 ô SIGNI
-    if (fullMainDeck.length >= 3) {
-      for (let i = 0; i < 3; i++) {
-        const signiCard = fullMainDeck.pop()!;
-        signiCard.isFaceUp = true;
-        mockSigniZone[i] = signiCard; // Đặt vào ô 0, 1, 2
-      }
-    }
+    // if (fullMainDeck.length >= 3) {
+    //   for (let i = 0; i < 3; i++) {
+    //     const signiCard = fullMainDeck.pop()!;
+    //     signiCard.isFaceUp = true;
+    //     mockSigniZone[i] = signiCard; // Đặt vào ô 0, 1, 2
+    //   }
+    // }
 
     // Lấy 5 lá bài làm Ener (giữ nguyên)
-    if (fullMainDeck.length >= 5) {
-      for (let i = 0; i < 5; i++) {
-        const enerCard = fullMainDeck.pop()!;
-        enerCard.isFaceUp = true;
-        mockEnerZone.push(enerCard);
-      }
-    }
+    // if (fullMainDeck.length >= 5) {
+    //   for (let i = 0; i < 5; i++) {
+    //     const enerCard = fullMainDeck.pop()!;
+    //     enerCard.isFaceUp = true;
+    //     mockEnerZone.push(enerCard);
+    //   }
+    // }
 
     // Lấy 1 lá bài làm mộ Main Deck
-    if (fullMainDeck.length > 0) {
-      const trashCard = fullMainDeck.pop()!;
-      trashCard.isFaceUp = true;
-      mockTrash.push(trashCard);
-    }
+    // if (fullMainDeck.length > 0) {
+    //   const trashCard = fullMainDeck.pop()!;
+    //     trashCard.isFaceUp = true;
+    //     mockTrash.push(trashCard);
+    // }
 
     // Lấy 1 lá LRIG làm Lrig Trash (giữ nguyên)
-    if (remainingLrigDeck.length > 0) {
-      const lrigTrashCard = remainingLrigDeck.pop()!;
-      lrigTrashCard.isFaceUp = true;
-      mockLrigTrash.push(lrigTrashCard);
-    }
+    // if (remainingLrigDeck.length > 0) {
+    //   const lrigTrashCard = remainingLrigDeck.pop()!;
+    //   lrigTrashCard.isFaceUp = true;
+    //   mockLrigTrash.push(lrigTrashCard);
+    // }
 
     // Lấy 1 lá làm Check Zone (giữ nguyên)
-    if (fullMainDeck.length > 0) {
-      const checkZoneCard = fullMainDeck.pop()!;
-      checkZoneCard.isFaceUp = true;
-      mockCheckZone[0] = checkZoneCard;
-    }
+    // if (fullMainDeck.length > 0) {
+    //   const checkZoneCard = fullMainDeck.pop()!;
+    //   checkZoneCard.isFaceUp = true;
+    //   mockCheckZone[0] = checkZoneCard;
+    // }
     // === KẾT THÚC DỮ LIỆU GIẢ LẬP ===
 
     set({
@@ -183,14 +193,14 @@ const useGameStore = create<GameState>((set, get) => ({
       player: {
         mainDeck: fullMainDeck,
         lrigDeck: remainingLrigDeck,
-        hand: [],
-        signiZone: mockSigniZone, // <-- Dùng dữ liệu giả
+        hand: [], // Tay bắt đầu trống
+        signiZone: [null, null, null], // Sân bắt đầu trống
         lrigZone: initialLrigs,
         lifeCloth: lifeClothStack,
-        enerZone: mockEnerZone, // <-- Dùng dữ liệu giả
-        trash: mockTrash, // <-- Dùng dữ liệu giả
-        lrigTrash: mockLrigTrash,
-        checkZone: mockCheckZone,
+        enerZone: [], // Ener bắt đầu trống
+        trash: [],
+        lrigTrash: [],
+        checkZone: [null],
       },
       ai: {
         mainDeck: fullMainDeck.map((c) => createCardInstance(c, "ai")), // Tương tự nhưng cho AI
@@ -278,6 +288,77 @@ const useGameStore = create<GameState>((set, get) => ({
           mainDeck: newMainDeck,
         },
       };
+    });
+  },
+
+  goToNextPhase: () => {
+    set((state) => {
+      const currentPhaseIndex = PHASES.indexOf(state.phase);
+      let nextPhaseIndex = currentPhaseIndex + 1;
+      let newTurn = state.turn;
+
+      if (nextPhaseIndex >= PHASES.length) {
+        nextPhaseIndex = 0; // Quay về Draw Phase
+        newTurn += 1; // Bắt đầu lượt mới
+        // TODO: Logic chuyển lượt cho AI sau này
+      }
+
+      const nextPhase = PHASES[nextPhaseIndex];
+
+      // TỰ ĐỘNG THỰC THI LOGIC CỦA GIAI ĐOẠN
+      if (nextPhase === "draw") {
+        // Tạm thời rút 2 lá, luật chơi lượt đầu sẽ xử lý sau
+        get().drawCard(2);
+      }
+
+      return { phase: nextPhase, turn: newTurn };
+    });
+  },
+
+  chargeEner: (cardUuid, from, signiIndex) => {
+    set((state) => {
+      let cardToCharge: CardInstance | undefined;
+      const newPlayerState = { ...state.player };
+
+      if (from === "hand") {
+        cardToCharge = newPlayerState.hand.find((c) => c.uuid === cardUuid);
+        if (cardToCharge) {
+          newPlayerState.hand = newPlayerState.hand.filter(
+            (c) => c.uuid !== cardUuid
+          );
+        }
+      } else if (from === "signiZone" && signiIndex !== undefined) {
+        cardToCharge = newPlayerState.signiZone[signiIndex] ?? undefined;
+        if (cardToCharge) {
+          newPlayerState.signiZone[signiIndex] = null;
+        }
+      }
+
+      if (cardToCharge) {
+        cardToCharge.isFaceUp = true;
+        newPlayerState.enerZone = [...newPlayerState.enerZone, cardToCharge];
+      }
+
+      return { player: newPlayerState };
+    });
+  },
+
+  playSigni: (cardUuid, zoneIndex) => {
+    set((state) => {
+      // Kiểm tra xem ô có trống không
+      if (state.player.signiZone[zoneIndex]) return state;
+
+      const cardToPlay = state.player.hand.find((c) => c.uuid === cardUuid);
+      if (!cardToPlay) return state;
+
+      const newPlayerState = { ...state.player };
+      newPlayerState.hand = newPlayerState.hand.filter(
+        (c) => c.uuid !== cardUuid
+      );
+      cardToPlay.isFaceUp = true;
+      newPlayerState.signiZone[zoneIndex] = cardToPlay;
+
+      return { player: newPlayerState };
     });
   },
 }));

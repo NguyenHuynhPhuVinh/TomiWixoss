@@ -15,6 +15,9 @@ const Scene = dynamic(() => import("@/components/canvas/Scene"), {
 const DevPanel = dynamic(() => import("@/components/ui/DevPanel"), {
   ssr: false,
 });
+const PhaseIndicator = dynamic(() => import("@/components/ui/PhaseIndicator"), {
+  ssr: false,
+});
 
 export default function ClientOnlyLoader() {
   // State này bây giờ sẽ điều khiển SideCardPreview
@@ -34,6 +37,7 @@ export default function ClientOnlyLoader() {
   return (
     <>
       <DevPanel />
+      <PhaseIndicator />
 
       <TomiwixossSceneLoader>
         <Scene onDeckClick={handleDeckClick} />
