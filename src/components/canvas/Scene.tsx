@@ -176,11 +176,13 @@ export default function Scene() {
 
           case "enerZone":
             // Sử dụng lại logic xếp chồng đẹp của bạn
+            const zoneEntities = entitiesByZone.get("enerZone")!;
+            const realIndex = zoneEntities.findIndex((e) => e === entity);
             position = [
               coords.ENER_ZONE.x,
               coords.ENER_ZONE.y +
-                (totalCardsInZone - 1 - index) * CARD_DIMENSIONS.thickness,
-              coords.ENER_ZONE.z + index * 0.7,
+                (totalCardsInZone - 1 - realIndex) * CARD_DIMENSIONS.thickness,
+              coords.ENER_ZONE.z + realIndex * 0.7,
             ];
             rotation = [-Math.PI / 2, 0, Math.PI];
             break;

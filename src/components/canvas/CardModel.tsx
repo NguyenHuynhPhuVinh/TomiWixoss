@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
-import { useMemo } from "react";
+import { useMemo, memo } from "react"; // <-- IMPORT memo
 import { CardInstance } from "@/types/game";
 
 // Đưa các hằng số ra ngoài để có thể tái sử dụng
@@ -15,7 +15,7 @@ interface CardModelProps {
   card: CardInstance;
 }
 
-export default function CardModel({ card }: CardModelProps) {
+const CardModel = memo(function CardModel({ card }: CardModelProps) {
   const frontTexture = useLoader(TextureLoader, card.imageUrl);
   const mainBackTexture = useLoader(
     TextureLoader,
@@ -75,4 +75,6 @@ export default function CardModel({ card }: CardModelProps) {
       <boxGeometry args={[width, height, CARD_THICKNESS]} />
     </mesh>
   );
-}
+});
+
+export default CardModel;

@@ -2,6 +2,7 @@
 "use client";
 import { CardInstance } from "@/types/game";
 import CardModel from "./CardModel";
+import { memo } from "react"; // <-- 1. IMPORT memo
 
 interface CardProps {
   card: CardInstance;
@@ -10,9 +11,14 @@ interface CardProps {
   onClick?: () => void;
 }
 
-export default function Card({ card, position, rotation, onClick }: CardProps) {
-  // Logic phức tạp đã được chuyển vào CardModel
-  // Component này giờ chỉ lo về vị trí và tương tác
+// 2. BỌC COMPONENT BẰNG memo()
+const Card = memo(function Card({
+  card,
+  position,
+  rotation,
+  onClick,
+}: CardProps) {
+  // Logic bên trong không đổi
   return (
     <group
       position={position}
@@ -25,4 +31,6 @@ export default function Card({ card, position, rotation, onClick }: CardProps) {
       <CardModel card={card} />
     </group>
   );
-}
+});
+
+export default Card;
