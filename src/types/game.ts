@@ -1,5 +1,20 @@
 // src/types/game.ts
 
+// === THÊM VÀO ĐẦY ===
+// Thêm định nghĩa và export GamePhase tại đây
+export type GamePhase =
+  | "pre_game"
+  | "selecting_lrigs"
+  | "mulligan"
+  | "up"
+  | "draw"
+  | "ener"
+  | "grow"
+  | "main"
+  | "attack"
+  | "end";
+// =====================
+
 // Loại lá bài chính
 export type CardType = "LRIG" | "ASSIST LRIG" | "SIGNI" | "PIECE" | "SPELL";
 
@@ -20,7 +35,7 @@ export interface CardCost {
 // Định nghĩa cấu trúc cho các kỹ năng
 export interface CardAbility {
   type: "Action" | "Auto" | "Enter" | "Const" | "Guard" | "Use Conditions";
-  timing?: ("Main Phase" | "Attack Phase")[]; // Thời điểm sử dụng
+  timing?: GamePhase[]; // Thời điểm sử dụng, sử dụng GamePhase để nhất quán
   cost?: CardCost;
   description: string;
   turnLimit?: number; // Giới hạn mỗi lượt

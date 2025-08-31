@@ -96,7 +96,7 @@ export const divaDebutDeckEn: CardData[] = [
     abilities: [
       {
         type: "Enter",
-        timing: ["Main Phase"],
+        timing: ["main"],
         description:
           "Vanish target SIGNI on your opponent's field with power 8000 or less. Draw a card, and discard a card.",
       },
@@ -117,7 +117,7 @@ export const divaDebutDeckEn: CardData[] = [
     abilities: [
       {
         type: "Enter",
-        timing: ["Main Phase"],
+        timing: ["main"],
         description:
           "If there is a red SIGNI on your field, vanish target SIGNI on your opponent's field with power 10000 or less. If there is a blue SIGNI on your field, draw two cards. If there is a green SIGNI on your field, [Ener Charge 2].",
       },
@@ -149,7 +149,7 @@ export const divaDebutDeckEn: CardData[] = [
     team: "Ancient Surprise",
     growCost: { Blue: 0 },
     abilities: [
-      { type: "Enter", timing: ["Main Phase"], description: "Draw two cards." },
+      { type: "Enter", timing: ["main"], description: "Draw two cards." },
     ],
     imageUrl: `${IMG_PATH}/WXDi-D01-009[EN].webp`,
     backType: "LRIG",
@@ -167,7 +167,7 @@ export const divaDebutDeckEn: CardData[] = [
     abilities: [
       {
         type: "Enter",
-        timing: ["Main Phase", "Attack Phase"],
+        timing: ["main", "attack"],
         cost: { Blue: 1 },
         description: "Down target SIGNI on your opponent's field.",
       },
@@ -184,7 +184,7 @@ export const divaDebutDeckEn: CardData[] = [
     abilities: [
       {
         type: "Use Conditions",
-        timing: ["Main Phase"],
+        timing: ["main"],
         description:
           "You have <Ancient Surprise> on your field with all members level one or more. Look at the top eight cards of your deck. Put up to one level one SIGNI, one level two SIGNI, and one level three SIGNI from among them onto your field. Put the rest on the bottom of your deck in a random order. Then, target level one SIGNI gains [Assassin], target level two SIGNI gains [Lancer], and target level three SIGNI gains [Double Crush] until end of turn.",
       },
