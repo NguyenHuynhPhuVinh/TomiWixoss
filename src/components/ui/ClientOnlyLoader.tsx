@@ -1,7 +1,7 @@
 // src/components/ui/ClientOnlyLoader.tsx
 "use client";
 import dynamic from "next/dynamic";
-import { useState, useMemo } from "react"; // Thêm useMemo
+import { useState, useMemo, useRef } from "react"; // Thêm useRef
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 import { CardInstance } from "@/types/game";
 import useGameStore from "@/store/gameStore";
@@ -14,6 +14,7 @@ import {
 import { dispatchConfirmLrigSelectionAction } from "@/logic/ecs/actions";
 import { dispatchGrowLrigAction } from "@/logic/ecs/actions";
 import { useEffect } from "react";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside"; // <-- Import hook
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -64,11 +65,28 @@ export default function ClientOnlyLoader() {
     useGameStore,
     (state) => state.closeLrigDeckViewer
   );
+  const playerAction = useStore(useGameStore, (state) => state.playerAction);
+  const cancelPlayerAction = useStore(
+    useGameStore,
+    (state) => state.cancelPlayerAction
+  );
 
   // Khởi tạo game một lần khi component được mount
   useEffect(() => {
     initializeGame();
   }, [initializeGame]);
+
+  const gameAreaRef = useRef<HTMLDivElement>(null); // <-- Tạo ref cho toàn bộ khu vực game
+
+  // === SỬ DỤNG HOOK ĐỂ HỦY BỎ HÀNH ĐỘNG ===
+  useOnClickOutside(gameAreaRef, () => {
+    // Nếu đang có một hành động (như đặt bài) thì hủy nó đi
+    if (playerAction) {
+      console.log("Clicked outside, cancelling player action.");
+      cancelPlayerAction();
+    }
+  });
+  // =====================================
 
   // === TRUY VẤN DỮ LIỆU CHO LRIG SELECTOR ===
   const lrigDeckForSelector: CardInstance[] = useMemo(() => {
@@ -177,7 +195,8 @@ export default function ClientOnlyLoader() {
   // ===========================================
 
   return (
-    <>
+    // Bọc toàn bộ game trong một div và gắn ref vào đó
+    <div ref={gameAreaRef} className="w-screen h-screen">
       {/* Các component UI 2D nằm ở đây */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
         <GameController />
@@ -228,6 +247,6 @@ export default function ClientOnlyLoader() {
         }}
       />
       {/* <DeckViewer /> */}
-    </>
+    </div>
   );
 }

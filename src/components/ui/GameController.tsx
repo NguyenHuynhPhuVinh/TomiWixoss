@@ -27,6 +27,11 @@ export default function GameController() {
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
   const initializeGame = useGameStore((state) => state.initializeGame);
   const openZoneViewer = useGameStore((state) => state.openZoneViewer);
+  const playerAction = useStore(useGameStore, (state) => state.playerAction);
+  const cancelPlayerAction = useStore(
+    useGameStore,
+    (state) => state.cancelPlayerAction
+  );
   // const setPhase = useGameStore((state) => state.setPhase); // Không còn cần thiết
 
   const globalState = world?.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
@@ -36,6 +41,26 @@ export default function GameController() {
   // const handleNextPhase = () => { ... };
 
   const renderContent = () => {
+    // === XỬ LÝ TRẠNG THÁI HÀNH ĐỘNG ĐẶC BIỆT TRƯỚC ===
+    if (playerAction?.type === "place_signi") {
+      return (
+        <>
+          <p className="text-sm text-blue-400 mb-2 animate-pulse">
+            Chọn một ô SIGNI trống trên sân...
+          </p>
+          <Button
+            onClick={cancelPlayerAction}
+            variant="destructive"
+            size="sm"
+            className="w-full mt-2"
+          >
+            Hủy
+          </Button>
+        </>
+      );
+    }
+    // ===============================================
+
     switch (phase) {
       case "pre_game":
         // Nút này bây giờ sẽ dispatch action
