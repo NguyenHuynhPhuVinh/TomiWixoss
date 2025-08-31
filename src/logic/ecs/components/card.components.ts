@@ -1,0 +1,44 @@
+// src/logic/ecs/components/card.components.ts
+import { Component } from "../ecs.types";
+import { CardData, ZoneKey } from "@/types/game";
+
+/**
+ * Chứa dữ liệu tĩnh của lá bài, không bao giờ thay đổi.
+ */
+export class CardInfoComponent implements Component {
+  constructor(public data: CardData) {}
+}
+
+/**
+ * Chứa trạng thái động của một thực thể trên bàn đấu.
+ */
+export class StatusComponent implements Component {
+  constructor(
+    public isFaceUp: boolean = false,
+    public isDowned: boolean = false
+  ) {}
+}
+
+/**
+ * Chứa thông tin về vị trí của một thực thể.
+ */
+export class ZoneComponent implements Component {
+  constructor(
+    public owner: "player" | "ai",
+    public zone: ZoneKey,
+    public index: number = 0 // Vị trí trong zone (ví dụ: ô SIGNI số 1, 2, 3)
+  ) {}
+}
+
+/**
+ * Component đánh dấu đây là một lá bài trên tay.
+ * (Component trống dùng để đánh dấu/tagging là một kỹ thuật phổ biến trong ECS).
+ */
+export class InHandComponent implements Component {}
+
+/**
+ * Component chứa power hiện tại của một SIGNI.
+ */
+export class PowerComponent implements Component {
+  constructor(public base: number, public modified: number) {}
+}
