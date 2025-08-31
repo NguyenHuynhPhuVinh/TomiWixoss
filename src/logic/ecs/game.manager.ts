@@ -143,41 +143,8 @@ class GameManager {
     // Cập nhật state chính bằng state cuối cùng đã được tính toán
     this.world = nextWorldState;
 
-    // BƯỚC CUỐI CÙNG TRONG LOOP
-    this.processSideEffects();
-
     this.notifyUpdate();
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
-  }
-
-  private processSideEffects() {
-    if (!this.world) return;
-    const sideEffectComponent = this.world.getComponent(
-      GLOBAL_ENTITY,
-      SideEffectComponent
-    )!;
-
-    // Xử lý tất cả các yêu cầu trong hàng đợi
-    while (sideEffectComponent.queue.length > 0) {
-      const effect = sideEffectComponent.queue.shift()!;
-      const { addLog, setMustDiscard, openZoneViewer } =
-        useGameStore.getState();
-
-      switch (effect.type) {
-        case "LOG":
-          addLog(effect.message, effect.logType);
-          break;
-        case "UPDATE_UI_FLAG":
-          if (effect.flag === "mustDiscard") {
-            setMustDiscard(effect.value);
-          }
-          if (effect.flag === "isZoneViewerOpen") {
-            if (effect.value) openZoneViewer();
-            // else closeZoneViewer() // Cần thêm action này
-          }
-          break;
-      }
-    }
   }
 
   public notifyUpdate() {

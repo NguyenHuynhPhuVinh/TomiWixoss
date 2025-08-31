@@ -11,6 +11,7 @@ import { DiscardSystem } from "./ecs/systems/discard.system";
 import { UpSystem } from "./ecs/systems/up.system";
 import { DrawSystem } from "./ecs/systems/draw.system";
 import { PhaseSystem } from "./ecs/systems/phase.system";
+import { SideEffectSystem } from "./ecs/systems/sideEffect.system";
 
 export function initializeWixossEngine() {
   // === KÍCH HOẠT IMMER PLUGIN CHO MAP/SET ===
@@ -29,6 +30,9 @@ export function initializeWixossEngine() {
   gameManager.registerSystem(new UpSystem());
   gameManager.registerSystem(new DrawSystem());
   gameManager.registerSystem(new PhaseSystem());
+
+  // LUÔN ĐĂNG KÝ SIDEEFFECTSYSTEM CUỐI CÙNG
+  gameManager.registerSystem(new SideEffectSystem());
 
   // Khởi tạo các system sau khi đăng ký xong
   gameManager.initializeSystems();
