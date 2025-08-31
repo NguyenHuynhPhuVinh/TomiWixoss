@@ -43,19 +43,19 @@ function PlayerZones({
     <group>
       {/* SIGNI Zones */}
       <ZoneHelper
-        position={[-2.8 * m, 0.01, -1.5 * m]}
+        position={[-2.7 * m, 0.01, 1.5 * m]}
         size={SIGNI_ZONE_SIZE}
         label={`${labelPrefix} SIGNI 1`}
         color={color}
       />
       <ZoneHelper
-        position={[0 * m, 0.01, -1.5 * m]}
+        position={[0 * m, 0.01, 1.5 * m]}
         size={SIGNI_ZONE_SIZE}
         label={`${labelPrefix} SIGNI 2`}
         color={color}
       />
       <ZoneHelper
-        position={[2.8 * m, 0.01, -1.5 * m]}
+        position={[2.7 * m, 0.01, 1.5 * m]}
         size={SIGNI_ZONE_SIZE}
         label={`${labelPrefix} SIGNI 3`}
         color={color}
@@ -63,19 +63,19 @@ function PlayerZones({
 
       {/* LRIG Zones */}
       <ZoneHelper
-        position={[-2.8 * m, 0.01, 1.0 * m]}
+        position={[-2.8 * m, 0.01, 4.95 * m]}
         size={LRIG_ZONE_SIZE}
         label={`${labelPrefix} ASSIST LRIG 1`}
         color={color}
       />
       <ZoneHelper
-        position={[0 * m, 0.01, 1.0 * m]}
+        position={[0 * m, 0.01, 4.7 * m]}
         size={LRIG_ZONE_SIZE}
         label={`${labelPrefix} CENTER LRIG`}
         color={color}
       />
       <ZoneHelper
-        position={[2.8 * m, 0.01, 1.0 * m]}
+        position={[2.8 * m, 0.01, 4.95 * m]}
         size={LRIG_ZONE_SIZE}
         label={`${labelPrefix} ASSIST LRIG 2`}
         color={color}
