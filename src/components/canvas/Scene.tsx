@@ -1,7 +1,7 @@
 // src/components/canvas/Scene.tsx
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -14,6 +14,8 @@ import Card from "./Card";
 import ZoneHelper from "./ZoneHelper"; // <-- IMPORT HELPER
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
+// --- IMPORT TỌA ĐỘ ---
+import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
 
 interface SceneProps {
   onDeckClick: () => void;
@@ -131,14 +133,8 @@ function PlayerZones({
 }
 
 export default function Scene({ onDeckClick }: SceneProps) {
-  const playerMainDeck = useStore(
-    useGameStore,
-    (state) => state.player.mainDeck
-  );
-  const playerLrigDeck = useStore(
-    useGameStore,
-    (state) => state.player.lrigDeck
-  );
+  // Lấy từng phần state một cách riêng biệt để tránh vòng lặp render
+  const player = useStore(useGameStore, (state) => state.player);
   const initializeGame = useStore(
     useGameStore,
     (state) => state.initializeGame
@@ -148,12 +144,14 @@ export default function Scene({ onDeckClick }: SceneProps) {
     initializeGame();
   }, [initializeGame]);
 
+  const coords = P1_ZONE_COORDINATES;
+
   const boardWidth = 12;
   const boardHeight = boardWidth / (4962 / 3509);
 
   return (
     <Canvas>
-      <PerspectiveCamera makeDefault position={[0, 15, 0.1]} fov={60} />
+      <PerspectiveCamera makeDefault position={[0, 18, 0.1]} fov={60} />
       <OrbitControls minDistance={5} maxDistance={25} />
 
       <Environment preset="city" />
@@ -170,36 +168,84 @@ export default function Scene({ onDeckClick }: SceneProps) {
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
 
-      {/* Vùng click vô hình cho Main Deck */}
+      {/* === RENDER CÁC THÀNH PHẦN TRÊN BÀN ĐẤU CỦA NGƯỜI CHƠI 1 === */}
+
+      {/* MAIN DECK */}
       <mesh
-        position={[5.2, 0.1, 2.5]}
+        position={[coords.MAIN_DECK.x, coords.MAIN_DECK.y, coords.MAIN_DECK.z]}
         rotation={[-Math.PI / 2, 0, 0]}
-        visible={playerMainDeck.length > 0} // Chỉ hiện khi còn bài
-        onClick={onDeckClick} // <-- Gọi prop được truyền vào
+        visible={player.mainDeck.length > 0}
+        onClick={onDeckClick}
       >
-        <planeGeometry args={[1, 1.2]} />
+        <planeGeometry
+          args={[CARD_DIMENSIONS.width + 0.1, CARD_DIMENSIONS.height + 0.1]}
+        />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
-
-      {/* Render các lá bài của Main Deck (không cần animation nữa) */}
-      {playerMainDeck.map((card, index) => (
+      {player.mainDeck.map((card, index) => (
         <Card
           key={card.uuid}
           card={card}
-          position={[5.2, 0.01 * index, 2.5]}
+          position={[
+            coords.MAIN_DECK.x,
+            coords.MAIN_DECK.y + CARD_DIMENSIONS.thickness * index,
+            coords.MAIN_DECK.z,
+          ]}
           rotation={[-Math.PI / 2, 0, 0]}
         />
       ))}
 
-      {/* Tạm thời vô hiệu hóa click LRIG Deck */}
-      {playerLrigDeck.map((card, index) => (
+      {/* LRIG DECK */}
+      {player.lrigDeck.map((card, index) => (
         <Card
           key={card.uuid}
           card={card}
-          position={[5.2, 0.01 * index, 0.5]}
+          position={[
+            coords.LRIG_DECK.x,
+            coords.LRIG_DECK.y + CARD_DIMENSIONS.thickness * index,
+            coords.LRIG_DECK.z,
+          ]}
           rotation={[-Math.PI / 2, 0, 0]}
         />
       ))}
+
+      {/* LRIG ZONE */}
+      {player.lrigZone.map((card, index) => {
+        if (!card) return null;
+        const lrigCoords = [
+          coords.ASSIST_LRIG_1,
+          coords.CENTER_LRIG,
+          coords.ASSIST_LRIG_2,
+        ][index];
+        return (
+          <Card
+            key={card.uuid}
+            card={card}
+            position={[lrigCoords.x, lrigCoords.y, lrigCoords.z]}
+            rotation={[-Math.PI / 2, 0, 0]}
+          />
+        );
+      })}
+
+      {/* LIFE CLOTH */}
+      {player.lifeCloth.map((card, index) => (
+        <Card
+          key={card.uuid}
+          card={card}
+          position={[
+            // Tính toán vị trí dựa trên kích thước mới để chúng không bị chồng chéo
+            // Tăng khoảng cách từ 0.1 lên 0.2 để phù hợp với kích thước lá bài lớn hơn
+            coords.LIFE_CLOTH.x -
+              3 * (CARD_DIMENSIONS.width + 0.2) +
+              index * (CARD_DIMENSIONS.width + 0.2),
+            coords.LIFE_CLOTH.y,
+            coords.LIFE_CLOTH.z,
+          ]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        />
+      ))}
+
+      {/* TODO: Render các lá bài trong SIGNI Zone, Ener Zone, Trash... tương tự */}
 
       {/* === VÙNG DEBUG HELPER === */}
       {/* Đặt chúng bên trong một group để có thể dễ dàng bật/tắt */}
