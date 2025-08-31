@@ -33,10 +33,6 @@ export default function InteractiveZone({
   const isPlacingSigni = playerAction?.type === "place_signi";
   const shouldHighlight = isSlotEmpty && isPlacingSigni;
 
-  console.log(
-    `[InteractiveZone ${zoneIndex}] isSlotEmpty: ${isSlotEmpty}, isPlacingSigni: ${isPlacingSigni}, shouldHighlight: ${shouldHighlight}`
-  );
-
   if (!shouldHighlight) return null;
 
   return (

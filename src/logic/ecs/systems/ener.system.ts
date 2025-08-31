@@ -27,7 +27,6 @@ export class EnerSystem implements System {
 
     // Guard Clause: Chỉ chạy trong Ener Phase và khi chưa có hành động
     if (globalState.phase !== "ener" || globalState.actionTakenInPhase) {
-      actionRequest.request = null; // Xóa yêu cầu không hợp lệ
       return;
     }
 
@@ -40,7 +39,6 @@ export class EnerSystem implements System {
 
     if (!zone || !status) {
       console.error(`Entity ${entityId} is not a valid card to charge ener.`);
-      actionRequest.request = null;
       return;
     }
 
@@ -54,9 +52,6 @@ export class EnerSystem implements System {
     // Đánh dấu đã thực hiện hành động
     globalState.actionTakenInPhase = true;
     addLog(`Nạp Ener từ ${source}: ${cardInfo.data.name}.`, "action");
-
-    // Dọn dẹp yêu cầu sau khi đã xử lý xong
-    actionRequest.request = null;
 
     // PHÁT SỰ KIỆN
     eventBus.dispatch(GameEvent.CARD_CHARGED, {

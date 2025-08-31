@@ -54,7 +54,5 @@ export class DiscardSystem implements System {
       entityId,
       cardId: cardInfo.data.id,
     });
-
-    actionRequest.request = null;
   }
 }

@@ -1,18 +1,19 @@
 // src/logic/ecs/game.manager.ts
 import { World } from "./world";
 import { GameFactory } from "./game.factory";
-import { UpSystem } from "./systems/up.system";
-import { DrawSystem } from "./systems/draw.system";
-import { EnerSystem } from "./systems/ener.system"; // <-- IMPORT
-import { GrowSystem } from "./systems/grow.system"; // <-- IMPORT
-import { PlaceSigniSystem } from "./systems/placeSigni.system"; // <-- IMPORT
-import { PhaseSystem } from "./systems/phase.system"; // <-- IMPORT
-import { SetupSystem } from "./systems/setup.system"; // <-- IMPORT
-import { DiscardSystem } from "./systems/discard.system"; // <-- IMPORT
 import { System } from "./ecs.types";
-import eventBus, { GameEvent } from "../core/event.bus"; // Import EventBus
 import { GLOBAL_ENTITY } from "./game.factory";
 import { ActionRequestComponent } from "./components/card.components";
+
+// Import tất cả các system
+import { SetupSystem } from "./systems/setup.system";
+import { EnerSystem } from "./systems/ener.system";
+import { GrowSystem } from "./systems/grow.system";
+import { PlaceSigniSystem } from "./systems/placeSigni.system";
+import { DiscardSystem } from "./systems/discard.system";
+import { UpSystem } from "./systems/up.system";
+import { DrawSystem } from "./systems/draw.system";
+import { PhaseSystem } from "./systems/phase.system";
 
 type UpdateListener = (world: World) => void;
 
@@ -23,20 +24,22 @@ class GameManager {
   private isLooping = false;
   private animationFrameId: number = 0;
 
-  // Action queue + single systems list
   private actionQueue: { type: string; payload?: any }[] = [];
-  private systems: System[] = []; // single ordered list of systems
+
+  // Chỉ còn một danh sách system duy nhất
+  private systems: System[] = [];
 
   public createNewGame(): World {
     this.world = this.factory.createNewGame();
 
-    // Build a single ordered list of systems. Order matters.
+    // Thứ tự rất quan trọng
+    // Các system xử lý action của người chơi nên ở trên
     this.systems.push(new SetupSystem());
     this.systems.push(new EnerSystem());
     this.systems.push(new GrowSystem());
     this.systems.push(new PlaceSigniSystem());
     this.systems.push(new DiscardSystem());
-    // automatic systems
+    // Các system tự động ở dưới
     this.systems.push(new UpSystem());
     this.systems.push(new DrawSystem());
     this.systems.push(new PhaseSystem());
@@ -48,55 +51,18 @@ class GameManager {
     this.updateListeners.push(listener);
   }
 
-  private loop() {
-    if (!this.isLooping || !this.world) return;
-
-    // --- New loop behavior ---
-    // In each frame do exactly one of:
-    //  - process a single queued action (if any), OR
-    //  - run automatic systems when there is no pending action.
-    if (this.actionQueue.length > 0) {
-      const action = this.actionQueue.shift()!;
-      this.processAction(action);
-    } else {
-      for (const system of this.systems) {
-        system.update(this.world);
-      }
-    }
-
-    this.updateListeners.forEach((listener) => listener(this.world!));
-    this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
-  }
-
-  public startLoop() {
-    if (this.isLooping) return;
-    this.isLooping = true;
-    this.loop();
-  }
-
   public stopLoop() {
     if (!this.isLooping) return;
     this.isLooping = false;
     cancelAnimationFrame(this.animationFrameId);
   }
 
-  /**
-   * Tạm dừng vòng lặp, chạy các system một lần, và thông báo cập nhật.
-   * Dùng cho các hành động cần phản hồi ngay lập tức từ người chơi.
-   */
-  public forceUpdate() {
-    if (!this.world) return;
-    this.stopLoop(); // Tạm dừng vòng lặp tự động
-
-    this.world.update();
-    this.updateListeners.forEach((listener) => listener(this.world!));
-
-    this.startLoop(); // Khởi động lại vòng lặp
+  public startLoop() {
+    if (this.isLooping) return;
+    this.isLooping = true;
+    this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
 
-  /**
-   * Push an action into the queue. Public interface for dispatchers.
-   */
   public queueAction(action: { type: string; payload?: any }) {
     console.log(
       `%cACTION QUEUED: ${action.type}`,
@@ -104,36 +70,62 @@ class GameManager {
       action.payload
     );
     this.actionQueue.push(action);
-  }
-
-  /**
-   * Process a single action by writing it to ActionRequestComponent and running systems.
-   */
-  private processAction(action: { type: string; payload?: any }) {
-    if (!this.world) return;
-
-    // Write the action into the shared ActionRequestComponent so systems can read it.
-    const actionRequest = this.world.getComponent(
-      GLOBAL_ENTITY,
-      ActionRequestComponent
-    )!;
-    actionRequest.request = action;
-
-    // When processing an explicit action we still run all systems.
-    // Systems that are automatic (Up/Draw/Phase) should guard themselves
-    // and not run if an action is actively being processed.
-    for (const system of this.systems) {
-      system.update(this.world);
+    // "Đánh thức" vòng lặp nếu nó đang ngủ
+    if (!this.isLooping) {
+      console.log(
+        "%cWaking up game loop to process action...",
+        "color: #3498DB"
+      );
+      this.startLoop();
     }
   }
 
-  /**
-   * Chỉ thông báo cho listener (Zustand) để re-render UI.
-   * Dùng cho các thay đổi state không cần chạy System ngay lập tức.
-   */
-  public notifyUpdate() {
+  private loop() {
     if (!this.world) return;
-    this.updateListeners.forEach((listener) => listener(this.world!));
+    if (!this.isLooping) {
+      // Nếu vòng lặp bị dừng bởi một system (như PhaseSystem),
+      // chúng ta vẫn cần cập nhật UI lần cuối cùng.
+      this.notifyUpdate();
+      return;
+    }
+
+    // --- LOGIC VÒNG LẶP MỚI, TUẦN TỰ HƠN ---
+
+    // 1. Ưu tiên xử lý MỘT action từ queue
+    if (this.actionQueue.length > 0) {
+      const action = this.actionQueue.shift()!;
+
+      // Ghi action vào World
+      const actionRequest = this.world.getComponent(
+        GLOBAL_ENTITY,
+        ActionRequestComponent
+      )!;
+      actionRequest.request = action;
+
+      // Chạy tất cả các system để xử lý action này
+      console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
+      for (const system of this.systems) {
+        system.update(this.world);
+      }
+
+      // Xóa request ngay sau khi xử lý xong
+      actionRequest.request = null;
+    } else {
+      // 2. Nếu không có action, mới chạy các system tự động
+      for (const system of this.systems) {
+        system.update(this.world);
+      }
+    }
+    // =====================================
+
+    this.notifyUpdate(); // Báo cho UI render lại sau khi TẤT CẢ system đã chạy xong
+    this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
+  }
+
+  public notifyUpdate() {
+    if (this.world) {
+      this.updateListeners.forEach((listener) => listener(this.world!));
+    }
   }
 }
 

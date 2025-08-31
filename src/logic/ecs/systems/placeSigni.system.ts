@@ -35,7 +35,6 @@ export class PlaceSigniSystem implements System {
     // --- 1. KIỂM TRA ĐIỀU KIỆN ---
     if (globalState.phase !== "main") {
       addLog("Chỉ có thể đặt SIGNI trong Main Phase.", "info");
-      actionRequest.request = null;
       return;
     }
 
@@ -55,7 +54,6 @@ export class PlaceSigniSystem implements System {
       !centerLrigEntity
     ) {
       console.error("Yêu cầu đặt SIGNI không hợp lệ.");
-      actionRequest.request = null;
       return;
     }
     const centerLrigInfo = world.getComponent(
@@ -69,7 +67,6 @@ export class PlaceSigniSystem implements System {
         `Không thể đặt SIGNI: Level quá cao (yêu cầu <= ${centerLrigInfo.data.level}).`,
         "info"
       );
-      actionRequest.request = null;
       return;
     }
 
@@ -94,7 +91,6 @@ export class PlaceSigniSystem implements System {
         `Không thể đặt SIGNI: Vượt quá giới hạn Level trên sân (Limit: ${lrigLimit}).`,
         "info"
       );
-      actionRequest.request = null;
       return;
     }
 
@@ -117,8 +113,5 @@ export class PlaceSigniSystem implements System {
       zone: "signiZone",
       zoneIndex,
     });
-
-    // Dọn dẹp yêu cầu
-    actionRequest.request = null;
   }
 }

@@ -115,9 +115,6 @@ export class SetupSystem implements System {
         break;
       }
     }
-
-    // Dọn dẹp yêu cầu
-    actionRequest.request = null;
   }
 
   // --- CÁC HÀM HELPER ---

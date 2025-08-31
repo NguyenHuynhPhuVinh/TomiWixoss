@@ -46,7 +46,6 @@ export class GrowSystem implements System {
     );
     if (!targetLrigInfo) {
       console.error("LRIG không hợp lệ để Grow.");
-      actionRequest.request = null;
       return;
     }
 
@@ -56,7 +55,6 @@ export class GrowSystem implements System {
     if (isCenterGrow) {
       if (globalState.phase !== "grow" || globalState.actionTakenInPhase) {
         addLog("Chỉ có thể Grow Center LRIG một lần trong Grow Phase.", "info");
-        actionRequest.request = null;
         return;
       }
     } else {
@@ -74,7 +72,6 @@ export class GrowSystem implements System {
           `Không thể Grow ${targetLrigInfo.data.name} trong ${globalState.phase} phase.`,
           "info"
         );
-        actionRequest.request = null;
         return;
       }
     }
@@ -87,7 +84,6 @@ export class GrowSystem implements System {
 
     if (!currentLrigEntity) {
       console.error("LRIG không hợp lệ để Grow.");
-      actionRequest.request = null;
       return;
     }
     const currentLrigInfo = world.getComponent(
@@ -102,7 +98,6 @@ export class GrowSystem implements System {
       targetLrigInfo.data.lrigType !== currentLrigInfo.data.lrigType
     ) {
       addLog("Mục tiêu Grow không hợp lệ.", "info");
-      actionRequest.request = null;
       return;
     }
 
@@ -125,7 +120,6 @@ export class GrowSystem implements System {
             `Không thể Grow Assist LRIG: Level (${targetLevel}) cao hơn Center LRIG (${centerLrigLevel}).`,
             "info"
           );
-          actionRequest.request = null;
           return;
         }
       }
@@ -145,7 +139,6 @@ export class GrowSystem implements System {
 
     if (!paymentResult.canPay) {
       addLog("Không thể Grow: Không đủ Ener.", "info");
-      actionRequest.request = null;
       return;
     }
 
@@ -210,9 +203,6 @@ export class GrowSystem implements System {
     }
     addLog(`Trả ${paymentResult.paidEner.length} Ener.`, "cost");
     addLog(`Grow LRIG thành ${targetLrigInfo.data.name}!`, "action");
-
-    // Dọn dẹp yêu cầu
-    actionRequest.request = null;
 
     // PHÁT SỰ KIỆN CHO GROW
     eventBus.dispatch(GameEvent.CARD_GROWN, {

@@ -33,6 +33,8 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
   initializeGame: () => {
     const newWorld = gameManager.createNewGame();
     get().syncStateFromWorld(newWorld);
+    // Khởi động vòng lặp game ngay sau khi world được tạo và đồng bộ
+    gameManager.startLoop();
   },
 
   syncStateFromWorld: (world) => {
