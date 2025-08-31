@@ -138,6 +138,44 @@ export default function Scene() {
         />
       ))}
 
+      {/* === BẬT LẠI RENDER CÁC ZONE KHÁC === */}
+
+      {/* LRIG ZONE */}
+      {player.lrigZone.map((card, index) => {
+        if (!card) return null;
+        const lrigCoords = [
+          coords.ASSIST_LRIG_1,
+          coords.CENTER_LRIG,
+          coords.ASSIST_LRIG_2,
+        ][index];
+        return (
+          <Card
+            key={card.uuid}
+            card={card}
+            position={[lrigCoords.x, lrigCoords.y, lrigCoords.z]}
+            rotation={[-Math.PI / 2, 0, 0]}
+          />
+        );
+      })}
+
+      {/* LIFE CLOTH */}
+      {player.lifeCloth.map((card, index) => {
+        const stackOffsetX = 0.67;
+        const stackOffsetY = CARD_DIMENSIONS.thickness;
+        return (
+          <Card
+            key={card.uuid}
+            card={card}
+            position={[
+              coords.LIFE_CLOTH.x + index * stackOffsetX,
+              coords.LIFE_CLOTH.y + index * stackOffsetY,
+              coords.LIFE_CLOTH.z,
+            ]}
+            rotation={[-Math.PI / 2, 0, Math.PI / 2]}
+          />
+        );
+      })}
+
       {/* Tạm thời ẩn các zone khác để tập trung vào mainDeck và lrigDeck */}
 
       {/* Tạm thời ẩn các zone khác để tập trung vào mainDeck và lrigDeck */}

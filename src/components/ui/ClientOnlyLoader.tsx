@@ -1,6 +1,10 @@
 // src/components/ui/ClientOnlyLoader.tsx
 "use client";
 import dynamic from "next/dynamic";
+import { useState } from "react";
+import { CardInstance } from "@/types/game";
+import Hand from "./Hand";
+import SideCardPreview from "./SideCardPreview";
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
@@ -13,17 +17,23 @@ const GameController = dynamic(() => import("@/components/ui/GameController"), {
 });
 
 export default function ClientOnlyLoader() {
-  // Xóa tất cả các state và handler không cần thiết
-  // const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
-  // ...
+  // Bật lại state và handler cho UI 2D
+  const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
+  // Giả sử có action này trong store (sẽ thêm sau)
+  const handleReturnSingleCard = (cardUuid: string) => {
+    // TODO: Implement return single card action
+  };
 
   return (
     <>
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
         <GameController />
-        {/* Tạm thời ẩn Hand và SideCardPreview */}
-        {/* <Hand ... /> */}
-        {/* <SideCardPreview card={selectedCard} /> */}
+        {/* Bật lại Hand và SideCardPreview */}
+        <Hand
+          onCardSelect={(card) => setSelectedCard(card)}
+          onReturnSingleCard={handleReturnSingleCard}
+        />
+        <SideCardPreview card={selectedCard} />
       </div>
 
       <TomiwixossSceneLoader>
