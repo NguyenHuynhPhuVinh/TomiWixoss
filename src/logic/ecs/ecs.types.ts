@@ -23,6 +23,6 @@ export interface SystemDependencies {
 export interface System {
   // Thêm phương thức setup để nhận dependency
   setup?(dependencies: SystemDependencies): void;
-  // Hàm update sẽ được gọi trong mỗi vòng lặp game.
-  update(world: World): void;
+  // Hàm update sẽ được gọi trong mỗi vòng lặp game và trả về World mới
+  update(world: World): World;
 }

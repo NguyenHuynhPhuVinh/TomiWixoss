@@ -10,9 +10,7 @@ import {
 import { GLOBAL_ENTITY } from "../game.factory";
 import { TURN_PHASES, GamePhase } from "@/types/game";
 import { GameEvent } from "@/logic/core/events.types"; // Import từ file mới
-// import useGameStore from "@/store/gameStore"; // <-- XÓA
-// import gameManager from "../game.manager"; // <-- XÓA
-// import eventBus from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
+import { produce } from "immer"; // <-- IMPORT IMMER
 
 // Các phase sẽ tự động chuyển tiếp nếu hành động đã xong
 const AUTO_ADVANCE_PHASES: GamePhase[] = ["up", "draw", "ener"];
@@ -35,30 +33,35 @@ export class PhaseSystem implements System {
     this.eventBus = dependencies.eventBus;
   }
 
-  public update(world: World): void {
-    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
-    const actionRequest = world.getComponent(
-      GLOBAL_ENTITY,
-      ActionRequestComponent
-    );
-    if (!globalState || !actionRequest) return;
+  public update(world: World): World {
+    return produce(world, (draftWorld) => {
+      const globalState = draftWorld.getComponent(
+        GLOBAL_ENTITY,
+        GlobalStateComponent
+      );
+      const actionRequest = draftWorld.getComponent(
+        GLOBAL_ENTITY,
+        ActionRequestComponent
+      );
+      if (!globalState || !actionRequest) return;
 
-    const isProcessingAction = !!actionRequest.request;
+      const isProcessingAction = !!actionRequest.request;
 
-    // 1. Logic tự động (chỉ chạy khi game idle)
-    if (
-      !isProcessingAction &&
-      AUTO_ADVANCE_PHASES.includes(globalState.phase) &&
-      globalState.actionTakenInPhase
-    ) {
-      this.advancePhase(globalState, world);
-      return;
-    }
+      // 1. Logic tự động (chỉ chạy khi game idle)
+      if (
+        !isProcessingAction &&
+        AUTO_ADVANCE_PHASES.includes(globalState.phase) &&
+        globalState.actionTakenInPhase
+      ) {
+        this.advancePhase(globalState, draftWorld as World);
+        return;
+      }
 
-    // 2. Logic theo yêu cầu (chỉ chạy khi có action)
-    if (actionRequest.request?.type === "ADVANCE_PHASE") {
-      this.advancePhase(globalState, world);
-    }
+      // 2. Logic theo yêu cầu (chỉ chạy khi có action)
+      if (actionRequest.request?.type === "ADVANCE_PHASE") {
+        this.advancePhase(globalState, draftWorld as World);
+      }
+    });
   }
 
   /**

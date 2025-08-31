@@ -10,10 +10,9 @@ import {
   SideEffectComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-// import useGameStore from "@/store/gameStore";
 import shuffle from "shuffle-array";
 import { Entity } from "../ecs.types"; // Import Entity
-// import gameManager from "../game.manager"; // <-- XÓA, sẽ nhận qua dependency
+import { produce } from "immer"; // <-- IMPORT IMMER
 
 export class SetupSystem implements System {
   private gameManager!: SystemDependencies["gameManager"];
@@ -23,138 +22,149 @@ export class SetupSystem implements System {
     this.gameManager = dependencies.gameManager;
   }
 
-  public update(world: World): void {
-    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
-    const actionRequest = world.getComponent(
-      GLOBAL_ENTITY,
-      ActionRequestComponent
-    );
+  public update(world: World): World {
+    return produce(world, (draftWorld) => {
+      const globalState = draftWorld.getComponent(
+        GLOBAL_ENTITY,
+        GlobalStateComponent
+      );
+      const actionRequest = draftWorld.getComponent(
+        GLOBAL_ENTITY,
+        ActionRequestComponent
+      );
 
-    if (!globalState || !actionRequest || !actionRequest.request) return;
+      if (!globalState || !actionRequest || !actionRequest.request) return;
 
-    const { type, payload } = actionRequest.request;
-    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
+      const { type, payload } = actionRequest.request;
+      const sideEffects = draftWorld.getComponent(
+        GLOBAL_ENTITY,
+        SideEffectComponent
+      )!;
 
-    // Xử lý các yêu cầu liên quan đến setup
-    switch (type) {
-      // === THÊM CASE MỚI Ở ĐẦU ===
-      case "START_SETUP": {
-        if (globalState.phase !== "pre_game") break;
+      // Xử lý các yêu cầu liên quan đến setup
+      switch (type) {
+        // === THÊM CASE MỚI Ở ĐẦU ===
+        case "START_SETUP": {
+          if (globalState.phase !== "pre_game") break;
 
-        // Logic validate deck nên được thực hiện ở đây
-        // (Tạm thời bỏ qua để đơn giản hóa)
-        sideEffects.queue.push({
-          type: "LOG",
-          message: "Bắt đầu chuẩn bị trận đấu...",
-          logType: "system",
-        });
-
-        globalState.phase = "selecting_lrigs";
-        sideEffects.queue.push({
-          type: "LOG",
-          message: "Chọn LRIG để bắt đầu trận đấu.",
-          logType: "system",
-        });
-        break;
-      }
-      // ===========================
-
-      // --- YÊU CẦU XÁC NHẬN CHỌN LRIG ---
-      case "CONFIRM_LRIG_SELECTION": {
-        if (globalState.phase !== "selecting_lrigs") break;
-
-        const { center, assists } = payload; // payload = { center: Entity, assists: Entity[] }
-
-        // Cập nhật ZoneComponent cho các LRIG đã chọn
-        const lrigsToPlace = [assists[0], center, assists[1]];
-        lrigsToPlace.forEach((entityId, index) => {
-          const zone = world.getComponent(entityId, ZoneComponent)!;
-          const status = world.getComponent(entityId, StatusComponent)!;
-          zone.zone = "lrigZone";
-          zone.index = index;
-          status.isFaceUp = true;
-        });
-
-        sideEffects.queue.push({
-          type: "LOG",
-          message: "Đã chọn LRIG. Rút 5 lá bài khởi đầu.",
-          logType: "action",
-        });
-
-        // Rút 5 lá bài đầu tiên (logic giống DrawSystem)
-        this.drawInitialHand(world, 5);
-
-        globalState.phase = "mulligan";
-        sideEffects.queue.push({
-          type: "LOG",
-          message: "Bắt đầu giai đoạn Mulligan.",
-          logType: "system",
-        });
-        break;
-      }
-
-      // --- YÊU CẦU XÁC NHẬN MULLIGAN ---
-      case "CONFIRM_MULLIGAN": {
-        if (globalState.phase !== "mulligan") break;
-
-        const cardsToReturnEntities: Entity[] = payload.entities;
-        const amountToRedraw = cardsToReturnEntities.length;
-
-        if (amountToRedraw > 0) {
+          // Logic validate deck nên được thực hiện ở đây
+          // (Tạm thời bỏ qua để đơn giản hóa)
           sideEffects.queue.push({
             type: "LOG",
-            message: `Đổi ${amountToRedraw} lá bài.`,
+            message: "Bắt đầu chuẩn bị trận đấu...",
+            logType: "system",
+          });
+
+          globalState.phase = "selecting_lrigs";
+          sideEffects.queue.push({
+            type: "LOG",
+            message: "Chọn LRIG để bắt đầu trận đấu.",
+            logType: "system",
+          });
+          break;
+        }
+        // ===========================
+
+        // --- YÊU CẦU XÁC NHẬN CHỌN LRIG ---
+        case "CONFIRM_LRIG_SELECTION": {
+          if (globalState.phase !== "selecting_lrigs") break;
+
+          const { center, assists } = payload; // payload = { center: Entity, assists: Entity[] }
+
+          // Cập nhật ZoneComponent cho các LRIG đã chọn
+          const lrigsToPlace = [assists[0], center, assists[1]];
+          lrigsToPlace.forEach((entityId, index) => {
+            const zone = draftWorld.getComponent(entityId, ZoneComponent)!;
+            const status = draftWorld.getComponent(entityId, StatusComponent)!;
+            zone.zone = "lrigZone";
+            zone.index = index;
+            status.isFaceUp = true;
+          });
+
+          sideEffects.queue.push({
+            type: "LOG",
+            message: "Đã chọn LRIG. Rút 5 lá bài khởi đầu.",
             logType: "action",
           });
 
-          // Trả bài về deck
-          cardsToReturnEntities.forEach((entity) => {
-            const zone = world.getComponent(entity, ZoneComponent)!;
-            const status = world.getComponent(entity, StatusComponent)!;
-            zone.zone = "mainDeck";
-            status.isFaceUp = false;
-          });
+          // Rút 5 lá bài đầu tiên (logic giống DrawSystem)
+          this.drawInitialHand(draftWorld as World, 5);
 
-          // Xáo lại deck
-          this.shuffleMainDeck(world);
-
-          // Rút lại bài
-          this.drawInitialHand(world, amountToRedraw);
-        } else {
+          globalState.phase = "mulligan";
           sideEffects.queue.push({
             type: "LOG",
-            message: "Không đổi bài.",
-            logType: "info",
+            message: "Bắt đầu giai đoạn Mulligan.",
+            logType: "system",
           });
+          break;
         }
 
-        // Chia Life Cloth
-        const lifeClothEntities = this.getTopCardsOfDeck(world, 7);
-        lifeClothEntities.forEach((entity, index) => {
-          const zone = world.getComponent(entity, ZoneComponent)!;
-          zone.zone = "lifeCloth";
-          zone.index = index;
-        });
-        sideEffects.queue.push({
-          type: "LOG",
-          message: "Chia 7 lá Life Cloth.",
-          logType: "system",
-        });
+        // --- YÊU CẦU XÁC NHẬN MULLIGAN ---
+        case "CONFIRM_MULLIGAN": {
+          if (globalState.phase !== "mulligan") break;
 
-        // Bắt đầu game
-        globalState.phase = "up";
-        globalState.turn = 1;
-        sideEffects.queue.push({
-          type: "LOG",
-          message: `Bắt đầu Turn 1 - Up Phase`,
-          logType: "system",
-        });
+          const cardsToReturnEntities: Entity[] = payload.entities;
+          const amountToRedraw = cardsToReturnEntities.length;
 
-        // Khởi động vòng lặp tự động cho các phase đầu tiên
-        this.gameManager.startLoop();
-        break;
+          if (amountToRedraw > 0) {
+            sideEffects.queue.push({
+              type: "LOG",
+              message: `Đổi ${amountToRedraw} lá bài.`,
+              logType: "action",
+            });
+
+            // Trả bài về deck
+            cardsToReturnEntities.forEach((entity) => {
+              const zone = draftWorld.getComponent(entity, ZoneComponent)!;
+              const status = draftWorld.getComponent(entity, StatusComponent)!;
+              zone.zone = "mainDeck";
+              status.isFaceUp = false;
+            });
+
+            // Xáo lại deck
+            this.shuffleMainDeck(draftWorld as World);
+
+            // Rút lại bài
+            this.drawInitialHand(draftWorld as World, amountToRedraw);
+          } else {
+            sideEffects.queue.push({
+              type: "LOG",
+              message: "Không đổi bài.",
+              logType: "info",
+            });
+          }
+
+          // Chia Life Cloth
+          const lifeClothEntities = this.getTopCardsOfDeck(
+            draftWorld as World,
+            7
+          );
+          lifeClothEntities.forEach((entity, index) => {
+            const zone = draftWorld.getComponent(entity, ZoneComponent)!;
+            zone.zone = "lifeCloth";
+            zone.index = index;
+          });
+          sideEffects.queue.push({
+            type: "LOG",
+            message: "Chia 7 lá Life Cloth.",
+            logType: "system",
+          });
+
+          // Bắt đầu game
+          globalState.phase = "up";
+          globalState.turn = 1;
+          sideEffects.queue.push({
+            type: "LOG",
+            message: `Bắt đầu Turn 1 - Up Phase`,
+            logType: "system",
+          });
+
+          // Khởi động vòng lặp tự động cho các phase đầu tiên
+          this.gameManager.startLoop();
+          break;
+        }
       }
-    }
+    });
   }
 
   // --- CÁC HÀM HELPER ---

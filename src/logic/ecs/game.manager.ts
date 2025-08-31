@@ -11,6 +11,7 @@ import useGameStore from "@/store/gameStore";
 import eventBus from "../core/event.bus";
 import { GameEvent } from "../core/events.types";
 import { GameAction } from "../core/actions.types"; // <-- IMPORT
+import { produce } from "immer"; // <-- IMPORT IMMER
 
 // XÓA: Import tất cả các system - chúng sẽ được đăng ký từ bên ngoài
 // import { SetupSystem } from "./systems/setup.system";
@@ -100,21 +101,47 @@ class GameManager {
       return;
     }
 
-    // 1. Lấy action (nếu có) và đặt vào request
-    const action = this.actionQueue.shift();
-    const actionRequest = this.world.getComponent(
-      GLOBAL_ENTITY,
-      ActionRequestComponent
-    )!;
-    actionRequest.request = action || null;
-    if (action) {
+    // Bắt đầu với state hiện tại
+    let nextWorldState = this.world;
+
+    // 1. Xử lý Action Queue
+    while (this.actionQueue.length > 0) {
+      const action = this.actionQueue.shift()!;
+
+      // Tạo state mới với action request
+      nextWorldState = produce(nextWorldState, (draftWorld) => {
+        const actionRequest = draftWorld.getComponent(
+          GLOBAL_ENTITY,
+          ActionRequestComponent
+        )!;
+        actionRequest.request = action;
+      });
+
       console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
+
+      // Mỗi system sẽ nhận state cũ và trả về state mới
+      nextWorldState = this.systems.reduce(
+        (currentWorld, system) => system.update(currentWorld),
+        nextWorldState
+      );
     }
 
-    // 2. Chạy tất cả các system MỘT LẦN DUY NHẤT
-    for (const system of this.systems) {
-      system.update(this.world);
-    }
+    // 2. Xử lý Game Loop tự động (không có action)
+    nextWorldState = produce(nextWorldState, (draftWorld) => {
+      const actionRequest = draftWorld.getComponent(
+        GLOBAL_ENTITY,
+        ActionRequestComponent
+      )!;
+      actionRequest.request = null;
+    });
+
+    nextWorldState = this.systems.reduce(
+      (currentWorld, system) => system.update(currentWorld),
+      nextWorldState
+    );
+
+    // Cập nhật state chính bằng state cuối cùng đã được tính toán
+    this.world = nextWorldState;
 
     // BƯỚC CUỐI CÙNG TRONG LOOP
     this.processSideEffects();
