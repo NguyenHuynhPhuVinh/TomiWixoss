@@ -14,6 +14,7 @@ import { DiscardSystem } from "./systems/discard.system";
 import { UpSystem } from "./systems/up.system";
 import { DrawSystem } from "./systems/draw.system";
 import { PhaseSystem } from "./systems/phase.system";
+import { AdvancePhaseSystem } from "./systems/advancePhase.system";
 
 type UpdateListener = (world: World) => void;
 
@@ -39,6 +40,7 @@ class GameManager {
     this.systems.push(new GrowSystem());
     this.systems.push(new PlaceSigniSystem());
     this.systems.push(new DiscardSystem());
+    this.systems.push(new AdvancePhaseSystem());
     // Các system tự động ở dưới
     this.systems.push(new UpSystem());
     this.systems.push(new DrawSystem());
