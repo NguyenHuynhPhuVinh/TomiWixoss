@@ -30,6 +30,11 @@ export default function Scene() {
     useGameStore,
     (state) => state.openZoneViewer
   );
+  // LẤY ACTION MỚI TỪ STORE
+  const chargeEnerFromSigni = useStore(
+    useGameStore,
+    (state) => state.chargeEnerFromSigni
+  );
 
   const handleLrigDeckClick = () => {
     if (phase === "grow" && !actionTakenInPhase) {
@@ -206,6 +211,13 @@ export default function Scene() {
             card={card}
             position={[signiCoords.x, signiCoords.y, signiCoords.z]}
             rotation={[-Math.PI / 2, 0, 0]} // SIGNI luôn nằm dọc
+            // === THÊM LOGIC CLICK Ở ĐÂY ===
+            onClick={() => {
+              // Chỉ cho phép click khi ở Ener Phase VÀ chưa có hành động nào được thực hiện
+              if (phase === "ener" && !actionTakenInPhase) {
+                chargeEnerFromSigni(card.uuid, index);
+              }
+            }}
           />
         );
       })}

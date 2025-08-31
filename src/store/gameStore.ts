@@ -77,6 +77,7 @@ interface GameState {
   checkEndPhaseConditions: () => void; // Kiểm tra và set cờ mustDiscard
   // --- ACTION MỚI CHO ENER PHASE ---
   chargeEnerFromHand: (cardUuid: string) => void;
+  chargeEnerFromSigni: (cardUuid: string, fromZoneIndex: number) => void; // <-- ACTION MỚI
   // --- ACTION MỚI CHO GROW PHASE ---
   growCenterLrig: (targetLrigUuid: string) => void;
   isZoneViewerOpen: boolean; // State mới để điều khiển modal
@@ -460,6 +461,48 @@ const useGameStore = create<GameState>((set, get) => ({
         player: {
           ...state.player,
           hand: newHand,
+          enerZone: newEnerZone,
+        },
+        actionTakenInPhase: true, // Đánh dấu đã thực hiện hành động
+      };
+    });
+  },
+
+  // --- ACTION MỚI CHO ENER TỪ SÂN ---
+  chargeEnerFromSigni: (cardUuid: string, fromZoneIndex: number) => {
+    // Các bước kiểm tra điều kiện tương tự
+    if (get().actionTakenInPhase) {
+      console.warn("Ener Charge action has already been taken this turn.");
+      return;
+    }
+    if (get().phase !== "ener") {
+      console.warn("Attempted to charge ener outside of Ener Phase.");
+      return;
+    }
+
+    set((state) => {
+      const cardToCharge = state.player.signiZone[fromZoneIndex];
+
+      // Kiểm tra xem có đúng là lá bài đó không
+      if (!cardToCharge || cardToCharge.uuid !== cardUuid) {
+        console.error("Card not found in SIGNI zone to charge ener.");
+        return state;
+      }
+
+      // 1. Tạo mảng SIGNI Zone mới, đặt vị trí cũ thành null
+      const newSigniZone = [...state.player.signiZone];
+      newSigniZone[fromZoneIndex] = null;
+
+      // 2. Lá bài vào Ener Zone luôn được lật ngửa
+      cardToCharge.isFaceUp = true;
+
+      // 3. Tạo mảng Ener Zone mới chứa lá bài đó
+      const newEnerZone = [...state.player.enerZone, cardToCharge];
+
+      return {
+        player: {
+          ...state.player,
+          signiZone: newSigniZone,
           enerZone: newEnerZone,
         },
         actionTakenInPhase: true, // Đánh dấu đã thực hiện hành động

@@ -141,7 +141,9 @@ export default function GameController({
               <p className="text-sm text-green-500 my-2">Đã nạp Ener.</p>
             ) : (
               <p className="text-sm text-muted-foreground my-2">
-                Tùy chọn: Chọn một lá bài trên tay để nạp vào Ener Zone.
+                {/* === THAY ĐỔI VĂN BẢN HƯỚNG DẪN === */}
+                Tùy chọn: Chọn một lá bài trên tay hoặc trên sân để nạp vào Ener
+                Zone.
               </p>
             )}
             <Button onClick={goToNextPhase} className="w-full mt-2">
