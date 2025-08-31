@@ -2,6 +2,7 @@
 import { ICommand, GameStoreGet } from "./command.interface";
 import useGameStore from "@/store/gameStore";
 import { CardInstance } from "@/types/game";
+import { checkCost } from "../payment";
 
 export class GrowLrigCommand implements ICommand {
   constructor(
@@ -35,13 +36,13 @@ export class GrowLrigCommand implements ICommand {
 
     // --- Logic kiểm tra và thanh toán cost ---
     const cost = targetLrigData.growCost;
-    if (!cost || !this.checkCost(cost, player.enerZone).canPay) {
+    const paymentResult = checkCost(cost, player.enerZone);
+    if (!paymentResult.canPay) {
       get().addLog("Không thể Grow: Không đủ Ener.", "info");
       return;
     }
-    const { remainingEner, paidEner } = this.checkCost(cost, player.enerZone);
-    player.enerZone = remainingEner;
-    player.trash.push(...paidEner);
+    player.enerZone = paymentResult.remainingEner;
+    player.trash.push(...paymentResult.paidEner);
     // ------------------------------------
 
     // --- Logic cập nhật Model ---
@@ -56,26 +57,9 @@ export class GrowLrigCommand implements ICommand {
     );
 
     // Log và cập nhật UI
-    get().addLog(`Trả ${paidEner.length} Ener.`, "cost");
+    get().addLog(`Trả ${paymentResult.paidEner.length} Ener.`, "cost");
     get().addLog(`Grow LRIG thành ${targetLrigData.name}!`, "action");
     useGameStore.getState().closeLrigDeckViewer();
     useGameStore.getState().updateGame(game);
-  }
-
-  private checkCost(
-    cost: any,
-    enerZone: CardInstance[]
-  ): {
-    canPay: boolean;
-    remainingEner: CardInstance[];
-    paidEner: CardInstance[];
-  } {
-    // Tạm thời implement đơn giản
-    if (cost && cost.length > 0 && enerZone.length >= cost.length) {
-      const paidEner = enerZone.slice(0, cost.length);
-      const remainingEner = enerZone.slice(cost.length);
-      return { canPay: true, remainingEner, paidEner };
-    }
-    return { canPay: false, remainingEner: enerZone, paidEner: [] };
   }
 }

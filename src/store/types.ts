@@ -76,6 +76,12 @@ export interface GameActions {
   // Game Slice Actions
   initializeGame: (initialState: GameState) => void;
   updateGame: (gameInstance: any) => void; // Sử dụng any tạm thời cho Game
+  setPhase: (phase: GamePhase) => void;
+  setPlayer: (player: PlayerState) => void;
+  setAi: (ai: PlayerState) => void;
+  getPlayer: () => PlayerState;
+  getAi: () => PlayerState;
+  drawCards: (amount: number) => void;
 
   // UI Slice Actions
   initiatePlaceSigni: (cardUuid: string) => void;

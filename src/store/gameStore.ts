@@ -1,6 +1,6 @@
 // src/store/gameStore.ts
 import { create } from "zustand";
-import { GameStore, PlayerState } from "./types";
+import { GameStore, PlayerState, GamePhase } from "./types";
 import { createLogSlice } from "./slices/logSlice";
 import { createGameSlice } from "./slices/gameSlice";
 import { createUiSlice } from "./slices/uiSlice"; // Import slice mới
@@ -19,16 +19,23 @@ const initialPlayerState: PlayerState = {
   checkZone: [null],
 };
 
-const useGameStore = create<GameStore>((set, get, api) => ({
-  // --- STATE BAN ĐẦU ---
+// Định nghĩa initialGameState
+const initialGameState = {
   gameStarted: false,
-  phase: "pre_game",
+  phase: "pre_game" as GamePhase,
   turn: 1,
   player: initialPlayerState,
   ai: initialPlayerState,
   actionTakenInPhase: false,
+  playerAction: null,
+  isZoneViewerOpen: false,
+  viewingLrigDeckForGrow: null,
+  mustDiscard: false,
+  logs: [],
+};
 
-  // --- TÍCH HỢP CÁC SLICES ---
+const useGameStore = create<GameStore>((set, get, api) => ({
+  ...initialGameState,
   ...createLogSlice(set, get, api),
   ...createGameSlice(set, get, api),
   ...createUiSlice(set, get, api),
