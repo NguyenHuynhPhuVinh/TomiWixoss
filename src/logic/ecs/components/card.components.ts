@@ -70,7 +70,7 @@ export class GlobalStateComponent implements Component {
  * Các System sẽ đọc component này để biết cần phải làm gì.
  */
 export class ActionRequestComponent implements Component {
-  public request: { type: string; payload: any } | null = null;
+  public request: { type: string; payload?: any } | null = null;
 }
 
 /**

@@ -1,92 +1,39 @@
 // src/logic/ecs/actions.ts
 import gameManager from "./game.manager";
+import { Entity } from "./ecs.types";
 import { GLOBAL_ENTITY } from "./game.factory";
 import {
-  ActionRequestComponent,
   GlobalStateComponent,
+  ActionRequestComponent,
 } from "./components/card.components";
-import { Entity } from "./ecs.types";
 
 export function dispatchChargeEnerAction(
   source: "hand" | "signi",
   entityId: number
 ) {
-  const world = gameManager.world;
-  if (!world) return;
-
-  const actionRequest = world.getComponent(
-    GLOBAL_ENTITY,
-    ActionRequestComponent
-  );
-  if (actionRequest) {
-    actionRequest.request = {
-      type: "CHARGE_ENER",
-      payload: { source, entityId },
-    };
-    // Gọi phương thức xử lý hành động mới
-    gameManager.handlePlayerAction();
-  }
+  gameManager.queueAction({
+    type: "CHARGE_ENER",
+    payload: { source, entityId },
+  });
 }
 
 // === ACTION MỚI ===
 export function dispatchStartSetupAction() {
-  const world = gameManager.world;
-  if (!world) return;
-
-  const actionRequest = world.getComponent(
-    GLOBAL_ENTITY,
-    ActionRequestComponent
-  );
-  if (actionRequest) {
-    actionRequest.request = {
-      type: "START_SETUP",
-      payload: null,
-    };
-    gameManager.handlePlayerAction();
-  }
+  gameManager.queueAction({ type: "START_SETUP" });
 }
+
 export function dispatchAdvancePhaseAction() {
-  const world = gameManager.world;
-  if (!world) return;
-
-  const actionRequest = world.getComponent(
-    GLOBAL_ENTITY,
-    ActionRequestComponent
-  );
-  if (actionRequest) {
-    actionRequest.request = { type: "ADVANCE_PHASE", payload: null };
-
-    // Xử lý hành động ngay lập tức
-    gameManager.handlePlayerAction();
-
-    // Nếu phase tiếp theo là một phase tự động, hãy khởi động lại vòng lặp
-    const newPhase = world.getComponent(
-      GLOBAL_ENTITY,
-      GlobalStateComponent
-    )!.phase;
-    if (["up", "draw"].includes(newPhase)) {
-      gameManager.startLoop();
-    }
-  }
+  gameManager.queueAction({ type: "ADVANCE_PHASE" });
 }
 
 export function dispatchConfirmLrigSelectionAction(
   center: number,
   assists: number[]
 ) {
-  const world = gameManager.world;
-  if (!world) return;
-  const actionRequest = world.getComponent(
-    GLOBAL_ENTITY,
-    ActionRequestComponent
-  );
-  if (actionRequest) {
-    actionRequest.request = {
-      type: "CONFIRM_LRIG_SELECTION",
-      payload: { center, assists },
-    };
-    gameManager.handlePlayerAction();
-  }
+  gameManager.queueAction({
+    type: "CONFIRM_LRIG_SELECTION",
+    payload: { center, assists },
+  });
 }
 
 /**
@@ -94,14 +41,13 @@ export function dispatchConfirmLrigSelectionAction(
  * @param selection - Mảng các Entity ID đã được chọn.
  */
 export function dispatchUpdateMulliganSelection(selection: Entity[]) {
+  // This updates local global state directly and notifies UI.
   const world = gameManager.world;
   if (!world) return;
 
   const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
   if (globalState) {
     globalState.mulliganSelection = selection;
-    // Chỉ cập nhật state, không cần chạy system nên không gọi forceUpdate
-    // Nhưng chúng ta cần báo cho UI biết để re-render
     gameManager.notifyUpdate();
   }
 }
@@ -112,69 +58,28 @@ export function dispatchUpdateMulliganSelection(selection: Entity[]) {
 export function dispatchConfirmMulliganAction() {
   const world = gameManager.world;
   if (!world) return;
-
-  const actionRequest = world.getComponent(
-    GLOBAL_ENTITY,
-    ActionRequestComponent
-  );
   const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
-
-  if (actionRequest && globalState) {
-    actionRequest.request = {
-      type: "CONFIRM_MULLIGAN",
-      // payload sẽ lấy từ chính globalState.mulliganSelection
-      payload: { entities: globalState.mulliganSelection },
-    };
-    gameManager.handlePlayerAction();
-  }
+  const entities = globalState ? globalState.mulliganSelection : [];
+  gameManager.queueAction({ type: "CONFIRM_MULLIGAN", payload: { entities } });
 }
 
 export function dispatchGrowLrigAction(
   targetEntityId: number,
   zoneIndex: number
 ) {
-  const world = gameManager.world;
-  if (!world) return;
-
-  const actionRequest = world.getComponent(
-    GLOBAL_ENTITY,
-    ActionRequestComponent
-  );
-  if (actionRequest) {
-    actionRequest.request = {
-      type: "GROW_LRIG",
-      payload: { targetEntityId, zoneIndex },
-    };
-    gameManager.handlePlayerAction();
-  }
+  gameManager.queueAction({
+    type: "GROW_LRIG",
+    payload: { targetEntityId, zoneIndex },
+  });
 }
 
 export function dispatchPlaceSigniAction(entityId: number, zoneIndex: number) {
-  const world = gameManager.world;
-  if (!world) return;
-
-  const actionRequest = world.getComponent(
-    GLOBAL_ENTITY,
-    ActionRequestComponent
-  );
-  if (actionRequest) {
-    actionRequest.request = {
-      type: "PLACE_SIGNI",
-      payload: { entityId, zoneIndex },
-    };
-    gameManager.handlePlayerAction();
-  }
+  gameManager.queueAction({
+    type: "PLACE_SIGNI",
+    payload: { entityId, zoneIndex },
+  });
 }
 
 export function dispatchDiscardCardAction(entityId: number) {
-  const world = gameManager.world;
-  if (!world) return;
-  const actionRequest = world.getComponent(
-    GLOBAL_ENTITY,
-    ActionRequestComponent
-  );
-  if (actionRequest) {
-    actionRequest.request = { type: "DISCARD_CARD", payload: { entityId } };
-    gameManager.handlePlayerAction();
-  }
+  gameManager.queueAction({ type: "DISCARD_CARD", payload: { entityId } });
 }

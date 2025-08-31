@@ -10,6 +10,7 @@ import { PhaseSystem } from "./systems/phase.system"; // <-- IMPORT
 import { SetupSystem } from "./systems/setup.system"; // <-- IMPORT
 import { DiscardSystem } from "./systems/discard.system"; // <-- IMPORT
 import { System } from "./ecs.types";
+import eventBus, { GameEvent } from "../core/event.bus"; // Import EventBus
 import { GLOBAL_ENTITY } from "./game.factory";
 import { ActionRequestComponent } from "./components/card.components";
 
@@ -21,25 +22,24 @@ class GameManager {
   private updateListeners: UpdateListener[] = [];
   private isLooping = false;
   private animationFrameId: number = 0;
-  // Tách các system ra
-  private loopSystems: System[] = [];
-  private actionSystems: { [key: string]: System } = {};
+
+  // Action queue + single systems list
+  private actionQueue: { type: string; payload?: any }[] = [];
+  private systems: System[] = []; // single ordered list of systems
 
   public createNewGame(): World {
     this.world = this.factory.createNewGame();
 
-    // Phân loại các system
-    this.actionSystems["SETUP"] = new SetupSystem();
-    this.actionSystems["ENER"] = new EnerSystem();
-    this.actionSystems["GROW"] = new GrowSystem(); // <-- THÊM VÀO ĐÂY
-    this.actionSystems["PLACE_SIGNI"] = new PlaceSigniSystem(); // <-- THÊM VÀO ĐÂY
-    this.actionSystems["PHASE"] = new PhaseSystem();
-    this.actionSystems["DISCARD"] = new DiscardSystem(); // <-- THÊM VÀO ĐÂY
-    // ... các system hành động khác
-
-    this.loopSystems.push(new UpSystem());
-    this.loopSystems.push(new DrawSystem());
-    this.loopSystems.push(new PhaseSystem());
+    // Build a single ordered list of systems. Order matters.
+    this.systems.push(new SetupSystem());
+    this.systems.push(new EnerSystem());
+    this.systems.push(new GrowSystem());
+    this.systems.push(new PlaceSigniSystem());
+    this.systems.push(new DiscardSystem());
+    // automatic systems
+    this.systems.push(new UpSystem());
+    this.systems.push(new DrawSystem());
+    this.systems.push(new PhaseSystem());
 
     return this.world;
   }
@@ -51,8 +51,14 @@ class GameManager {
   private loop() {
     if (!this.isLooping || !this.world) return;
 
-    // Vòng lặp chỉ chạy các system "tự động"
-    for (const system of this.loopSystems) {
+    // 1) Process one action from the queue if present
+    if (this.actionQueue.length > 0) {
+      const action = this.actionQueue.shift()!;
+      this.processAction(action);
+    }
+
+    // 2) Run all systems (systems themselves check conditions)
+    for (const system of this.systems) {
       system.update(this.world);
     }
 
@@ -87,62 +93,33 @@ class GameManager {
   }
 
   /**
-   * Xử lý một hành động cụ thể được yêu cầu bởi người chơi.
-   * @param actionType - Loại hành động (ví dụ: 'ENER', 'PLACE_SIGNI').
+   * Push an action into the queue. Public interface for dispatchers.
    */
-  public handlePlayerAction() {
+  public queueAction(action: { type: string; payload?: any }) {
+    console.log(
+      `%cACTION QUEUED: ${action.type}`,
+      "color: #F39C12",
+      action.payload
+    );
+    this.actionQueue.push(action);
+  }
+
+  /**
+   * Process a single action by writing it to ActionRequestComponent and running systems.
+   */
+  private processAction(action: { type: string; payload?: any }) {
     if (!this.world) return;
 
-    // Lấy ra ActionRequestComponent để xem người chơi muốn làm gì
+    // Update ActionRequestComponent so systems can read it
     const actionRequest = this.world.getComponent(
       GLOBAL_ENTITY,
       ActionRequestComponent
-    );
-    if (!actionRequest || !actionRequest.request) return;
+    )!;
+    actionRequest.request = action;
 
-    const requestType = actionRequest.request.type; // Ví dụ: 'CHARGE_ENER'
-
-    // Tìm system tương ứng để xử lý
-    // Chúng ta có thể tạo một map để nối 'CHARGE_ENER' với 'ENER' system
-    let systemKey: string;
-    switch (requestType) {
-      case "START_SETUP": // <-- THÊM VÀO ĐÂY
-        systemKey = "SETUP";
-        break;
-      case "CHARGE_ENER":
-        systemKey = "ENER";
-        break;
-      case "GROW_LRIG":
-        systemKey = "GROW";
-        break;
-      case "PLACE_SIGNI":
-        systemKey = "PLACE_SIGNI"; // <-- THÊM VÀO ĐÂY
-        break;
-      case "ADVANCE_PHASE":
-        systemKey = "PHASE";
-        break;
-      case "CONFIRM_LRIG_SELECTION":
-        systemKey = "SETUP";
-        break;
-      case "CONFIRM_MULLIGAN":
-        systemKey = "SETUP";
-        break;
-      case "DISCARD_CARD":
-        systemKey = "DISCARD"; // <-- THÊM VÀO ĐÂY
-        break;
-      default:
-        console.warn(`Unknown action type: ${requestType}`);
-        return;
-    }
-
-    const systemToRun = this.actionSystems[systemKey];
-
-    if (systemToRun) {
-      console.log(`--- Handling player action via ${requestType} ---`);
-      systemToRun.update(this.world);
-
-      // Sau khi action được xử lý, thông báo cho UI cập nhật
-      this.notifyUpdate();
+    // Run all systems. Systems responsible for this action should handle it.
+    for (const system of this.systems) {
+      system.update(this.world);
     }
   }
 
