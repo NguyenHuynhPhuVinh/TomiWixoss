@@ -4,6 +4,8 @@ import { useStore } from "zustand";
 import useGameStore from "@/store/gameStore";
 import { Plane } from "@react-three/drei";
 import * as THREE from "three";
+import commandService from "@/logic/core/command.service";
+import { PlaceSigniCommand } from "@/logic/commands/placeSigni.command";
 
 interface InteractiveZoneProps {
   position: [number, number, number];
@@ -20,8 +22,6 @@ export default function InteractiveZone({
 }: InteractiveZoneProps) {
   const playerAction = useStore(useGameStore, (state) => state.playerAction);
   const signiZone = useStore(useGameStore, (state) => state.player.signiZone);
-  const placeSigni = useStore(useGameStore, (state) => state.placeSigni);
-
   const isMySlotEmpty = signiZone[zoneIndex] === null;
   const isPlacingSigni = playerAction?.type === "place_signi";
   const shouldHighlight = isMySlotEmpty && isPlacingSigni;
@@ -35,7 +35,17 @@ export default function InteractiveZone({
       rotation={rotation}
       onClick={(e) => {
         e.stopPropagation();
-        placeSigni(zoneIndex);
+        if (playerAction) {
+          // Tạo một command mới và dispatch nó
+          const command = new PlaceSigniCommand(
+            playerAction.cardUuid,
+            zoneIndex
+          );
+          commandService.dispatch(command);
+
+          // Tắt chế độ hành động
+          useGameStore.getState().cancelPlayerAction();
+        }
       }}
     >
       <meshStandardMaterial

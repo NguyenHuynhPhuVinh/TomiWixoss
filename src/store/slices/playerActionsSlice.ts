@@ -16,7 +16,6 @@ export interface PlayerActionsSlice {
   growCenterLrig: (targetLrigUuid: string) => void;
   growAssistLrig: (targetLrigUuid: string, fromZoneIndex: number) => void;
   initiatePlaceSigni: (cardUuid: string) => void;
-  placeSigni: (toZoneIndex: number) => void;
   cancelPlayerAction: () => void;
 }
 
@@ -453,46 +452,5 @@ export const createPlayerActionsSlice: StateCreator<
 
   cancelPlayerAction: () => {
     set({ playerAction: null });
-  },
-
-  placeSigni: (toZoneIndex) => {
-    const state = get();
-    if (state.playerAction?.type !== "place_signi") return;
-
-    const cardUuid = state.playerAction.cardUuid;
-    const cardToPlay = state.player.hand.find((c) => c.uuid === cardUuid);
-
-    // Kiểm tra lại lần cuối cho chắc
-    if (!cardToPlay || state.player.signiZone[toZoneIndex] !== null) {
-      console.error("Invalid placement action.");
-      set({ playerAction: null }); // Hủy hành động nếu không hợp lệ
-      return;
-    }
-
-    set((currentState) => {
-      const newHand = currentState.player.hand.filter(
-        (c) => c.uuid !== cardUuid
-      );
-      const newSigniZone = [...currentState.player.signiZone];
-
-      cardToPlay.isFaceUp = true; // Bài ra sân luôn ngửa
-      newSigniZone[toZoneIndex] = cardToPlay;
-
-      return {
-        player: {
-          ...currentState.player,
-          hand: newHand,
-          signiZone: newSigniZone,
-        },
-        playerAction: null, // Hoàn thành và thoát chế độ hành động
-      };
-    });
-    // Thêm log sau khi đặt SIGNI
-    if (cardToPlay) {
-      get().addLog(
-        `Đặt SIGNI: ${cardToPlay.name} vào vị trí ${toZoneIndex + 1}.`,
-        "action"
-      );
-    }
   },
 });

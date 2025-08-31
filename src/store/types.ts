@@ -95,7 +95,6 @@ export interface GameActions {
   growCenterLrig: (targetLrigUuid: string) => void;
   growAssistLrig: (targetLrigUuid: string, fromZoneIndex: number) => void;
   initiatePlaceSigni: (cardUuid: string) => void;
-  placeSigni: (toZoneIndex: number) => void;
   cancelPlayerAction: () => void;
 
   // UI Actions
