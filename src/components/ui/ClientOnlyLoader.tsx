@@ -6,6 +6,9 @@ import { CardInstance } from "@/types/game";
 import Hand from "./Hand";
 import SideCardPreview from "./SideCardPreview";
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
+import LrigSelector from "./LrigSelector"; // Import component mới
+import { useStore } from "zustand";
+import useGameStore from "@/store/gameStore";
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -21,6 +24,13 @@ export default function ClientOnlyLoader() {
   const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
   // State mới để lưu các lá bài được chọn cho mulligan
   const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
+
+  const phase = useStore(useGameStore, (state) => state.phase);
+  const fullLrigDeck = useStore(useGameStore, (state) => state.player.lrigDeck);
+  const dealRemainingSetup = useStore(
+    useGameStore,
+    (state) => state.dealRemainingSetup
+  );
 
   return (
     <>
@@ -42,6 +52,12 @@ export default function ClientOnlyLoader() {
         {/* Tạm thời không cần click deck, chúng ta sẽ thêm lại sau */}
         <Scene />
       </TomiwixossSceneLoader>
+
+      <LrigSelector
+        isOpen={phase === "selecting_lrigs"}
+        fullLrigDeck={fullLrigDeck}
+        onConfirm={dealRemainingSetup}
+      />
 
       {/* Ẩn DeckViewer */}
       {/* {viewingDeck && ( ... )} */}

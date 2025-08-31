@@ -10,6 +10,7 @@ import { validateDeck } from "@/logic/deckValidation"; // <-- IMPORT HÀM MỚI
 // Thêm phase 'mulligan'
 type GamePhase =
   | "pre_game"
+  | "selecting_lrigs"
   | "mulligan"
   | "up"
   | "draw"
@@ -53,7 +54,12 @@ interface GameState {
   prepareDecks: () => void; // Bước 1: Chỉ xáo bài
   drawInitialHand: () => void; // Bước 2: Chỉ rút 5 lá đầu
   performMulligan: (cardsToReturnUuids: string[]) => void; // Bước 3: Thực hiện đổi bài
-  dealRemainingSetup: () => void; // Bước 4: Chia Life Cloth và LRIGs
+  dealRemainingSetup: (
+    centerUuid: string,
+    assist1Uuid: string,
+    assist2Uuid: string
+  ) => void; // Bước 4: Chia Life Cloth và LRIGs
+  dealRemainingSetupAfterMulligan: () => void; // Thêm action mới
   setMulliganSelection: (selection: string[]) => void; // Thêm action để set mulligan selection
   // --- ACTIONS MỚI CHO LƯỢT CHƠI ---
   goToNextPhase: () => void;
@@ -149,10 +155,9 @@ const useGameStore = create<GameState>((set, get) => ({
         mainDeck: playerMainDeck,
         lrigDeck: playerLrigDeck,
       },
+      phase: "selecting_lrigs", // <-- QUAN TRỌNG: Dừng lại ở đây
     });
-
-    // Tự động gọi bước tiếp theo
-    setTimeout(() => get().drawInitialHand(), 500);
+    // Xóa setTimeout và không gọi drawInitialHand nữa
   },
 
   // BƯỚC 2: Rút 5 lá bài lên tay và chuyển sang phase Mulligan
@@ -205,45 +210,62 @@ const useGameStore = create<GameState>((set, get) => ({
       };
     });
     // Tự động gọi bước cuối cùng của setup
-    setTimeout(() => get().dealRemainingSetup(), 500);
+    setTimeout(() => get().dealRemainingSetupAfterMulligan(), 500);
   },
 
-  // BƯỚC 4: Chia Life Cloth, đặt LRIG và chuyển game sang trạng thái "in_play"
-  dealRemainingSetup: () => {
+  // BƯỚC 4 MỚI: Người chơi xác nhận LRIG, sau đó tự động rút tay bài
+  dealRemainingSetup: (
+    centerUuid: string,
+    assist1Uuid: string,
+    assist2Uuid: string
+  ) => {
     set((state) => {
-      const playerMainDeck = [...state.player.mainDeck];
       const playerLrigDeck = [...state.player.lrigDeck];
 
-      const lifeClothStack = playerMainDeck.splice(0, 7);
+      const centerLrig = playerLrigDeck.find((c) => c.uuid === centerUuid);
+      const assistLrig1 = playerLrigDeck.find((c) => c.uuid === assist1Uuid);
+      const assistLrig2 = playerLrigDeck.find((c) => c.uuid === assist2Uuid);
 
-      // === THAY THẾ LOGIC HARD-CODE BẰNG HÀM MỚI ===
-      const { centerLrig, assistLrigs, remainingDeck } =
-        findInitialLrigs(playerLrigDeck);
-
-      const initialLrigs: (CardInstance | null)[] = [null, null, null];
-
-      if (centerLrig && assistLrigs[0] && assistLrigs[1]) {
-        // "OPEN!": Lật ngửa 3 LRIG
-        centerLrig.isFaceUp = true;
-        assistLrigs[0].isFaceUp = true;
-        assistLrigs[1].isFaceUp = true;
-
-        // Đặt vào đúng vị trí: Assist - Center - Assist
-        initialLrigs[0] = assistLrigs[0];
-        initialLrigs[1] = centerLrig;
-        initialLrigs[2] = assistLrigs[1];
+      if (!centerLrig || !assistLrig1 || !assistLrig2) {
+        console.error("LRIG selection is invalid.");
+        return state;
       }
-      // ===============================================
+
+      // "OPEN!": Lật ngửa 3 LRIG
+      centerLrig.isFaceUp = true;
+      assistLrig1.isFaceUp = true;
+      assistLrig2.isFaceUp = true;
+
+      const initialLrigs = [assistLrig1, centerLrig, assistLrig2];
+      const initialUuids = [centerUuid, assist1Uuid, assist2Uuid];
+      const remainingLrigDeck = playerLrigDeck.filter(
+        (c) => !initialUuids.includes(c.uuid)
+      );
 
       return {
         player: {
           ...state.player,
-          mainDeck: playerMainDeck,
-          lrigDeck: remainingDeck, // Sử dụng bộ bài còn lại đã được lọc
-          lifeCloth: lifeClothStack,
+          lrigDeck: remainingLrigDeck,
           lrigZone: initialLrigs,
         },
-        phase: "up", // <-- BẮT ĐẦU LƯỢT 1 VỚI UP PHASE
+      };
+    });
+    // Sau khi đặt LRIG, tự động rút bài
+    setTimeout(() => get().drawInitialHand(), 500);
+  },
+
+  // Tách logic chia Life Cloth ra để gọi sau Mulligan
+  dealRemainingSetupAfterMulligan: () => {
+    set((state) => {
+      const playerMainDeck = [...state.player.mainDeck];
+      const lifeClothStack = playerMainDeck.splice(0, 7);
+      return {
+        player: {
+          ...state.player,
+          mainDeck: playerMainDeck,
+          lifeCloth: lifeClothStack,
+        },
+        phase: "up",
         turn: 1,
       };
     });

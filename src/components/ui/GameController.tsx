@@ -32,6 +32,12 @@ export default function GameController({
     switch (phase) {
       case "pre_game":
         return <Button onClick={prepareDecks}>Chuẩn bị</Button>;
+      case "selecting_lrigs":
+        return (
+          <p className="text-muted-foreground animate-pulse">
+            Vui lòng chọn LRIG...
+          </p>
+        );
       case "mulligan":
         const selectionCount = selectedCardsForMulligan.length;
         return (
