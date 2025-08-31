@@ -5,9 +5,10 @@ import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array"; // Cài đặt: npm install shuffle-array
 
-// Thêm một phase đặc biệt cho việc chuẩn bị game
+// Thêm các phase mới cho giai đoạn Setup
 type GamePhase =
-  | "setup"
+  | "pre_game"
+  | "selecting_lrigs"
   | "mulligan"
   | "up"
   | "draw"
@@ -50,10 +51,13 @@ interface GameState {
   ai: PlayerState;
   increaseTurn: () => void;
   setPlayerEner: (amount: number) => void;
-  // XÓA initializeGame
-  // THAY THẾ BẰNG CÁC ACTION MỚI
-  setupDecks: () => void;
-  dealInitialCards: () => void;
+  // --- CÁC ACTION MỚI CHO GAME SETUP ---
+  startGame: () => void; // Bắt đầu quá trình setup
+  confirmLrigSelection: (
+    centerId: string,
+    assist1Id: string,
+    assist2Id: string
+  ) => void; // Xác nhận 3 LRIG đã chọn
   mulligan: (cardsToReturnUuids: string[]) => void;
   upPhase: () => void;
   growPhase: (lrigToGrowUuid: string) => void;
@@ -86,8 +90,8 @@ const useGameStore = create<GameState>((set, get) => ({
   // <-- Thêm 'get' vào đây
   isInitialized: false, // <-- Giá trị ban đầu
   // State ban đầu
-  turn: 1,
-  phase: "setup", // Phase ban đầu là 'setup'
+  turn: 0,
+  phase: "pre_game", // Phase ban đầu là 'pre_game'
   playerEner: 0,
   player: {
     mainDeck: [],
@@ -122,8 +126,8 @@ const useGameStore = create<GameState>((set, get) => ({
 
   // --- ACTIONS MỚI ---
 
-  // 1. Chỉ tạo và xáo trộn bài
-  setupDecks: () => {
+  // BƯỚC 1: Bắt đầu game, tạo và xáo bài, chuyển sang chọn LRIG
+  startGame: () => {
     let fullMainDeck = divaDebutDeckEn
       .filter((c) => c.backType === "MAIN")
       .flatMap((card) =>
@@ -143,44 +147,57 @@ const useGameStore = create<GameState>((set, get) => ({
         ...get().player,
         mainDeck: fullMainDeck,
         lrigDeck: fullLrigDeck,
+        // Reset lại tất cả các zone khác về trạng thái ban đầu
+        hand: [],
+        signiZone: [null, null, null],
+        lrigZone: [null, null, null],
+        lifeCloth: [],
+        enerZone: [],
+        trash: [],
+        lrigTrash: [],
+        checkZone: [null],
       },
-      // TODO: setup cho AI tương tự
-      phase: "setup", // Vẫn đang trong giai đoạn setup
+      turn: 0,
+      phase: "selecting_lrigs", // Chuyển sang phase chọn LRIG
     });
   },
 
-  // 2. Chia bài ra bàn đấu
-  dealInitialCards: () => {
+  // BƯỚC 2: Người chơi xác nhận 3 LRIG, sau đó chia bài và lật LRIG
+  confirmLrigSelection: (centerId, assist1Id, assist2Id) => {
     set((state) => {
-      const playerMainDeck = [...state.player.mainDeck];
       const playerLrigDeck = [...state.player.lrigDeck];
+      const playerMainDeck = [...state.player.mainDeck];
 
-      // a. Lấy 7 lá làm Life Cloth
-      const lifeClothStack = playerMainDeck.splice(0, 7);
-
-      // b. Rút 5 lá bài đầu tiên lên tay
-      const initialHand = playerMainDeck.splice(0, 5);
-      initialHand.forEach((c) => (c.isFaceUp = true));
-
-      // c. Đặt 3 LRIG level 0 ra sân
+      // a. Chọn 3 LRIG từ LRIG Deck và đặt ÚP vào lrigZone
       const initialLrigs: (CardInstance | null)[] = [null, null, null];
-      const assist1 = playerLrigDeck.find((c) => c.id === "WXDi-D01-005");
-      const center = playerLrigDeck.find((c) => c.id === "WXDi-D01-001");
-      const assist2 = playerLrigDeck.find((c) => c.id === "WXDi-D01-008");
+      const assist1 = playerLrigDeck.find((c) => c.id === assist1Id);
+      const center = playerLrigDeck.find((c) => c.id === centerId);
+      const assist2 = playerLrigDeck.find((c) => c.id === assist2Id);
 
-      if (assist1) assist1.isFaceUp = true;
-      if (center) center.isFaceUp = true;
-      if (assist2) assist2.isFaceUp = true;
+      // Quan trọng: isFaceUp vẫn là false ở bước này
       initialLrigs[0] = assist1 || null;
       initialLrigs[1] = center || null;
       initialLrigs[2] = assist2 || null;
 
+      // b. Loại bỏ LRIG đã chọn ra khỏi LRIG Deck
       const remainingLrigDeck = playerLrigDeck.filter(
         (c) =>
           c.uuid !== assist1?.uuid &&
           c.uuid !== center?.uuid &&
           c.uuid !== assist2?.uuid
       );
+
+      // c. Rút 5 lá bài lên tay
+      const initialHand = playerMainDeck.splice(0, 5);
+      initialHand.forEach((c) => (c.isFaceUp = true));
+
+      // d. Đặt 7 lá Life Cloth
+      const lifeClothStack = playerMainDeck.splice(0, 7);
+
+      // e. "OPEN!": Lật ngửa 3 LRIG
+      initialLrigs.forEach((lrig) => {
+        if (lrig) lrig.isFaceUp = true;
+      });
 
       return {
         player: {

@@ -6,49 +6,62 @@ import { Button } from "./button";
 export default function GameController() {
   const phase = useGameStore((state) => state.phase);
   const turn = useGameStore((state) => state.turn);
-  const setupDecks = useGameStore((state) => state.setupDecks);
-  const dealInitialCards = useGameStore((state) => state.dealInitialCards);
+  const startGame = useGameStore((state) => state.startGame);
+  const confirmLrigSelection = useGameStore(
+    (state) => state.confirmLrigSelection
+  );
   const mulligan = useGameStore((state) => state.mulligan);
-  // --- LẤY ACTION MỚI TỪ STORE ---
   const goToNextPhase = useGameStore((state) => state.goToNextPhase);
   const drawCard = useGameStore((state) => state.drawCard);
 
   const renderContent = () => {
     switch (phase) {
-      case "setup":
+      case "pre_game":
         return (
           <>
-            <p className="text-muted-foreground mb-4">Sẵn sàng để bắt đầu.</p>
-            <Button
-              onClick={() => {
-                setupDecks();
-                dealInitialCards();
-              }}
-              className="w-full"
-            >
+            <p className="text-muted-foreground mb-4">
+              Chào mừng đến với TomiWixoss.
+            </p>
+            <Button onClick={startGame} className="w-full">
               Bắt đầu Game
             </Button>
           </>
         );
-      case "mulligan":
+      case "selecting_lrigs":
         return (
           <>
-            <p className="text-muted-foreground mb-4">
-              Chọn bài muốn đổi trên tay, sau đó bấm xác nhận.
-            </p>
+            <p className="text-muted-foreground mb-4">Chọn 3 LRIG Level 0.</p>
+            {/* Tạm thời hard-code lựa chọn, sau này sẽ làm UI chọn */}
             <Button
               onClick={() => {
-                // Tạm thời, chúng ta sẽ không đổi bài để đơn giản
-                mulligan([]);
+                confirmLrigSelection(
+                  "WXDi-D01-001", // Center: At
+                  "WXDi-D01-005", // Assist 1: Tawil
+                  "WXDi-D01-008" // Assist 2: Umr
+                );
               }}
               className="w-full"
             >
-              Xác nhận Mulligan (Bỏ qua)
+              Xác nhận LRIG
             </Button>
           </>
         );
-
-      // Logic rút bài theo luật (lượt 1 rút 1, các lượt sau rút 2)
+      case "mulligan":
+        // ... giữ nguyên logic mulligan ...
+        return (
+          <>
+            <p className="text-muted-foreground mb-4">
+              Chọn bài muốn đổi trên tay.
+            </p>
+            <Button
+              onClick={() => mulligan([])} // Bỏ qua mulligan
+              className="w-full"
+            >
+              Xác nhận (Bỏ qua)
+            </Button>
+          </>
+        );
+      // ... các case khác (draw, ener, main...) giữ nguyên ...
       case "draw":
         const amountToDraw = turn === 1 ? 1 : 2;
         return (
