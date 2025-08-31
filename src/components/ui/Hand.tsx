@@ -1,71 +1,89 @@
 // src/components/ui/Hand.tsx
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import Image from "next/image";
 import { CardInstance } from "@/types/game";
 import { AnimatePresence, motion } from "framer-motion";
-import ContextMenu from "./ContextMenu";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { cn } from "@/lib/utils"; // Import cn utility
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
-  onReturnSingleCard: (cardUuid: string) => void;
+  // Prop mới để gửi danh sách bài chọn mulligan lên component cha
+  onMulliganSelectionChange: (selectedUuids: string[]) => void;
 }
 
 const CARD_BASE_WIDTH = 120;
 const CARD_BASE_HEIGHT = 168;
 
-export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
+export default function Hand({
+  onCardSelect,
+  onMulliganSelectionChange,
+}: HandProps) {
+  // Bỏ onReturnSingleCard
   const hand = useStore(useGameStore, (state) => state.player.hand);
+  const phase = useStore(useGameStore, (state) => state.phase); // Lấy phase hiện tại
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
+  // State mới để theo dõi các lá bài được chọn cho mulligan
+  const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
   const handRef = useRef<HTMLDivElement>(null);
 
-  // Lấy phase và actions
-  const phase = useGameStore((state) => state.phase);
-  const chargeEnerAction = useGameStore((state) => state.chargeEner);
-  const playSigniAction = useGameStore((state) => state.playSigni);
-  const setPlayerAction = useGameStore((state) => state.setPlayerAction);
+  // === XÓA CÁC DÒNG GỌI ACTION KHÔNG TỒN TẠI ===
+  // const phase = useGameStore((state) => state.phase);
+  // const chargeEnerAction = useGameStore((state) => state.chargeEner);
+  // const playSigniAction = useGameStore((state) => state.playSigni);
+  // const setPlayerAction = useGameStore((state) => state.setPlayerAction);
+  // ===========================================
+
+  // Gửi thay đổi lên component cha mỗi khi danh sách chọn mulligan thay đổi
+  useEffect(() => {
+    if (phase === "mulligan") {
+      onMulliganSelectionChange(mulliganSelection);
+    }
+  }, [mulliganSelection, onMulliganSelectionChange, phase]);
 
   useOnClickOutside(handRef, () => {
-    setSelectedCardUuid(null);
-    onCardSelect(null);
+    if (phase !== "mulligan") {
+      // Chỉ hoạt động khi không ở phase mulligan
+      setSelectedCardUuid(null);
+      onCardSelect(null);
+    }
   });
 
   const handleCardClick = (card: CardInstance) => {
-    if (selectedCardUuid === card.uuid) {
-      setSelectedCardUuid(null);
-      onCardSelect(null);
+    // Luôn cập nhật preview khi click, bất kể phase nào
+    onCardSelect(card);
+
+    if (phase === "mulligan") {
+      // Logic chọn/bỏ chọn cho mulligan
+      setMulliganSelection(
+        (prev) =>
+          prev.includes(card.uuid)
+            ? prev.filter((uuid) => uuid !== card.uuid) // Bỏ chọn
+            : [...prev, card.uuid] // Thêm vào danh sách chọn
+      );
     } else {
-      setSelectedCardUuid(card.uuid);
-      onCardSelect(card);
+      // Logic click bình thường (chỉ để hiển thị preview, đã được xử lý ở dòng đầu tiên)
+      // Chúng ta có thể thêm lại logic selectedUuid nếu muốn có hiệu ứng "khóa"
+      if (selectedCardUuid === card.uuid) {
+        setSelectedCardUuid(null);
+        onCardSelect(null); // Click lần 2 thì ẩn preview
+      } else {
+        setSelectedCardUuid(card.uuid);
+        // onCardSelect(card) đã được gọi ở trên
+      }
     }
   };
 
-  const handleDiscard = () => {
-    if (selectedCardUuid) {
-      onReturnSingleCard(selectedCardUuid);
-      setSelectedCardUuid(null);
-      onCardSelect(null);
-    }
-  };
-
-  const handleChargeEner = (cardUuid: string) => {
-    chargeEnerAction(cardUuid, "hand");
-    setSelectedCardUuid(null);
-    onCardSelect(null);
-  };
-
-  const handlePlaySigni = (card: CardInstance) => {
-    // Khi người dùng click "Play SIGNI" từ tay
-    setPlayerAction({ type: "place_signi", card, fromZone: "hand" });
-    setSelectedCardUuid(null);
-    onCardSelect(null);
-  };
+  // Xóa các hàm handler không dùng đến
+  // const handleDiscard = () => { ... };
+  // const handleChargeEner = (cardUuid: string) => { ... };
+  // const handlePlaySigni = (card: CardInstance) => { ... };
 
   if (numCards === 0) return null;
 
@@ -77,7 +95,12 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
       <div className="relative pointer-events-auto">
         <AnimatePresence>
           {hand.map((card, index) => {
-            const isSelected = selectedCardUuid === card.uuid;
+            const isSelectedForMulligan =
+              phase === "mulligan" && mulliganSelection.includes(card.uuid);
+            const isSelectedForPreview =
+              phase !== "mulligan" && selectedCardUuid === card.uuid;
+
+            // ... logic transform ...
             const centerIndex = (numCards - 1) / 2;
             const distanceFromCenter = index - centerIndex;
             const transform = `translateX(${
@@ -94,18 +117,22 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
                   zIndex: numCards - Math.abs(distanceFromCenter),
                 }}
                 animate={{
-                  y: isSelected ? -40 : 0,
-                  scale: isSelected ? 1.2 : 1, // Lá được chọn sẽ to hơn một chút
+                  y: isSelectedForMulligan || isSelectedForPreview ? -40 : 0,
+                  scale:
+                    isSelectedForMulligan || isSelectedForPreview ? 1.2 : 1,
+                  // ... transform và filter ...
                   transform: transform,
-                  filter: isSelected
+                  filter: isSelectedForPreview
                     ? "drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))"
+                    : isSelectedForMulligan
+                    ? "drop-shadow(0 0 15px rgba(34, 197, 94, 0.8))" // Viền xanh cho mulligan
                     : "drop-shadow(0 0 0 rgba(255, 255, 255, 0))", // Thay màu shadow cho đẹp hơn
                   transition: { type: "spring", stiffness: 400, damping: 30 },
                 }}
                 // === THÊM LẠI WHILEHOVER ===
                 whileHover={{
                   // Chỉ áp dụng hiệu ứng hover nếu lá bài không đang được chọn
-                  ...(!isSelected && {
+                  ...(!(isSelectedForMulligan || isSelectedForPreview) && {
                     y: -40,
                     scale: 1.15,
                     filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.7))",
@@ -117,19 +144,15 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
 
                 onClick={() => handleCardClick(card)}
               >
-                {/* Hiển thị ContextMenu nếu lá bài này đang được chọn */}
-                {isSelected && (
-                  <ContextMenu
-                    onDiscard={handleDiscard}
-                    showChargeEner={phase === "ener"}
-                    onChargeEner={() => handleChargeEner(card.uuid)}
-                    showPlaySigni={phase === "main"}
-                    onPlaySigni={() => handlePlaySigni(card)}
-                  />
-                )}
+                {/* Tạm thời xóa ContextMenu */}
 
                 <div
-                  className="relative"
+                  className={cn(
+                    "relative transition-all duration-300",
+                    // Thêm viền xanh nếu được chọn cho mulligan
+                    isSelectedForMulligan &&
+                      "ring-4 ring-blue-500 ring-offset-2 ring-offset-background rounded-lg"
+                  )}
                   style={{
                     width: `${CARD_BASE_WIDTH}px`,
                     height: `${CARD_BASE_HEIGHT}px`,

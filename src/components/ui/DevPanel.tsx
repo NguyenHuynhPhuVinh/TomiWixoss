@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 export default function DevPanel() {
   const [isLuaReady, setIsLuaReady] = useState(false);
-  const turn = useGameStore((state) => state.turn);
+  // const turn = useGameStore((state) => state.turn); // <-- XÓA DÒNG NÀY
 
   // useEffect bây giờ là async để xử lý việc khởi tạo
   useEffect(() => {
@@ -41,7 +41,8 @@ export default function DevPanel() {
   return (
     <div className="absolute top-4 left-4 bg-card p-4 rounded-lg shadow-lg z-10 border pointer-events-auto">
       <h2 className="text-lg font-bold mb-2 text-card-foreground">Dev Panel</h2>
-      <p className="text-muted-foreground">Current Turn: {turn}</p>
+      {/* <p className="text-muted-foreground">Current Turn: {turn}</p> */}{" "}
+      {/* <-- COMMENT OUT DÒNG NÀY */}
       <Button
         onClick={runTestScript}
         disabled={!isLuaReady}

@@ -19,19 +19,21 @@ const GameController = dynamic(() => import("@/components/ui/GameController"), {
 export default function ClientOnlyLoader() {
   // Bật lại state và handler cho UI 2D
   const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
-  // Giả sử có action này trong store (sẽ thêm sau)
-  const handleReturnSingleCard = (cardUuid: string) => {
-    // TODO: Implement return single card action
-  };
+  // State mới để lưu các lá bài được chọn cho mulligan
+  const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
 
   return (
     <>
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
-        <GameController />
+        <GameController
+          // Truyền danh sách đã chọn vào GameController
+          selectedCardsForMulligan={mulliganSelection}
+        />
         {/* Bật lại Hand và SideCardPreview */}
         <Hand
           onCardSelect={(card) => setSelectedCard(card)}
-          onReturnSingleCard={handleReturnSingleCard}
+          // Nhận danh sách từ Hand và cập nhật state
+          onMulliganSelectionChange={setMulliganSelection}
         />
         <SideCardPreview card={selectedCard} />
       </div>
