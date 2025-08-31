@@ -6,7 +6,25 @@ import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array";
 
 // Thêm phase 'mulligan'
-type GamePhase = "pre_game" | "mulligan" | "in_play";
+type GamePhase =
+  | "pre_game"
+  | "mulligan"
+  | "up"
+  | "draw"
+  | "ener"
+  | "grow"
+  | "main"
+  | "attack"
+  | "end";
+const TURN_PHASES: GamePhase[] = [
+  "up",
+  "draw",
+  "ener",
+  "grow",
+  "main",
+  "attack",
+  "end",
+];
 
 interface PlayerState {
   mainDeck: CardInstance[];
@@ -14,11 +32,17 @@ interface PlayerState {
   lrigZone: (CardInstance | null)[];
   lifeCloth: CardInstance[];
   hand: CardInstance[];
+  signiZone: (CardInstance | null)[];
+  enerZone: CardInstance[];
+  trash: CardInstance[];
+  lrigTrash: CardInstance[];
+  checkZone: (CardInstance | null)[];
 }
 
 interface GameState {
   gameStarted: boolean;
   phase: GamePhase;
+  turn: number;
   player: PlayerState;
   ai: PlayerState;
   mulliganSelection: string[]; // Thêm để lưu các lá bài được chọn cho mulligan
@@ -28,6 +52,10 @@ interface GameState {
   performMulligan: (cardsToReturnUuids: string[]) => void; // Bước 3: Thực hiện đổi bài
   dealRemainingSetup: () => void; // Bước 4: Chia Life Cloth và LRIGs
   setMulliganSelection: (selection: string[]) => void; // Thêm action để set mulligan selection
+  // --- ACTIONS MỚI CHO LƯỢT CHƠI ---
+  goToNextPhase: () => void;
+  upAllCards: () => void;
+  drawCardForTurn: () => void;
 }
 
 // Hàm helper giữ nguyên
@@ -45,6 +73,7 @@ const createCardInstance = (
 const useGameStore = create<GameState>((set, get) => ({
   gameStarted: false,
   phase: "pre_game",
+  turn: 0,
   mulliganSelection: [],
   player: {
     mainDeck: [],
@@ -52,6 +81,11 @@ const useGameStore = create<GameState>((set, get) => ({
     lrigZone: [null, null, null],
     lifeCloth: [],
     hand: [],
+    signiZone: [null, null, null],
+    enerZone: [],
+    trash: [],
+    lrigTrash: [],
+    checkZone: [null],
   },
   ai: {
     mainDeck: [],
@@ -59,6 +93,11 @@ const useGameStore = create<GameState>((set, get) => ({
     lrigZone: [null, null, null],
     lifeCloth: [],
     hand: [],
+    signiZone: [null, null, null],
+    enerZone: [],
+    trash: [],
+    lrigTrash: [],
+    checkZone: [null],
   },
 
   // BƯỚC 1: Chuẩn bị 2 bộ bài, sau đó tự động gọi bước 2
@@ -174,13 +213,62 @@ const useGameStore = create<GameState>((set, get) => ({
           lifeCloth: lifeClothStack,
           lrigZone: initialLrigs,
         },
-        phase: "in_play", // <-- Setup hoàn tất!
+        phase: "up", // <-- BẮT ĐẦU LƯỢT 1 VỚI UP PHASE
+        turn: 1,
       };
     });
   },
 
   setMulliganSelection: (selection: string[]) => {
     set({ mulliganSelection: selection });
+  },
+
+  // --- ACTIONS MỚI ---
+  goToNextPhase: () => {
+    set((state) => {
+      if (state.phase === "pre_game" || state.phase === "mulligan")
+        return state; // Không làm gì trong giai đoạn setup
+
+      const currentPhaseIndex = TURN_PHASES.indexOf(state.phase);
+      let nextPhaseIndex = currentPhaseIndex + 1;
+      let newTurn = state.turn;
+
+      if (nextPhaseIndex >= TURN_PHASES.length) {
+        nextPhaseIndex = 0; // Quay về Up Phase
+        newTurn += 1;
+      }
+      return { phase: TURN_PHASES[nextPhaseIndex], turn: newTurn };
+    });
+  },
+
+  upAllCards: () => {
+    set((state) => {
+      const upCard = (card: CardInstance | null) =>
+        card ? { ...card, isDowned: false } : null;
+      return {
+        player: {
+          ...state.player,
+          signiZone: state.player.signiZone.map(upCard),
+          lrigZone: state.player.lrigZone.map(upCard),
+        },
+      };
+    });
+  },
+
+  drawCardForTurn: () => {
+    set((state) => {
+      const amountToDraw = state.turn === 1 ? 1 : 2;
+      const playerMainDeck = [...state.player.mainDeck];
+      const drawnCards = playerMainDeck.splice(0, amountToDraw);
+      drawnCards.forEach((c) => (c.isFaceUp = true));
+      return {
+        player: {
+          ...state.player,
+          mainDeck: playerMainDeck,
+          hand: [...state.player.hand, ...drawnCards],
+        },
+      };
+    });
   },
 }));
 
