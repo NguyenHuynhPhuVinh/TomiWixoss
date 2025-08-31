@@ -10,7 +10,7 @@ import {
 import { GLOBAL_ENTITY } from "../game.factory";
 // import useGameStore from "@/store/gameStore";
 // import eventBus, { GameEvent } from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
-import { GameEvent } from "@/logic/core/event.bus";
+import { GameEvent } from "@/logic/core/events.types";
 
 export class DrawSystem implements System {
   private eventBus!: SystemDependencies["eventBus"];

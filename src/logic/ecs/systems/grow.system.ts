@@ -17,7 +17,7 @@ import { checkCost } from "@/logic/payment";
 import { CardInstance } from "@/types/game";
 import { GamePhase } from "@/types/game";
 // import eventBus, { GameEvent } from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
-import { GameEvent } from "@/logic/core/event.bus";
+import { GameEvent } from "@/logic/core/events.types";
 
 export class GrowSystem implements System {
   private eventBus!: SystemDependencies["eventBus"];
@@ -240,8 +240,9 @@ export class GrowSystem implements System {
 
     // PHÁT SỰ KIỆN CHO GROW
     this.eventBus.dispatch(GameEvent.CARD_GROWN, {
-      targetEntityId,
-      newCardId: targetLrigInfo.data.id,
+      entityId: targetEntityId,
+      cardId: targetLrigInfo.data.id,
+      zoneIndex,
     });
   }
 }

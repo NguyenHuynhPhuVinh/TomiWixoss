@@ -9,7 +9,8 @@ import {
 } from "./components/card.components";
 import useGameStore from "@/store/gameStore";
 import eventBus from "../core/event.bus";
-import { GameEvent } from "../core/event.bus";
+import { GameEvent } from "../core/events.types";
+import { GameAction } from "../core/actions.types"; // <-- IMPORT
 
 // Import tất cả các system
 import { SetupSystem } from "./systems/setup.system";
@@ -30,7 +31,7 @@ class GameManager {
   private isLooping = false;
   private animationFrameId: number = 0;
 
-  private actionQueue: { type: string; payload?: any }[] = [];
+  private actionQueue: GameAction[] = [];
 
   // Chỉ còn một danh sách system duy nhất
   private systems: System[] = [];
@@ -80,7 +81,7 @@ class GameManager {
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
 
-  public queueAction(action: { type: string; payload?: any }) {
+  public queueAction(action: GameAction): void {
     console.log(
       `%cACTION QUEUED: ${action.type}`,
       "color: #F39C12",

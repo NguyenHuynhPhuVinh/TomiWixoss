@@ -9,7 +9,7 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import { TURN_PHASES, GamePhase } from "@/types/game";
-import { GameEvent } from "@/logic/core/event.bus";
+import { GameEvent } from "@/logic/core/events.types"; // Import từ file mới
 // import useGameStore from "@/store/gameStore"; // <-- XÓA
 // import gameManager from "../game.manager"; // <-- XÓA
 // import eventBus from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
@@ -112,7 +112,7 @@ export class PhaseSystem implements System {
         "color: #E67E22"
       );
       // Để dừng vòng lặp, chúng ta sẽ phát ra một sự kiện đặc biệt
-      this.eventBus.dispatch(GameEvent.STOP_GAME_LOOP);
+      this.eventBus.dispatch(GameEvent.STOP_GAME_LOOP, {});
     }
     // =====================================
 

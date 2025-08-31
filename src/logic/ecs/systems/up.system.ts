@@ -6,11 +6,12 @@ import {
   ZoneComponent,
   GlobalStateComponent,
   SideEffectComponent,
+  CardInfoComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 // import useGameStore from "@/store/gameStore";
 // import eventBus, { GameEvent } from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
-import { GameEvent } from "@/logic/core/event.bus";
+import { GameEvent } from "@/logic/core/events.types";
 
 export class UpSystem implements System {
   private eventBus!: SystemDependencies["eventBus"];
@@ -36,6 +37,7 @@ export class UpSystem implements System {
     const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
 
     let uppedCardCount = 0;
+    const uppedEntities: number[] = [];
     const entitiesToUp = world.query([StatusComponent, ZoneComponent]);
 
     for (const entity of entitiesToUp) {
@@ -50,6 +52,7 @@ export class UpSystem implements System {
         if (status.isDowned) {
           status.isDowned = false;
           uppedCardCount++;
+          uppedEntities.push(entity);
         }
       }
     }
@@ -61,7 +64,10 @@ export class UpSystem implements System {
         logType: "action",
       });
       this.eventBus.dispatch(GameEvent.CARDS_UPPED, {
-        count: uppedCardCount,
+        uppedEntities: uppedEntities,
+        cardIds: uppedEntities.map(
+          (e) => world.getComponent(e, CardInfoComponent)!.data.id
+        ),
       });
     } else {
       sideEffects.queue.push({

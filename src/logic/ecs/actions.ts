@@ -6,34 +6,45 @@ import {
   GlobalStateComponent,
   ActionRequestComponent,
 } from "./components/card.components";
+import { GameAction } from "../core/actions.types"; // <-- IMPORT
 
 export function dispatchChargeEnerAction(
   source: "hand" | "signi",
   entityId: number
 ) {
-  gameManager.queueAction({
+  const action: GameAction = {
     type: "CHARGE_ENER",
     payload: { source, entityId },
-  });
+  };
+  gameManager.queueAction(action);
 }
 
 // === ACTION MỚI ===
 export function dispatchStartSetupAction() {
-  gameManager.queueAction({ type: "START_SETUP" });
+  const action: GameAction = {
+    type: "START_SETUP",
+    payload: {},
+  };
+  gameManager.queueAction(action);
 }
 
 export function dispatchAdvancePhaseAction() {
-  gameManager.queueAction({ type: "ADVANCE_PHASE" });
+  const action: GameAction = {
+    type: "ADVANCE_PHASE",
+    payload: {},
+  };
+  gameManager.queueAction(action);
 }
 
 export function dispatchConfirmLrigSelectionAction(
   center: number,
   assists: number[]
 ) {
-  gameManager.queueAction({
+  const action: GameAction = {
     type: "CONFIRM_LRIG_SELECTION",
     payload: { center, assists },
-  });
+  };
+  gameManager.queueAction(action);
 }
 
 /**
@@ -60,26 +71,36 @@ export function dispatchConfirmMulliganAction() {
   if (!world) return;
   const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
   const entities = globalState ? globalState.mulliganSelection : [];
-  gameManager.queueAction({ type: "CONFIRM_MULLIGAN", payload: { entities } });
+  const action: GameAction = {
+    type: "CONFIRM_MULLIGAN",
+    payload: { entities },
+  };
+  gameManager.queueAction(action);
 }
 
 export function dispatchGrowLrigAction(
   targetEntityId: number,
   zoneIndex: number
 ) {
-  gameManager.queueAction({
+  const action: GameAction = {
     type: "GROW_LRIG",
     payload: { targetEntityId, zoneIndex },
-  });
+  };
+  gameManager.queueAction(action);
 }
 
 export function dispatchPlaceSigniAction(entityId: number, zoneIndex: number) {
-  gameManager.queueAction({
+  const action: GameAction = {
     type: "PLACE_SIGNI",
     payload: { entityId, zoneIndex },
-  });
+  };
+  gameManager.queueAction(action);
 }
 
 export function dispatchDiscardCardAction(entityId: number) {
-  gameManager.queueAction({ type: "DISCARD_CARD", payload: { entityId } });
+  const action: GameAction = {
+    type: "DISCARD_CARD",
+    payload: { entityId },
+  };
+  gameManager.queueAction(action);
 }

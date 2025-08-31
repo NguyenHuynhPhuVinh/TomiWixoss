@@ -3,6 +3,7 @@ import { Component } from "../ecs.types";
 import { CardData, ZoneKey, GamePhase } from "@/types/game"; // Import GamePhase
 import { Entity } from "../ecs.types"; // Import Entity
 import { LogType } from "@/store/types"; // Import LogType
+import { GameAction } from "../../core/actions.types"; // <-- IMPORT
 
 /**
  * Chứa dữ liệu tĩnh của lá bài, không bao giờ thay đổi.
@@ -71,7 +72,7 @@ export class GlobalStateComponent implements Component {
  * Các System sẽ đọc component này để biết cần phải làm gì.
  */
 export class ActionRequestComponent implements Component {
-  public request: { type: string; payload?: any } | null = null;
+  public request: GameAction | null = null;
 }
 
 /**
