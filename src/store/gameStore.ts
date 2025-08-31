@@ -5,7 +5,27 @@ import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array"; // Cài đặt: npm install shuffle-array
 
-const PHASES: GameState["phase"][] = ["draw", "ener", "main", "attack", "end"];
+// Thêm một phase đặc biệt cho việc chuẩn bị game
+type GamePhase =
+  | "setup"
+  | "mulligan"
+  | "up"
+  | "draw"
+  | "ener"
+  | "grow"
+  | "main"
+  | "attack"
+  | "end";
+
+const PHASES_IN_TURN: GamePhase[] = [
+  "up",
+  "draw",
+  "ener",
+  "grow",
+  "main",
+  "attack",
+  "end",
+];
 
 interface PlayerState {
   mainDeck: CardInstance[];
@@ -24,13 +44,20 @@ interface PlayerState {
 interface GameState {
   isInitialized: boolean; // <-- THÊM CỜ NÀY
   turn: number;
-  phase: "draw" | "ener" | "main" | "attack" | "end";
+  phase: GamePhase;
   playerEner: number;
   player: PlayerState;
   ai: PlayerState;
   increaseTurn: () => void;
   setPlayerEner: (amount: number) => void;
-  initializeGame: () => void;
+  // XÓA initializeGame
+  // THAY THẾ BẰNG CÁC ACTION MỚI
+  setupDecks: () => void;
+  dealInitialCards: () => void;
+  mulligan: (cardsToReturnUuids: string[]) => void;
+  upPhase: () => void;
+  growPhase: (lrigToGrowUuid: string) => void;
+  endTurn: () => void;
   drawCard: (amount: number) => void; // <-- THÊM ACTION RÚT BÀI
   returnAllCardsFromHand: () => void; // <-- THÊM ACTION TRẢ BÀI
   returnSingleCardFromHand: (cardUuid: string) => void; // <-- THÊM ACTION MỚI
@@ -60,7 +87,7 @@ const useGameStore = create<GameState>((set, get) => ({
   isInitialized: false, // <-- Giá trị ban đầu
   // State ban đầu
   turn: 1,
-  phase: "draw",
+  phase: "setup", // Phase ban đầu là 'setup'
   playerEner: 0,
   player: {
     mainDeck: [],
@@ -93,11 +120,10 @@ const useGameStore = create<GameState>((set, get) => ({
 
   setPlayerEner: (amount) => set({ playerEner: amount }),
 
-  initializeGame: () => {
-    if (get().isInitialized) return;
+  // --- ACTIONS MỚI ---
 
-    // --- MAIN DECK SETUP ---
-    // Tạo bộ bài đầy đủ (ví dụ: 4 bản sao mỗi lá) và xáo trộn
+  // 1. Chỉ tạo và xáo trộn bài
+  setupDecks: () => {
     let fullMainDeck = divaDebutDeckEn
       .filter((c) => c.backType === "MAIN")
       .flatMap((card) =>
@@ -105,118 +131,136 @@ const useGameStore = create<GameState>((set, get) => ({
           .fill(card)
           .map(() => createCardInstance(card, "player"))
       )
-      .slice(0, 40); // Đảm bảo đúng 40 lá
+      .slice(0, 40);
     shuffle(fullMainDeck);
 
-    // --- LIFE CLOTH SETUP ---
-    // Lấy 7 lá trên cùng làm Life Cloth
-    const lifeClothStack = fullMainDeck.splice(0, 7);
-
-    // --- LRIG DECK & INITIAL LRIGS SETUP ---
     let fullLrigDeck = divaDebutDeckEn
       .filter((c) => c.backType === "LRIG" || c.backType === "PIECE")
       .map((c) => createCardInstance(c, "player"));
 
-    // Tìm 3 LRIG level 0 để đặt lên sân
-    const initialLrigs: (CardInstance | null)[] = [null, null, null];
-    // Giả sử Assist LRIG 1 là Tawil, Center là At, Assist 2 là Umr
-    const assist1 = fullLrigDeck.find((c) => c.id === "WXDi-D01-005"); // Tawil
-    const center = fullLrigDeck.find((c) => c.id === "WXDi-D01-001"); // At
-    const assist2 = fullLrigDeck.find((c) => c.id === "WXDi-D01-008"); // Umr
-
-    if (assist1) assist1.isFaceUp = true;
-    if (center) center.isFaceUp = true;
-    if (assist2) assist2.isFaceUp = true;
-
-    initialLrigs[0] = assist1 || null;
-    initialLrigs[1] = center || null;
-    initialLrigs[2] = assist2 || null;
-
-    // Loại bỏ các LRIG đã đặt ra khỏi LRIG Deck
-    const remainingLrigDeck = fullLrigDeck.filter(
-      (c) =>
-        c.uuid !== assist1?.uuid &&
-        c.uuid !== center?.uuid &&
-        c.uuid !== assist2?.uuid
-    );
-
-    // === CẬP NHẬT DỮ LIỆU GIẢ LẬP ===
-    // XÓA TOÀN BỘ PHẦN NÀY
-    // const mockSigniZone: (CardInstance | null)[] = [null, null, null];
-    // const mockEnerZone: CardInstance[] = [];
-    // const mockTrash: CardInstance[] = [];
-    // const mockLrigTrash: CardInstance[] = []; // <-- Thêm Lrig Trash
-    // const mockCheckZone: (CardInstance | null)[] = [null]; // Check zone thường chỉ có 1 lá
-
-    // Lấp đầy 3 ô SIGNI
-    // if (fullMainDeck.length >= 3) {
-    //   for (let i = 0; i < 3; i++) {
-    //     const signiCard = fullMainDeck.pop()!;
-    //     signiCard.isFaceUp = true;
-    //     mockSigniZone[i] = signiCard; // Đặt vào ô 0, 1, 2
-    //   }
-    // }
-
-    // Lấy 5 lá bài làm Ener (giữ nguyên)
-    // if (fullMainDeck.length >= 5) {
-    //   for (let i = 0; i < 5; i++) {
-    //     const enerCard = fullMainDeck.pop()!;
-    //     enerCard.isFaceUp = true;
-    //     mockEnerZone.push(enerCard);
-    //   }
-    // }
-
-    // Lấy 1 lá bài làm mộ Main Deck
-    // if (fullMainDeck.length > 0) {
-    //   const trashCard = fullMainDeck.pop()!;
-    //     trashCard.isFaceUp = true;
-    //     mockTrash.push(trashCard);
-    // }
-
-    // Lấy 1 lá LRIG làm Lrig Trash (giữ nguyên)
-    // if (remainingLrigDeck.length > 0) {
-    //   const lrigTrashCard = remainingLrigDeck.pop()!;
-    //   lrigTrashCard.isFaceUp = true;
-    //   mockLrigTrash.push(lrigTrashCard);
-    // }
-
-    // Lấy 1 lá làm Check Zone (giữ nguyên)
-    // if (fullMainDeck.length > 0) {
-    //   const checkZoneCard = fullMainDeck.pop()!;
-    //   checkZoneCard.isFaceUp = true;
-    //   mockCheckZone[0] = checkZoneCard;
-    // }
-    // === KẾT THÚC DỮ LIỆU GIẢ LẬP ===
-
     set({
-      isInitialized: true,
       player: {
+        ...get().player,
         mainDeck: fullMainDeck,
-        lrigDeck: remainingLrigDeck,
-        hand: [], // Tay bắt đầu trống
-        signiZone: [null, null, null], // Sân bắt đầu trống
-        lrigZone: initialLrigs,
-        lifeCloth: lifeClothStack,
-        enerZone: [], // Ener bắt đầu trống
-        trash: [],
-        lrigTrash: [],
-        checkZone: [null],
+        lrigDeck: fullLrigDeck,
       },
-      ai: {
-        mainDeck: fullMainDeck.map((c) => createCardInstance(c, "ai")), // Tương tự nhưng cho AI
-        lrigDeck: remainingLrigDeck.map((c) => createCardInstance(c, "ai")),
-        hand: [],
-        signiZone: [null, null, null],
-        lrigZone: initialLrigs.map((l) =>
-          l ? createCardInstance(l, "ai") : null
-        ),
-        lifeCloth: lifeClothStack.map((c) => createCardInstance(c, "ai")),
-        enerZone: [],
-        trash: [],
-        lrigTrash: [],
-        checkZone: [null],
-      },
+      // TODO: setup cho AI tương tự
+      phase: "setup", // Vẫn đang trong giai đoạn setup
     });
+  },
+
+  // 2. Chia bài ra bàn đấu
+  dealInitialCards: () => {
+    set((state) => {
+      const playerMainDeck = [...state.player.mainDeck];
+      const playerLrigDeck = [...state.player.lrigDeck];
+
+      // a. Lấy 7 lá làm Life Cloth
+      const lifeClothStack = playerMainDeck.splice(0, 7);
+
+      // b. Rút 5 lá bài đầu tiên lên tay
+      const initialHand = playerMainDeck.splice(0, 5);
+      initialHand.forEach((c) => (c.isFaceUp = true));
+
+      // c. Đặt 3 LRIG level 0 ra sân
+      const initialLrigs: (CardInstance | null)[] = [null, null, null];
+      const assist1 = playerLrigDeck.find((c) => c.id === "WXDi-D01-005");
+      const center = playerLrigDeck.find((c) => c.id === "WXDi-D01-001");
+      const assist2 = playerLrigDeck.find((c) => c.id === "WXDi-D01-008");
+
+      if (assist1) assist1.isFaceUp = true;
+      if (center) center.isFaceUp = true;
+      if (assist2) assist2.isFaceUp = true;
+      initialLrigs[0] = assist1 || null;
+      initialLrigs[1] = center || null;
+      initialLrigs[2] = assist2 || null;
+
+      const remainingLrigDeck = playerLrigDeck.filter(
+        (c) =>
+          c.uuid !== assist1?.uuid &&
+          c.uuid !== center?.uuid &&
+          c.uuid !== assist2?.uuid
+      );
+
+      return {
+        player: {
+          ...state.player,
+          mainDeck: playerMainDeck,
+          lrigDeck: remainingLrigDeck,
+          hand: initialHand,
+          lifeCloth: lifeClothStack,
+          lrigZone: initialLrigs,
+        },
+        phase: "mulligan", // Chuyển sang phase Mulligan
+      };
+    });
+  },
+
+  // 3. Xử lý Mulligan
+  mulligan: (cardsToReturnUuids: string[]) => {
+    set((state) => {
+      const amountToRedraw = cardsToReturnUuids.length;
+      if (amountToRedraw === 0) {
+        // Nếu không mulligan, chuyển sang lượt đầu tiên
+        return { phase: "draw", turn: 1 };
+      }
+
+      const hand = [...state.player.hand];
+      const deck = [...state.player.mainDeck];
+
+      const cardsToKeep = hand.filter(
+        (c) => !cardsToReturnUuids.includes(c.uuid)
+      );
+      const cardsToReturn = hand.filter((c) =>
+        cardsToReturnUuids.includes(c.uuid)
+      );
+
+      // Trả bài về deck và xáo trộn
+      deck.push(...cardsToReturn);
+      shuffle(deck);
+
+      // Rút lại số bài tương ứng
+      const newCards = deck.splice(0, amountToRedraw);
+      newCards.forEach((c) => (c.isFaceUp = true));
+
+      return {
+        player: {
+          ...state.player,
+          mainDeck: deck,
+          hand: [...cardsToKeep, ...newCards],
+        },
+        phase: "draw", // Chuyển sang lượt đầu tiên
+        turn: 1,
+      };
+    });
+  },
+
+  // 4. Các action cho các phase (ví dụ `drawCard`, `chargeEner` đã có)
+  // ...
+  upPhase: () => {
+    // Lật các lá bài downed
+    set((state) => ({
+      player: {
+        ...state.player,
+        signiZone: state.player.signiZone.map((card) =>
+          card ? { ...card, isDowned: false } : null
+        ),
+        lrigZone: state.player.lrigZone.map((card) =>
+          card ? { ...card, isDowned: false } : null
+        ),
+      },
+      phase: "draw",
+    }));
+  },
+
+  growPhase: (lrigToGrowUuid: string) => {
+    // Sẽ implement sau
+    set({ phase: "main" });
+  },
+
+  endTurn: () => {
+    // Sẽ implement sau
+    set((state) => ({ turn: state.turn + 1, phase: "up" }));
   },
 
   drawCard: (amount: number) => {
@@ -293,17 +337,17 @@ const useGameStore = create<GameState>((set, get) => ({
 
   goToNextPhase: () => {
     set((state) => {
-      const currentPhaseIndex = PHASES.indexOf(state.phase);
+      const currentPhaseIndex = PHASES_IN_TURN.indexOf(state.phase as any);
       let nextPhaseIndex = currentPhaseIndex + 1;
       let newTurn = state.turn;
 
-      if (nextPhaseIndex >= PHASES.length) {
-        nextPhaseIndex = 0; // Quay về Draw Phase
+      if (nextPhaseIndex >= PHASES_IN_TURN.length) {
+        nextPhaseIndex = 0; // Quay về Up Phase
         newTurn += 1; // Bắt đầu lượt mới
         // TODO: Logic chuyển lượt cho AI sau này
       }
 
-      const nextPhase = PHASES[nextPhaseIndex];
+      const nextPhase = PHASES_IN_TURN[nextPhaseIndex];
 
       // TỰ ĐỘNG THỰC THI LOGIC CỦA GIAI ĐOẠN
       if (nextPhase === "draw") {

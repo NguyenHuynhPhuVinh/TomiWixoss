@@ -15,7 +15,7 @@ const Scene = dynamic(() => import("@/components/canvas/Scene"), {
 const DevPanel = dynamic(() => import("@/components/ui/DevPanel"), {
   ssr: false,
 });
-const PhaseIndicator = dynamic(() => import("@/components/ui/PhaseIndicator"), {
+const GameController = dynamic(() => import("@/components/ui/GameController"), {
   ssr: false,
 });
 
@@ -37,7 +37,7 @@ export default function ClientOnlyLoader() {
   return (
     <>
       <DevPanel />
-      <PhaseIndicator />
+      <GameController />
 
       <TomiwixossSceneLoader>
         <Scene onDeckClick={handleDeckClick} />

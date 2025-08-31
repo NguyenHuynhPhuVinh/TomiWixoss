@@ -24,14 +24,6 @@ interface SceneProps {
 export default function Scene({ onDeckClick }: SceneProps) {
   // Lấy từng phần state một cách riêng biệt để tránh vòng lặp render
   const player = useStore(useGameStore, (state) => state.player);
-  const initializeGame = useStore(
-    useGameStore,
-    (state) => state.initializeGame
-  );
-
-  useEffect(() => {
-    initializeGame();
-  }, [initializeGame]);
 
   const coords = P1_ZONE_COORDINATES;
 
