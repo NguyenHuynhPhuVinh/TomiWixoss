@@ -32,6 +32,11 @@ export default function Hand({
     useGameStore,
     (state) => state.discardCardFromHand
   );
+  // LẤY ACTION MỚI
+  const chargeEnerAction = useStore(
+    useGameStore,
+    (state) => state.chargeEnerFromHand
+  );
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
@@ -89,6 +94,13 @@ export default function Hand({
   const handleDiscard = (cardUuid: string) => {
     discardCardAction(cardUuid);
     // Không cần bỏ chọn vì người chơi có thể cần bỏ nhiều lá
+  };
+
+  const handleChargeEner = (cardUuid: string) => {
+    chargeEnerAction(cardUuid);
+    // Sau khi nạp, lá bài biến mất khỏi tay, nên chúng ta cần bỏ chọn
+    setSelectedCardUuid(null);
+    onCardSelect(null);
   };
 
   if (numCards === 0) return null;
@@ -152,6 +164,9 @@ export default function Hand({
               >
                 {isSelectedForPreview && (
                   <ContextMenu
+                    showChargeEner={phase === "ener"}
+                    onChargeEner={() => handleChargeEner(card.uuid)}
+                    // Logic cũ cho End Phase
                     showDiscard={phase === "end" && mustDiscard}
                     onDiscard={() => handleDiscard(card.uuid)}
                   />

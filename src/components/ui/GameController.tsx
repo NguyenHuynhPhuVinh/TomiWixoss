@@ -109,6 +109,22 @@ export default function GameController({
             </Button>
           </>
         );
+      case "ener":
+        return (
+          <>
+            <h3 className="font-bold">Turn {turn} - Ener Phase</h3>
+            {actionTakenInPhase ? (
+              <p className="text-sm text-green-500 my-2">Đã nạp Ener.</p>
+            ) : (
+              <p className="text-sm text-muted-foreground my-2">
+                Tùy chọn: Chọn một lá bài trên tay để nạp vào Ener Zone.
+              </p>
+            )}
+            <Button onClick={goToNextPhase} className="w-full mt-2">
+              Next Phase
+            </Button>
+          </>
+        );
       default: // Các phase còn lại (ener, main, ...)
         const phaseText = phase.charAt(0).toUpperCase() + phase.slice(1);
         if (phase === "end") {

@@ -68,6 +68,8 @@ interface GameState {
   drawCardForTurn: () => void;
   discardCardFromHand: (cardUuid: string) => void;
   checkEndPhaseConditions: () => void; // Kiểm tra và set cờ mustDiscard
+  // --- ACTION MỚI CHO ENER PHASE ---
+  chargeEnerFromHand: (cardUuid: string) => void;
 }
 
 // Hàm helper giữ nguyên
@@ -404,6 +406,46 @@ const useGameStore = create<GameState>((set, get) => ({
     });
     // Sau khi bỏ bài, gọi hàm kiểm tra lại
     get().checkEndPhaseConditions();
+  },
+
+  // --- ACTION MỚI ---
+  chargeEnerFromHand: (cardUuid: string) => {
+    // Ngăn hành động nếu đã làm rồi
+    if (get().actionTakenInPhase) {
+      console.warn("Ener Charge action has already been taken this turn.");
+      return;
+    }
+    // Ngăn hành động nếu không ở đúng phase
+    if (get().phase !== "ener") {
+      console.warn("Attempted to charge ener outside of Ener Phase.");
+      return;
+    }
+
+    set((state) => {
+      const cardToCharge = state.player.hand.find((c) => c.uuid === cardUuid);
+      if (!cardToCharge) {
+        console.error("Card not found in hand to charge ener.");
+        return state;
+      }
+
+      // 1. Tạo mảng tay mới không chứa lá bài đó
+      const newHand = state.player.hand.filter((c) => c.uuid !== cardUuid);
+
+      // 2. Lá bài vào Ener Zone luôn được lật ngửa
+      cardToCharge.isFaceUp = true;
+
+      // 3. Tạo mảng Ener Zone mới chứa lá bài đó
+      const newEnerZone = [...state.player.enerZone, cardToCharge];
+
+      return {
+        player: {
+          ...state.player,
+          hand: newHand,
+          enerZone: newEnerZone,
+        },
+        actionTakenInPhase: true, // Đánh dấu đã thực hiện hành động
+      };
+    });
   },
 }));
 

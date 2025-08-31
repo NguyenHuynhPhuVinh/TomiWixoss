@@ -1,7 +1,7 @@
 // src/components/canvas/Scene.tsx
 "use client";
 
-import { Suspense } from "react";
+import { Suspense } from "react"; // Bỏ useEffect vì không còn dùng initializeGame
 import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -11,28 +11,13 @@ import {
 } from "@react-three/drei";
 import GameBoard from "./GameBoard";
 import Card from "./Card";
-// import ZoneHelper from "./ZoneHelper"; // <-- IMPORT HELPER - COMMENTED OUT
-// import InteractiveZone from "./InteractiveZone";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
-// --- IMPORT TỌA ĐỘ ---
 import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
 
-// src/components/canvas/Scene.tsx
-
-// Bỏ interface SceneProps và props khỏi component
+// Component này không cần props nữa vì nó lấy mọi thứ từ store
 export default function Scene() {
-  // Lấy từng phần state một cách riêng biệt để tránh vòng lặp render
   const player = useStore(useGameStore, (state) => state.player);
-  // const initializeGame = useStore(
-  //   useGameStore,
-  //   (state) => state.initializeGame
-  // );
-
-  // useEffect(() => {
-  //   initializeGame();
-  // }, [initializeGame]);
-
   const coords = P1_ZONE_COORDINATES;
 
   const boardWidth = 12;
@@ -47,39 +32,37 @@ export default function Scene() {
       <ambientLight intensity={1} />
       <directionalLight position={[0, 20, 10]} intensity={1.5} castShadow />
 
+      {/* --- BÀN ĐẤU (Không thay đổi) --- */}
       <GameBoard
         position={[0, 0, boardHeight / 2]}
         rotation={[-Math.PI / 2, 0, 0]}
       />
-
       <GameBoard
         position={[0, 0, -(boardHeight / 2)]}
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
 
-      {/* === RENDER CÁC THÀNH PHẦN TRÊN BÀN ĐẤU CỦA NGƯỜI CHƠI 1 === */}
+      {/* === RENDER CÁC THÀNH PHẦN TRÊN BÀN ĐẤU CỦA NGƯỜI CHƠI === */}
+
+      {/* --- CÁC ZONE ĐÃ CÓ (Không thay đổi) --- */}
 
       {/* MAIN DECK */}
-      {player.mainDeck.length > 0 && ( // Chỉ render vùng click nếu có bài
+      {player.mainDeck.length > 0 && (
         <mesh
-          // Vị trí của hộp click sẽ được đặt ở giữa chiều cao của chồng bài
           position={[
             coords.MAIN_DECK.x,
             coords.MAIN_DECK.y +
               (player.mainDeck.length * CARD_DIMENSIONS.thickness) / 2,
             coords.MAIN_DECK.z,
           ]}
-          // onClick={onMainDeckClick}
         >
-          {/* Thay thế plane bằng box */}
           <boxGeometry
             args={[
-              CARD_DIMENSIONS.width + 0.1, // Chiều rộng (giữ nguyên)
-              CARD_DIMENSIONS.height + 0.1, // Chiều dài (giữ nguyên)
-              player.mainDeck.length * CARD_DIMENSIONS.thickness, // Chiều cao (độ dày) động
+              CARD_DIMENSIONS.width + 0.1,
+              CARD_DIMENSIONS.height + 0.1,
+              player.mainDeck.length * CARD_DIMENSIONS.thickness,
             ]}
           />
-          {/* Vật liệu vẫn vô hình */}
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
       )}
@@ -105,14 +88,11 @@ export default function Scene() {
               (player.lrigDeck.length * CARD_DIMENSIONS.thickness) / 2,
             coords.LRIG_DECK.z,
           ]}
-          // onClick={onLrigDeckClick}
         >
           <boxGeometry
             args={[
-              // Kích thước của hộp click cho LRIG Deck sẽ hoán đổi width/height
-              // vì các lá bài nằm ngang
-              CARD_DIMENSIONS.height + 0.1, // Width của hộp = Height của bài
-              CARD_DIMENSIONS.width + 0.1, // Height của hộp = Width của bài
+              CARD_DIMENSIONS.height + 0.1,
+              CARD_DIMENSIONS.width + 0.1,
               player.lrigDeck.length * CARD_DIMENSIONS.thickness,
             ]}
           />
@@ -128,17 +108,9 @@ export default function Scene() {
             coords.LRIG_DECK.y + CARD_DIMENSIONS.thickness * index,
             coords.LRIG_DECK.z,
           ]}
-          rotation={[
-            -Math.PI / 2, // Nằm phẳng
-            0,
-            // Nếu là PIECE (vốn đã ngang) thì không xoay (0).
-            // Nếu là LRIG (dọc) thì xoay 90 độ (Math.PI / 2) để thành ngang.
-            card.type === "PIECE" ? 0 : Math.PI / 2,
-          ]}
+          rotation={[-Math.PI / 2, 0, card.type === "PIECE" ? 0 : Math.PI / 2]}
         />
       ))}
-
-      {/* === BẬT LẠI RENDER CÁC ZONE KHÁC === */}
 
       {/* LRIG ZONE */}
       {player.lrigZone.map((card, index) => {
@@ -159,72 +131,100 @@ export default function Scene() {
       })}
 
       {/* LIFE CLOTH */}
-      {player.lifeCloth.map((card, index) => {
-        const stackOffsetX = 0.67;
-        const stackOffsetY = CARD_DIMENSIONS.thickness;
-        return (
-          <Card
-            key={card.uuid}
-            card={card}
-            position={[
-              coords.LIFE_CLOTH.x + index * stackOffsetX,
-              coords.LIFE_CLOTH.y + index * stackOffsetY,
-              coords.LIFE_CLOTH.z,
-            ]}
-            rotation={[-Math.PI / 2, 0, Math.PI / 2]}
-          />
-        );
-      })}
+      {player.lifeCloth.map((card, index) => (
+        <Card
+          key={card.uuid}
+          card={card}
+          position={[
+            coords.LIFE_CLOTH.x + index * 0.67,
+            coords.LIFE_CLOTH.y + index * CARD_DIMENSIONS.thickness,
+            coords.LIFE_CLOTH.z,
+          ]}
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]}
+        />
+      ))}
 
-      {/* TRASH (Mộ bài chính) */}
+      {/* ENER ZONE (Giữ nguyên code đẹp của bạn) */}
+      {player.enerZone.map((card, index) => (
+        <Card
+          key={card.uuid}
+          card={card}
+          position={[
+            coords.ENER_ZONE.x,
+            coords.ENER_ZONE.y +
+              (player.enerZone.length - 1 - index) * CARD_DIMENSIONS.thickness,
+            coords.ENER_ZONE.z + index * 0.7,
+          ]}
+          rotation={[-Math.PI / 2, 0, Math.PI]}
+        />
+      ))}
+
+      {/* TRASH */}
       {player.trash.map((card, index) => (
         <Card
           key={card.uuid}
           card={card}
           position={[
             coords.TRASH.x,
-            coords.TRASH.y + index * CARD_DIMENSIONS.thickness, // Xếp chồng lên
+            coords.TRASH.y + index * CARD_DIMENSIONS.thickness,
             coords.TRASH.z,
           ]}
           rotation={[-Math.PI / 2, 0, 0]}
         />
       ))}
 
-      {/* Vùng click động cho Trash */}
-      {player.trash.length > 0 && (
-        <mesh
-          position={[
-            coords.TRASH.x,
-            coords.TRASH.y +
-              (player.trash.length * CARD_DIMENSIONS.thickness) / 2,
-            coords.TRASH.z,
-          ]}
-        >
-          <boxGeometry
-            args={[
-              CARD_DIMENSIONS.width + 0.1,
-              CARD_DIMENSIONS.height + 0.1,
-              player.trash.length * CARD_DIMENSIONS.thickness,
-            ]}
+      {/* === CÁC ZONE MỚI ĐƯỢC THÊM VÀO === */}
+
+      {/* SIGNI ZONE */}
+      {player.signiZone.map((card, index) => {
+        if (!card) return null; // Bỏ qua các ô trống
+        const signiCoords = [coords.SIGNI_1, coords.SIGNI_2, coords.SIGNI_3][
+          index
+        ];
+        return (
+          <Card
+            key={card.uuid}
+            card={card}
+            position={[signiCoords.x, signiCoords.y, signiCoords.z]}
+            rotation={[-Math.PI / 2, 0, 0]} // SIGNI luôn nằm dọc
           />
-          <meshBasicMaterial transparent opacity={0} />
-        </mesh>
-      )}
+        );
+      })}
 
-      {/* Tạm thời ẩn các zone khác để tập trung vào mainDeck và lrigDeck */}
+      {/* LRIG TRASH */}
+      {player.lrigTrash.map((card, index) => (
+        <Card
+          key={card.uuid}
+          card={card}
+          position={[
+            coords.LRIG_TRASH.x,
+            coords.LRIG_TRASH.y + index * CARD_DIMENSIONS.thickness,
+            coords.LRIG_TRASH.z,
+          ]}
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]} // LRIG trong mộ nằm ngang
+        />
+      ))}
 
-      {/* Tạm thời ẩn các zone khác để tập trung vào mainDeck và lrigDeck */}
+      {/* CHECK ZONE */}
+      {player.checkZone.map((card, index) => {
+        // Thông thường chỉ có 1 lá bài trong Check Zone
+        if (!card) return null;
+        return (
+          <Card
+            key={card.uuid}
+            card={card}
+            position={[
+              coords.CHECK_ZONE.x,
+              coords.CHECK_ZONE.y + index * CARD_DIMENSIONS.thickness,
+              coords.CHECK_ZONE.z,
+            ]}
+            rotation={[-Math.PI / 2, 0, 0]} // Bài trong Check Zone nằm dọc
+          />
+        );
+      })}
 
-      {/* === VÙNG DEBUG HELPER === */}
-
-      {/* === VÙNG DEBUG HELPER === */}
-      {/* 
-      <group>
-        <PlayerZones player="p1" color="cyan" />
-        <PlayerZones player="p2" color="tomato" />
-      </group>
-      */}
-      {/* === KẾT THÚC VÙNG DEBUG === */}
+      {/* --- VÙNG CLICK ĐỘNG CHO CÁC ZONE (Tùy chọn, thêm sau) --- */}
+      {/* (Code cho các <mesh> vô hình có thể được thêm ở đây) */}
 
       <Suspense fallback={null}>
         <Preload all />
