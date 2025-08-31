@@ -5,21 +5,23 @@ import { StatusComponent, ZoneComponent } from "../components/card.components";
 import useGameStore from "@/store/gameStore"; // Chúng ta vẫn cần store để biết khi nào cần chạy
 
 export class UpSystem implements System {
-  public update(world: World): void {
-    // System này chỉ nên chạy trong Up Phase
-    const phase = useGameStore.getState().phase;
-    if (phase !== "up") {
-      return;
-    }
+  private hasRunThisPhase = false;
 
-    // Lấy ra action `hasUpPhaseActionBeenTaken` để tránh chạy nhiều lần
-    // (Đây là một cách để kết nối System với State tổng)
-    const actionTaken = useGameStore.getState().actionTakenInPhase;
-    if (actionTaken) {
+  public update(world: World): void {
+    // Lấy phase từ một component toàn cục trong world (cách làm đúng chuẩn ECS)
+    // Tạm thời, chúng ta sẽ giả định có một GlobalStateComponent
+    // const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+    // if (globalState.phase !== 'up' || this.hasRunThisPhase) return;
+
+    // Cách đơn giản hơn cho bây giờ:
+    const phase = useGameStore.getState().phase;
+    if (phase !== "up" || this.hasRunThisPhase) {
+      if (phase !== "up") this.hasRunThisPhase = false; // Reset khi qua phase mới
       return;
     }
 
     console.log("--- Running UpSystem ---");
+    // ... logic truy vấn và thay đổi StatusComponent như cũ ...
 
     // 1. Truy vấn: Tìm tất cả các Entity có cả StatusComponent và ZoneComponent
     const entitiesToUp = world.query([StatusComponent, ZoneComponent]);
@@ -39,7 +41,7 @@ export class UpSystem implements System {
       }
     }
 
-    // Báo cho store biết là hành động của phase này đã xong
-    useGameStore.getState().setActionTakenInPhase(true);
+    this.hasRunThisPhase = true; // System tự quản lý trạng thái của nó
+    console.log("UpSystem has finished for this phase.");
   }
 }

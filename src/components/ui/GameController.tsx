@@ -20,14 +20,7 @@ export default function GameController({
     switch (phase) {
       case "pre_game":
         return (
-          <Button
-            onClick={() => {
-              gameManager.createNewGame();
-              // Cập nhật store để UI biết
-              useGameStore.getState().setWorld(gameManager.world!);
-              useGameStore.getState().setPhase("up"); // Tạm thời chuyển thẳng đến Up Phase
-            }}
-          >
+          <Button onClick={() => useGameStore.getState().initializeGame()}>
             Chuẩn bị
           </Button>
         );
@@ -37,11 +30,7 @@ export default function GameController({
             <h3 className="font-bold">Up Phase</h3>
             <Button
               onClick={() => {
-                // Thay vì gọi command, chúng ta chỉ cần chạy vòng lặp game
-                gameManager.update();
-
-                // Chúng ta cần một cách để trigger re-render sau khi update
-                // Đây là một vấn đề cần giải quyết
+                gameManager.forceUpdate(); // Ra lệnh cho GameManager chạy 1 lần
               }}
               className="w-full mt-2"
             >
@@ -55,7 +44,10 @@ export default function GameController({
             <h3 className="font-bold">{phase} Phase</h3>
             <Button
               onClick={() => {
-                // Placeholder for other phases
+                // Tương lai: dispatch(new AdvancePhaseCommand())
+                // Command này sẽ thay đổi phase trong GlobalStateComponent của World
+                // Sau đó gọi gameManager.forceUpdate()
+                // useGameStore.getState().setPhase('draw'); // Tạm thời
               }}
               className="w-full mt-2"
             >
@@ -77,12 +69,7 @@ export default function GameController({
           Sẵn sàng để bắt đầu một trận đấu.
         </p>
         <Button
-          onClick={() => {
-            gameManager.createNewGame();
-            // Cập nhật store để UI biết
-            useGameStore.getState().setWorld(gameManager.world!);
-            useGameStore.getState().setPhase("up"); // Tạm thời chuyển thẳng đến Up Phase
-          }}
+          onClick={() => useGameStore.getState().initializeGame()}
           className="w-full"
           size="lg"
         >
