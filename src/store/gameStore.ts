@@ -1,109 +1,12 @@
 // src/store/gameStore.ts
 import { create } from "zustand";
-import { CardInstance, CardData } from "@/types/game"; // Chắc chắn rằng các type khác được export từ đây
+import { GameStore, TURN_PHASES, LogEntry, LogType } from "./types"; // <-- IMPORT TYPE TỔNG HỢP
+import { CardInstance, CardData } from "@/types/game";
 import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array";
-import { findInitialLrigs } from "@/logic/setup"; // <-- IMPORT HÀM MỚI
-import { validateDeck } from "@/logic/deckValidation"; // <-- IMPORT HÀM MỚI
-
-// Định nghĩa kiểu cho một entry trong log
-export type LogType = "info" | "action" | "system" | "cost";
-export interface LogEntry {
-  id: string; // Dùng uuid để làm key trong React
-  message: string;
-  type: LogType;
-  timestamp: number; // Để sau này có thể thêm timestamp nếu muốn
-}
-
-// Thêm phase 'mulligan'
-type GamePhase =
-  | "pre_game"
-  | "selecting_lrigs"
-  | "mulligan"
-  | "up"
-  | "draw"
-  | "ener"
-  | "grow"
-  | "main"
-  | "attack"
-  | "end";
-const TURN_PHASES: GamePhase[] = [
-  "up",
-  "draw",
-  "ener",
-  "grow",
-  "main",
-  "attack",
-  "end",
-];
-
-// Định nghĩa một kiểu cho các hành động của người chơi
-type PlayerAction = {
-  type: "place_signi";
-  cardUuid: string;
-};
-
-interface PlayerState {
-  mainDeck: CardInstance[];
-  lrigDeck: CardInstance[];
-  lrigZone: (CardInstance | null)[];
-  lifeCloth: CardInstance[];
-  hand: CardInstance[];
-  signiZone: (CardInstance | null)[];
-  enerZone: CardInstance[];
-  trash: CardInstance[];
-  lrigTrash: CardInstance[];
-  checkZone: (CardInstance | null)[];
-}
-
-interface GameState {
-  gameStarted: boolean;
-  phase: GamePhase;
-  turn: number;
-  player: PlayerState;
-  ai: PlayerState;
-  mulliganSelection: string[]; // Thêm để lưu các lá bài được chọn cho mulligan
-  mustDiscard: boolean; // <-- STATE MỚI
-  actionTakenInPhase: boolean; // <-- STATE MỚI
-  playerAction: PlayerAction | null; // <-- STATE MỚI
-  // --- ACTIONS ĐÃ ĐƯỢC CẤU TRÚC LẠI ---
-  prepareDecks: () => void; // Bước 1: Chỉ xáo bài
-  drawInitialHand: () => void; // Bước 2: Chỉ rút 5 lá đầu
-  performMulligan: (cardsToReturnUuids: string[]) => void; // Bước 3: Thực hiện đổi bài
-  dealRemainingSetup: (
-    centerUuid: string,
-    assist1Uuid: string,
-    assist2Uuid: string
-  ) => void; // Bước 4: Chia Life Cloth và LRIGs
-  dealRemainingSetupAfterMulligan: () => void; // Thêm action mới
-  setMulliganSelection: (selection: string[]) => void; // Thêm action để set mulligan selection
-  // --- ACTIONS MỚI CHO LƯỢT CHƠI ---
-  goToNextPhase: () => void;
-  upAllCards: () => void;
-  drawCardForTurn: () => void;
-  discardCardFromHand: (cardUuid: string) => void;
-  checkEndPhaseConditions: () => void; // Kiểm tra và set cờ mustDiscard
-  // --- ACTION MỚI CHO ENER PHASE ---
-  chargeEnerFromHand: (cardUuid: string) => void;
-  chargeEnerFromSigni: (cardUuid: string, fromZoneIndex: number) => void; // <-- ACTION MỚI
-  // --- ACTION MỚI CHO GROW PHASE ---
-  growCenterLrig: (targetLrigUuid: string) => void;
-  growAssistLrig: (targetLrigUuid: string, fromZoneIndex: number) => void; // <-- ACTION MỚI
-  isZoneViewerOpen: boolean; // State mới để điều khiển modal
-  openZoneViewer: () => void;
-  closeZoneViewer: () => void;
-  viewingLrigDeckForGrow: { forAssistIndex: number | null } | null; // <-- STATE MỚI
-  openLrigDeckViewerForAssist: (zoneIndex: number) => void; // <-- ACTION MỚI
-  closeLrigDeckViewer: () => void; // <-- ACTION MỚI
-  // --- ACTIONS MỚI CHO MAIN PHASE ---
-  initiatePlaceSigni: (cardUuid: string) => void;
-  placeSigni: (toZoneIndex: number) => void;
-  cancelPlayerAction: () => void;
-  // --- LOG SYSTEM ---
-  logs: LogEntry[];
-  addLog: (message: string, type?: LogType) => void;
-}
+import { findInitialLrigs } from "@/logic/setup";
+import { validateDeck } from "@/logic/deckValidation";
 
 // Hàm helper giữ nguyên
 const createCardInstance = (
@@ -117,7 +20,7 @@ const createCardInstance = (
   owner,
 });
 
-const useGameStore = create<GameState>((set, get) => ({
+const useGameStore = create<GameStore>((set, get) => ({
   gameStarted: false,
   phase: "pre_game",
   turn: 0,

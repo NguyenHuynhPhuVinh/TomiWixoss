@@ -1,7 +1,8 @@
 // src/components/ui/GameLog.tsx
 "use client";
 import { useStore } from "zustand";
-import useGameStore, { LogEntry, LogType } from "@/store/gameStore";
+import useGameStore from "@/store/gameStore";
+import { LogEntry, LogType } from "@/store/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 // Không cần useRef và useEffect nữa
