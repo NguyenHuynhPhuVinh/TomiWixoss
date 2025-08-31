@@ -2,12 +2,7 @@
 "use client";
 import useGameStore from "@/store/gameStore";
 import { Button } from "./button";
-import { useStore } from "zustand";
-import commandService from "@/logic/core/command.service";
-import { DrawCardCommand } from "@/logic/commands/drawCard.command";
-import { AdvancePhaseCommand } from "@/logic/commands/advancePhase.command";
-import { UpAllCardsCommand } from "@/logic/commands/upAllCards.command";
-import setupService from "@/logic/core/setup.service";
+import gameManager from "@/logic/ecs/game.manager";
 
 // Thêm props mới
 interface GameControllerProps {
@@ -18,208 +13,49 @@ export default function GameController({
   selectedCardsForMulligan,
 }: GameControllerProps) {
   // Lấy state từ game model để đảm bảo luôn mới nhất
-  const game = useStore(useGameStore, (state) => state.game);
-  const phase = game?.phase ?? "pre_game"; // Nếu game chưa có thì là pre_game
-  const turn = game?.turn ?? 0;
-  const mainDeckCount = game?.player.mainDeck.length ?? 0;
-  const actionTakenInPhase = game?.actionTakenInPhase ?? false;
-  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
-  const handSize = game?.player.hand.length ?? 0;
+  const phase = useGameStore((state) => state.phase);
+  const actionTakenInPhase = useGameStore((state) => state.actionTakenInPhase);
 
   const renderContent = () => {
-    // Xử lý trạng thái hành động đặc biệt trước
-    // if (playerAction?.type === "place_signi") {
-    //   return (
-    //     <>
-    //       <p className="text-sm text-blue-400 mb-2">
-    //         Chọn một ô SIGNI trống trên sân...
-    //       </p>
-    //       <Button onClick={cancelPlayerAction} variant="destructive" size="sm">
-    //         Hủy
-    //       </Button>
-    //     </>
-    //   );
-    // }
-
     switch (phase) {
       case "pre_game":
         return (
-          <Button onClick={() => setupService.startSetup()}>Chuẩn bị</Button>
-        );
-      case "selecting_lrigs":
-        return (
-          <p className="text-muted-foreground animate-pulse">
-            Vui lòng chọn LRIG...
-          </p>
-        );
-      case "mulligan":
-        const selectionCount = selectedCardsForMulligan.length;
-        return (
-          <>
-            <p className="text-muted-foreground mb-4">
-              Chọn các lá bài trên tay muốn đổi.
-              <br />
-              <span className="font-bold">Đã chọn: {selectionCount}</span>
-            </p>
-            <Button
-              onClick={() => {
-                // === KẾT NỐI HÀM VÀO ĐÂY ===
-                setupService.confirmMulligan(selectedCardsForMulligan);
-              }}
-              className="w-full"
-            >
-              Xác nhận đổi bài
-            </Button>
-          </>
+          <Button
+            onClick={() => {
+              gameManager.createNewGame();
+              // Cập nhật store để UI biết
+              useGameStore.getState().setWorld(gameManager.world!);
+              useGameStore.getState().setPhase("up"); // Tạm thời chuyển thẳng đến Up Phase
+            }}
+          >
+            Chuẩn bị
+          </Button>
         );
       case "up":
         return (
           <>
-            <h3 className="font-bold">Turn {turn} - Up Phase</h3>
+            <h3 className="font-bold">Up Phase</h3>
             <Button
               onClick={() => {
-                const command = new UpAllCardsCommand();
-                commandService.dispatch(command);
+                // Thay vì gọi command, chúng ta chỉ cần chạy vòng lặp game
+                gameManager.update();
+
+                // Chúng ta cần một cách để trigger re-render sau khi update
+                // Đây là một vấn đề cần giải quyết
               }}
               className="w-full mt-2"
             >
               Up All Cards
             </Button>
-            <Button
-              onClick={() => {
-                const command = new AdvancePhaseCommand();
-                commandService.dispatch(command);
-              }}
-              variant="outline"
-              className="w-full mt-2"
-            >
-              Next Phase
-            </Button>
           </>
         );
-      case "draw":
-        const amountToDraw = turn === 1 ? 1 : 2;
-        // Điều kiện mới: có bài trong deck VÀ chưa thực hiện hành động
-        const canDraw = mainDeckCount > 0 && !actionTakenInPhase;
+      default:
         return (
           <>
-            <h3 className="font-bold">Turn {turn} - Draw Phase</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Deck: {mainDeckCount} lá
-            </p>
+            <h3 className="font-bold">{phase} Phase</h3>
             <Button
               onClick={() => {
-                const command = new DrawCardCommand();
-                commandService.dispatch(command);
-              }}
-              className="w-full mt-2"
-              disabled={!canDraw} // Kiểm tra điều kiện trực tiếp
-            >
-              {actionTakenInPhase ? "Đã rút bài" : `Rút ${amountToDraw} lá`}
-            </Button>
-            <Button
-              onClick={() => {
-                const command = new AdvancePhaseCommand();
-                commandService.dispatch(command);
-              }}
-              variant="outline"
-              className="w-full mt-2"
-            >
-              Next Phase
-            </Button>
-          </>
-        );
-      case "ener":
-        return (
-          <>
-            <h3 className="font-bold">Turn {turn} - Ener Phase</h3>
-            {actionTakenInPhase ? (
-              <p className="text-sm text-green-500 my-2">Đã nạp Ener.</p>
-            ) : (
-              <p className="text-sm text-muted-foreground my-2">
-                {/* === THAY ĐỔI VĂN BẢN HƯỚNG DẪN === */}
-                Tùy chọn: Chọn một lá bài trên tay hoặc trên sân để nạp vào Ener
-                Zone.
-              </p>
-            )}
-            <Button
-              onClick={() => {
-                const command = new AdvancePhaseCommand();
-                commandService.dispatch(command);
-              }}
-              className="w-full mt-2"
-            >
-              Next Phase
-            </Button>
-          </>
-        );
-      case "grow":
-        return (
-          <>
-            <h3 className="font-bold">Turn {turn} - Grow Phase</h3>
-            {actionTakenInPhase ? (
-              <p className="text-sm text-green-500 my-2">Đã Grow.</p>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground my-2">
-                  Tùy chọn: Click vào LRIG Deck để xem các lựa chọn Grow.
-                </p>
-                {/* Nút này chỉ để mở viewer, hành động chính là click vào lá bài trong viewer */}
-                <Button
-                  onClick={() => useGameStore.getState().openZoneViewer()} // Sửa lại để gọi action từ store
-                  className="w-full mt-2"
-                  variant="secondary"
-                >
-                  Xem LRIG Deck
-                </Button>
-              </>
-            )}
-            <Button
-              onClick={() => {
-                const command = new AdvancePhaseCommand();
-                commandService.dispatch(command);
-              }}
-              className="w-full mt-2"
-            >
-              Next Phase
-            </Button>
-          </>
-        );
-      default: // Các phase còn lại (ener, main, ...)
-        const phaseText = phase.charAt(0).toUpperCase() + phase.slice(1);
-        if (phase === "end") {
-          return (
-            <>
-              <h3 className="font-bold">Turn {turn} - End Phase</h3>
-              {mustDiscard && (
-                <p className="text-destructive text-sm my-2">
-                  Tay bạn có {handSize} lá.
-                  <br />
-                  Hãy bỏ {handSize - 6} lá.
-                </p>
-              )}
-              <Button
-                onClick={() => {
-                  const command = new AdvancePhaseCommand();
-                  commandService.dispatch(command);
-                }}
-                className="w-full mt-2"
-                disabled={mustDiscard}
-              >
-                Kết thúc Lượt
-              </Button>
-            </>
-          );
-        }
-        return (
-          <>
-            <h3 className="font-bold">
-              Turn {turn} - {phaseText} Phase
-            </h3>
-            <Button
-              onClick={() => {
-                const command = new AdvancePhaseCommand();
-                commandService.dispatch(command);
+                // Placeholder for other phases
               }}
               className="w-full mt-2"
             >
@@ -241,7 +77,12 @@ export default function GameController({
           Sẵn sàng để bắt đầu một trận đấu.
         </p>
         <Button
-          onClick={() => setupService.startSetup()}
+          onClick={() => {
+            gameManager.createNewGame();
+            // Cập nhật store để UI biết
+            useGameStore.getState().setWorld(gameManager.world!);
+            useGameStore.getState().setPhase("up"); // Tạm thời chuyển thẳng đến Up Phase
+          }}
           className="w-full"
           size="lg"
         >
@@ -251,13 +92,9 @@ export default function GameController({
     );
   }
 
-  // Khi game đã bắt đầu (mulligan hoặc các phase trong lượt)
+  // Khi game đã bắt đầu
   return (
-    <div
-      // === THAY ĐỔI Ở ĐÂY ===
-      // Thay vì căn giữa, chúng ta sẽ đặt nó ở góc trên bên phải
-      className="absolute top-4 right-4 bg-card p-4 rounded-lg shadow-lg z-10 border w-56 text-center pointer-events-auto"
-    >
+    <div className="absolute top-4 right-4 bg-card p-4 rounded-lg shadow-lg z-10 border w-56 text-center pointer-events-auto">
       {renderContent()}
     </div>
   );

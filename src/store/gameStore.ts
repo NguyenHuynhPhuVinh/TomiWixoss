@@ -1,45 +1,27 @@
 // src/store/gameStore.ts
 import { create } from "zustand";
-import { GameStore, PlayerState, GamePhase } from "./types";
-import { createLogSlice } from "./slices/logSlice";
-import { createGameSlice } from "./slices/gameSlice";
-import { createUiSlice } from "./slices/uiSlice"; // Import slice mới
+import { World } from "@/logic/ecs/world";
 
-// Định nghĩa state ban đầu cho Player
-const initialPlayerState: PlayerState = {
-  mainDeck: [],
-  lrigDeck: [],
-  lrigZone: [null, null, null],
-  lifeCloth: [],
-  hand: [],
-  signiZone: [null, null, null],
-  enerZone: [],
-  trash: [],
-  lrigTrash: [],
-  checkZone: [null],
-};
+// Định nghĩa lại state
+interface GameStore {
+  world: World | null;
+  phase: string; // Tạm thời vẫn giữ phase ở đây
+  actionTakenInPhase: boolean;
 
-// Định nghĩa initialGameState
-const initialGameState = {
-  game: null, // Bắt đầu với game null
-  gameStarted: false,
-  phase: "pre_game" as GamePhase,
-  turn: 0, // Bắt đầu với turn 0
-  player: initialPlayerState,
-  ai: initialPlayerState,
+  // Actions
+  setWorld: (world: World) => void;
+  setPhase: (phase: string) => void;
+  setActionTakenInPhase: (taken: boolean) => void;
+}
+
+const useGameStore = create<GameStore>((set) => ({
+  world: null,
+  phase: "pre_game",
   actionTakenInPhase: false,
-  playerAction: null,
-  isZoneViewerOpen: false,
-  viewingLrigDeckForGrow: null,
-  mustDiscard: false,
-  logs: [],
-};
 
-const useGameStore = create<GameStore>((set, get, api) => ({
-  ...initialGameState,
-  ...createLogSlice(set, get, api),
-  ...createGameSlice(set, get, api),
-  ...createUiSlice(set, get, api),
+  setWorld: (world) => set({ world }),
+  setPhase: (phase) => set({ phase }),
+  setActionTakenInPhase: (taken) => set({ actionTakenInPhase: taken }),
 }));
 
 export default useGameStore;
