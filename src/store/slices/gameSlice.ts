@@ -3,6 +3,9 @@ import { StateCreator } from "zustand";
 import { GameStore } from "../types";
 import { World } from "@/logic/ecs/world";
 import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
+// XÓA: import { GameFactory } from "@/logic/ecs/game.factory";
+import { CardData } from "@/types/game";
+import shuffle from "shuffle-array";
 import {
   GlobalStateComponent,
   ZoneComponent,
@@ -30,15 +33,36 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
   set,
   get
 ) => ({
-  initializeGame: () => {
+  initializeGame: async () => {
+    // GameManager sẽ tự quản lý factory của nó
     const newWorld = gameManager.createNewGame();
+
+    // Tải dữ liệu deck từ file JSON
+    const response = await fetch("/data/decks/diva-debut-deck.json");
+    const deck: CardData[] = await response.json();
+
+    const mainDeckData = deck
+      .filter((c) => c.backType === "MAIN")
+      .flatMap((c) => Array(4).fill(c))
+      .slice(0, 40);
+    const lrigDeckData = deck.filter(
+      (c) => c.backType === "LRIG" || c.backType === "PIECE"
+    );
+    shuffle(mainDeckData);
+
+    // Nạp dữ liệu vào World
+    gameManager.hydrateDeck(newWorld, mainDeckData, lrigDeckData);
+
     get().syncStateFromWorld(newWorld);
-    // Khởi động vòng lặp game ngay sau khi world được tạo và đồng bộ
+    gameManager.world = newWorld; // Cập nhật world trong manager
     gameManager.startLoop();
   },
 
   syncStateFromWorld: (world) => {
-    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+    const globalState = world.getComponent<GlobalStateComponent>(
+      GLOBAL_ENTITY,
+      "GlobalState"
+    );
 
     // === TẠO VÀ CẬP NHẬT boardState ===
     const newBoardState: BoardState = {
@@ -48,15 +72,14 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
       },
     };
 
-    const entitiesOnField = world.query([
-      ZoneComponent,
-      CardInfoComponent,
-      StatusComponent,
-    ]);
+    const entitiesOnField = world.query(["Zone", "CardInfo", "Status"]);
     for (const entity of entitiesOnField) {
-      const zone = world.getComponent(entity, ZoneComponent)!;
-      const cardInfo = world.getComponent(entity, CardInfoComponent)!;
-      const status = world.getComponent(entity, StatusComponent)!;
+      const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
+      const cardInfo = world.getComponent<CardInfoComponent>(
+        entity,
+        "CardInfo"
+      )!;
+      const status = world.getComponent<StatusComponent>(entity, "Status")!;
 
       const cardInstance: CardInstance = {
         ...cardInfo.data,

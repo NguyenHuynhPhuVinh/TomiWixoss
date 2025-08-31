@@ -24,7 +24,10 @@ export class UpSystem implements System {
   // private hasRunThisPhase = false;
 
   public update(world: World): void {
-    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+    const globalState = world.getComponent<GlobalStateComponent>(
+      GLOBAL_ENTITY,
+      "GlobalState"
+    );
     if (
       !globalState ||
       globalState.phase !== "up" ||
@@ -34,17 +37,20 @@ export class UpSystem implements System {
     }
 
     console.log("--- Running UpSystem ---");
-    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
+    const sideEffects = world.getComponent<SideEffectComponent>(
+      GLOBAL_ENTITY,
+      "SideEffect"
+    )!;
 
     let uppedCardCount = 0;
     const uppedEntities: number[] = [];
-    const entitiesToUp = world.query([StatusComponent, ZoneComponent]);
+    const entitiesToUp = world.query(["Status", "Zone"]);
 
     for (const entity of entitiesToUp) {
-      const zone = world.getComponent(entity, ZoneComponent)!;
+      const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
 
       if (zone.zone === "signiZone" || zone.zone === "lrigZone") {
-        const status = world.getComponent(entity, StatusComponent)!;
+        const status = world.getComponent<StatusComponent>(entity, "Status")!;
 
         // TODO: Thêm logic kiểm tra "Frozen" ở đây
         // if (status.isFrozen) continue;
@@ -66,7 +72,7 @@ export class UpSystem implements System {
       this.eventBus.dispatch(GameEvent.CARDS_UPPED, {
         uppedEntities: uppedEntities,
         cardIds: uppedEntities.map(
-          (e) => world.getComponent(e, CardInfoComponent)!.data.id
+          (e) => world.getComponent<CardInfoComponent>(e, "CardInfo")!.data.id
         ),
       });
     } else {

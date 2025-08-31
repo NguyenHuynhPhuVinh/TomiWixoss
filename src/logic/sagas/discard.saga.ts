@@ -12,7 +12,7 @@ export const discardCardSaga: Saga<{
 }> = (action, world, { eventBus }) => {
   const { entityId } = action.payload;
 
-  const cardInfo = world.getComponent(entityId, CardInfoComponent)!;
+  const cardInfo = world.getComponent<CardInfoComponent>(entityId, "CardInfo")!;
 
   // PHÁT SỰ KIỆN BỎ BÀI
   eventBus.dispatch(GameEvent.CARD_DISCARDED, {

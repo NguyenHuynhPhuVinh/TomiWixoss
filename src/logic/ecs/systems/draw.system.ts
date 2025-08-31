@@ -18,7 +18,10 @@ export class DrawSystem implements System {
   }
 
   public update(world: World): void {
-    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+    const globalState = world.getComponent<GlobalStateComponent>(
+      GLOBAL_ENTITY,
+      "GlobalState"
+    );
     if (!globalState) return;
 
     // Guard Clause: Chỉ chạy trong Draw Phase và khi chưa có hành động
@@ -33,9 +36,9 @@ export class DrawSystem implements System {
 
     // THAY VÌ TỰ RÚT BÀI
     // Nó sẽ đẩy một hiệu ứng vào stack
-    const effectStack = world.getComponent(
+    const effectStack = world.getComponent<EffectStackComponent>(
       GLOBAL_ENTITY,
-      EffectStackComponent
+      "EffectStack"
     )!;
     effectStack.stack.push({
       id: uuidv4(),

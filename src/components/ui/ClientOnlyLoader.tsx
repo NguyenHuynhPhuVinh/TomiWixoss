@@ -97,17 +97,20 @@ export default function ClientOnlyLoader() {
 
     // Tìm tất cả các entity trong lrigDeck
     const lrigEntities = world
-      .query([CardInfoComponent, ZoneComponent])
+      .query(["CardInfo", "Zone"])
       .filter((entity: number) => {
-        const zone = world.getComponent(entity, ZoneComponent)!;
+        const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
         return zone.zone === "lrigDeck";
       });
 
     // Chuyển đổi entity thành CardInstance mà LrigSelector có thể hiểu
     return lrigEntities.map((entity: number) => {
-      const cardInfo = world.getComponent(entity, CardInfoComponent)!;
-      const status = world.getComponent(entity, StatusComponent)!;
-      const zone = world.getComponent(entity, ZoneComponent)!;
+      const cardInfo = world.getComponent<CardInfoComponent>(
+        entity,
+        "CardInfo"
+      )!;
+      const status = world.getComponent<StatusComponent>(entity, "Status")!;
+      const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
       return {
         ...cardInfo.data,
         ...status,
@@ -136,9 +139,12 @@ export default function ClientOnlyLoader() {
     const validIds = getValidGrowOptions(world, phase, zoneIndex);
     // Chuyển đổi entity thành CardInstance
     return validIds.map((entityId) => {
-      const cardInfo = world.getComponent(entityId, CardInfoComponent)!;
-      const status = world.getComponent(entityId, StatusComponent)!;
-      const zone = world.getComponent(entityId, ZoneComponent)!;
+      const cardInfo = world.getComponent<CardInfoComponent>(
+        entityId,
+        "CardInfo"
+      )!;
+      const status = world.getComponent<StatusComponent>(entityId, "Status")!;
+      const zone = world.getComponent<ZoneComponent>(entityId, "Zone")!;
       return {
         ...cardInfo.data,
         ...status,

@@ -23,7 +23,10 @@ export const advancePhaseSaga: Saga<{
   type: "ADVANCE_PHASE";
   payload: {};
 }> = (action, world, { eventBus }) => {
-  const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent)!;
+  const globalState = world.getComponent<GlobalStateComponent>(
+    GLOBAL_ENTITY,
+    "GlobalState"
+  )!;
   const currentPhase = globalState.phase;
 
   // Calculate previous phase

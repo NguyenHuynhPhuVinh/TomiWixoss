@@ -12,7 +12,10 @@ export const growLrigSaga: Saga<{
 }> = (action, world, { eventBus }) => {
   const { targetEntityId, zoneIndex } = action.payload;
 
-  const targetLrigInfo = world.getComponent(targetEntityId, CardInfoComponent)!;
+  const targetLrigInfo = world.getComponent<CardInfoComponent>(
+    targetEntityId,
+    "CardInfo"
+  )!;
 
   // PHÁT SỰ KIỆN CHO GROW
   eventBus.dispatch(GameEvent.CARD_GROWN, {

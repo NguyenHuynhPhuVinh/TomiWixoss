@@ -10,8 +10,9 @@ export class World {
   private nextEntityId = 0;
   private entities = new Set<Entity>();
 
-  // Cấu trúc dữ liệu chính: Map từ loại Component -> (Map từ Entity -> instance Component)
-  private components = new Map<ComponentClass<any>, Map<Entity, any>>();
+  // === THAY ĐỔI LỚN: DÙNG string LÀM KEY ===
+  private components = new Map<string, Map<Entity, any>>();
+  // =========================================
   private systems: System[] = [];
 
   // === QUẢN LÝ ENTITY ===
@@ -22,26 +23,26 @@ export class World {
   }
 
   // === QUẢN LÝ COMPONENT ===
-  public addComponent<T extends Component>(entity: Entity, component: T): void {
-    const componentClass = component.constructor as ComponentClass<T>;
-    if (!this.components.has(componentClass)) {
-      this.components.set(componentClass, new Map());
+  public addComponent<T extends Component>(
+    entity: Entity,
+    componentName: string,
+    component: T
+  ): void {
+    if (!this.components.has(componentName)) {
+      this.components.set(componentName, new Map());
     }
-    this.components.get(componentClass)!.set(entity, component);
+    this.components.get(componentName)!.set(entity, component);
   }
 
   public getComponent<T extends Component>(
     entity: Entity,
-    componentClass: ComponentClass<T>
+    componentName: string
   ): T | undefined {
-    return this.components.get(componentClass)?.get(entity);
+    return this.components.get(componentName)?.get(entity);
   }
 
-  public hasComponent<T extends Component>(
-    entity: Entity,
-    componentClass: ComponentClass<T>
-  ): boolean {
-    return this.components.get(componentClass)?.has(entity) ?? false;
+  public hasComponent(entity: Entity, componentName: string): boolean {
+    return this.components.get(componentName)?.has(entity) ?? false;
   }
 
   // === QUẢN LÝ SYSTEM ===
@@ -52,10 +53,10 @@ export class World {
   /**
    * Hàm truy vấn cốt lõi: Tìm tất cả các Entity có một tập hợp Component nhất định.
    */
-  public query(componentClasses: ComponentClass<any>[]): Entity[] {
+  public query(componentNames: string[]): Entity[] {
     const entitiesWithComponents: Entity[] = [];
     for (const entity of this.entities) {
-      if (componentClasses.every((cls) => this.hasComponent(entity, cls))) {
+      if (componentNames.every((name) => this.hasComponent(entity, name))) {
         entitiesWithComponents.push(entity);
       }
     }

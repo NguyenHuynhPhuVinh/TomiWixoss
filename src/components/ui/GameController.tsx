@@ -34,7 +34,10 @@ export default function GameController() {
   );
   // const setPhase = useGameStore((state) => state.setPhase); // Không còn cần thiết
 
-  const globalState = world?.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+  const globalState = world?.getComponent<GlobalStateComponent>(
+    GLOBAL_ENTITY,
+    "GlobalState"
+  );
   const mulliganSelectionCount = globalState?.mulliganSelection.length ?? 0;
 
   // Xóa hàm handleNextPhase cũ
@@ -152,9 +155,10 @@ export default function GameController() {
       case "end":
         const handSize =
           world
-            ?.query([ZoneComponent])
+            ?.query(["Zone"])
             .filter(
-              (e) => world.getComponent(e, ZoneComponent)!.zone === "hand"
+              (e) =>
+                world.getComponent<ZoneComponent>(e, "Zone")!.zone === "hand"
             ).length ?? 0;
         return (
           <>

@@ -71,16 +71,12 @@ export default function Scene() {
   }
 
   // Lấy ra tất cả các entity có thể render được
-  const renderableEntities = world.query([
-    CardInfoComponent,
-    ZoneComponent,
-    StatusComponent,
-  ]);
+  const renderableEntities = world.query(["CardInfo", "Zone", "Status"]);
 
   // Nhóm các entity theo zone để dễ dàng tính toán logic xếp chồng
   const entitiesByZone = new Map<string, Entity[]>();
   for (const entity of renderableEntities) {
-    const zone = world.getComponent(entity, ZoneComponent)!.zone;
+    const zone = world.getComponent<ZoneComponent>(entity, "Zone")!.zone;
     if (!entitiesByZone.has(zone)) {
       entitiesByZone.set(zone, []);
     }
@@ -106,9 +102,12 @@ export default function Scene() {
 
       {/* --- RENDER CÁC LÁ BÀI TỪ ECS WORLD --- */}
       {renderableEntities.map((entity) => {
-        const cardInfo = world.getComponent(entity, CardInfoComponent)!;
-        const status = world.getComponent(entity, StatusComponent)!;
-        const zoneInfo = world.getComponent(entity, ZoneComponent)!;
+        const cardInfo = world.getComponent<CardInfoComponent>(
+          entity,
+          "CardInfo"
+        )!;
+        const status = world.getComponent<StatusComponent>(entity, "Status")!;
+        const zoneInfo = world.getComponent<ZoneComponent>(entity, "Zone")!;
 
         // Chuyển đổi dữ liệu ECS thành CardInstance mà component Card có thể hiểu
         const cardInstance: CardInstance = {

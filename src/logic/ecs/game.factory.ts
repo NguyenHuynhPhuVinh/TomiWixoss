@@ -1,82 +1,78 @@
 // src/logic/ecs/game.factory.ts
 import { World } from "./world";
-import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
-import shuffle from "shuffle-array";
 import { CardData, ZoneKey } from "@/types/game";
-import {
-  CardInfoComponent,
-  ZoneComponent,
-  StatusComponent,
-  GlobalStateComponent,
-  ActionRequestComponent, // <-- IMPORT
-  SideEffectComponent, // <-- THÊM IMPORT
-  EffectStackComponent, // <-- THÊM IMPORT
-} from "./components/card.components";
+import { Entity } from "./ecs.types";
+// XÓA: import gameManager from "./game.manager"; // <-- Loại bỏ circular dependency
+import { GameManager } from "./game.manager"; // Chỉ import type cho TypeScript
 
-// Định nghĩa một hằng số cho entity toàn cục để dễ nhận biết
 export const GLOBAL_ENTITY = 0;
 
 export class GameFactory {
-  /**
-   * Tạo ra một World mới, sẵn sàng để bắt đầu một trận đấu.
-   */
-  public createNewGame(): World {
+  // Nhận dependency qua constructor
+  constructor(private gameManager: GameManager) {}
+  public createEmptyWorld(): World {
     const world = new World();
+    const globalEntity = world.createEntity(); // Entity 0
 
-    // === 2. TẠO ENTITY TOÀN CỤC VÀ GẮN COMPONENT ===
-    const globalEntity = world.createEntity(); // Sẽ là entity 0
+    // Lấy các class component từ registry và tạo instance
+    const GlobalStateComponent =
+      this.gameManager.getComponentClass("GlobalState")!;
+    const ActionRequestComponent =
+      this.gameManager.getComponentClass("ActionRequest")!;
+    const SideEffectComponent =
+      this.gameManager.getComponentClass("SideEffect")!;
+    const EffectStackComponent =
+      this.gameManager.getComponentClass("EffectStack")!;
+
+    world.addComponent(globalEntity, "GlobalState", new GlobalStateComponent());
     world.addComponent(
       globalEntity,
-      new GlobalStateComponent("pre_game", 0, false)
+      "ActionRequest",
+      new ActionRequestComponent()
     );
-    world.addComponent(globalEntity, new ActionRequestComponent()); // <-- THÊM VÀO ĐÂY
-    world.addComponent(globalEntity, new SideEffectComponent()); // <-- THÊM VÀO ĐÂY
-    world.addComponent(globalEntity, new EffectStackComponent()); // <-- THÊM VÀO ĐÂY
-    // ===============================================
+    world.addComponent(globalEntity, "SideEffect", new SideEffectComponent());
+    world.addComponent(globalEntity, "EffectStack", new EffectStackComponent());
 
-    // 1. Lấy dữ liệu deck
-    const mainDeckData = divaDebutDeckEn
-      .filter((c) => c.backType === "MAIN")
-      .flatMap((card) => Array(4).fill(card))
-      .slice(0, 40);
-    const lrigDeckData = divaDebutDeckEn.filter(
-      (c) => c.backType === "LRIG" || c.backType === "PIECE"
-    );
-    shuffle(mainDeckData);
-
-    // 2. Tạo các Entity cho mỗi lá bài trong Main Deck
-    mainDeckData.forEach((cardData, index) => {
-      this.createCardEntity(world, cardData, "player", "mainDeck", index);
-    });
-
-    // 3. Tạo các Entity cho mỗi lá bài trong LRIG Deck
-    lrigDeckData.forEach((cardData, index) => {
-      this.createCardEntity(world, cardData, "player", "lrigDeck", index);
-    });
-
-    // TODO: Thêm các System vào World ở đây
-    // world.addSystem(new UpSystem());
-    // world.addSystem(new DrawSystem());
-
-    console.log("New game world created!", world);
     return world;
   }
 
   /**
-   * Helper để tạo một Entity lá bài hoàn chỉnh với các Component cơ bản.
+   * Nạp dữ liệu deck vào một World đã có.
+   * @param world - World cần nạp dữ liệu.
+   * @param deckData - Dữ liệu deck (mảng các CardData).
    */
-  private createCardEntity(
+  public hydrateDeck(
     world: World,
-    cardData: CardData,
-    owner: "player" | "ai",
-    zone: ZoneKey, // Sửa thành ZoneKey
-    index: number
+    mainDeckData: CardData[],
+    lrigDeckData: CardData[]
   ): void {
-    const cardEntity = world.createEntity();
+    // Lấy các class component từ registry
+    const CardInfoComponent = this.gameManager.getComponentClass("CardInfo")!;
+    const StatusComponent = this.gameManager.getComponentClass("Status")!;
+    const ZoneComponent = this.gameManager.getComponentClass("Zone")!;
 
-    // Gắn các component cho nó
-    world.addComponent(cardEntity, new CardInfoComponent(cardData));
-    world.addComponent(cardEntity, new StatusComponent(false, false)); // Mặc định úp và đứng
-    world.addComponent(cardEntity, new ZoneComponent(owner, zone, index));
+    mainDeckData.forEach((cardData, index) => {
+      const entity = world.createEntity();
+      world.addComponent(entity, "CardInfo", new CardInfoComponent(cardData));
+      world.addComponent(entity, "Status", new StatusComponent());
+      world.addComponent(
+        entity,
+        "Zone",
+        new ZoneComponent("player", "mainDeck", index)
+      );
+    });
+
+    lrigDeckData.forEach((cardData, index) => {
+      const entity = world.createEntity();
+      world.addComponent(entity, "CardInfo", new CardInfoComponent(cardData));
+      world.addComponent(entity, "Status", new StatusComponent());
+      world.addComponent(
+        entity,
+        "Zone",
+        new ZoneComponent("player", "lrigDeck", index)
+      );
+    });
+
+    console.log("World hydrated with deck data.");
   }
 }

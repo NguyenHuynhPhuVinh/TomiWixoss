@@ -16,13 +16,13 @@ export const startSetupReducer: Reducer<{
   type: "START_SETUP";
   payload: {};
 }> = (draftWorld, payload) => {
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   );
-  const sideEffects = draftWorld.getComponent(
+  const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
-    SideEffectComponent
+    "SideEffect"
   )!;
 
   if (globalState?.phase !== "pre_game") return;
@@ -47,13 +47,13 @@ export const confirmLrigSelectionReducer: Reducer<{
   type: "CONFIRM_LRIG_SELECTION";
   payload: { center: Entity; assists: Entity[] };
 }> = (draftWorld, payload) => {
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   );
-  const sideEffects = draftWorld.getComponent(
+  const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
-    SideEffectComponent
+    "SideEffect"
   )!;
 
   if (globalState?.phase !== "selecting_lrigs") return;
@@ -63,8 +63,11 @@ export const confirmLrigSelectionReducer: Reducer<{
   // Cập nhật ZoneComponent cho các LRIG đã chọn
   const lrigsToPlace = [assists[0], center, assists[1]];
   lrigsToPlace.forEach((entityId, index) => {
-    const zone = draftWorld.getComponent(entityId, ZoneComponent)!;
-    const status = draftWorld.getComponent(entityId, StatusComponent)!;
+    const zone = draftWorld.getComponent<ZoneComponent>(entityId, "Zone")!;
+    const status = draftWorld.getComponent<StatusComponent>(
+      entityId,
+      "Status"
+    )!;
     zone.zone = "lrigZone";
     zone.index = index;
     status.isFaceUp = true;
@@ -92,9 +95,9 @@ export const updateMulliganSelectionReducer: Reducer<{
   type: "UPDATE_MULLIGAN_SELECTION";
   payload: { selection: Entity[] };
 }> = (draftWorld, payload) => {
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   );
 
   if (globalState?.phase !== "mulligan") return;
@@ -107,13 +110,13 @@ export const confirmMulliganReducer: Reducer<{
   type: "CONFIRM_MULLIGAN";
   payload: { entities: Entity[] };
 }> = (draftWorld, payload) => {
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   );
-  const sideEffects = draftWorld.getComponent(
+  const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
-    SideEffectComponent
+    "SideEffect"
   )!;
 
   if (globalState?.phase !== "mulligan") return;
@@ -130,8 +133,11 @@ export const confirmMulliganReducer: Reducer<{
 
     // Trả bài về deck
     cardsToReturnEntities.forEach((entity) => {
-      const zone = draftWorld.getComponent(entity, ZoneComponent)!;
-      const status = draftWorld.getComponent(entity, StatusComponent)!;
+      const zone = draftWorld.getComponent<ZoneComponent>(entity, "Zone")!;
+      const status = draftWorld.getComponent<StatusComponent>(
+        entity,
+        "Status"
+      )!;
       zone.zone = "mainDeck";
       status.isFaceUp = false;
     });
@@ -152,7 +158,7 @@ export const confirmMulliganReducer: Reducer<{
   // Chia Life Cloth
   const lifeClothEntities = getTopCardsOfDeck(draftWorld, 7);
   lifeClothEntities.forEach((entity, index) => {
-    const zone = draftWorld.getComponent(entity, ZoneComponent)!;
+    const zone = draftWorld.getComponent<ZoneComponent>(entity, "Zone")!;
     zone.zone = "lifeCloth";
     zone.index = index;
   });
@@ -175,12 +181,14 @@ export const confirmMulliganReducer: Reducer<{
 // Helper functions
 function getTopCardsOfDeck(world: World, amount: number): number[] {
   const mainDeckEntities = world
-    .query([ZoneComponent])
-    .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "mainDeck");
+    .query(["Zone"])
+    .filter(
+      (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "mainDeck"
+    );
 
   mainDeckEntities.sort((a, b) => {
-    const indexA = world.getComponent(a, ZoneComponent)!.index;
-    const indexB = world.getComponent(b, ZoneComponent)!.index;
+    const indexA = world.getComponent<ZoneComponent>(a, "Zone")!.index;
+    const indexB = world.getComponent<ZoneComponent>(b, "Zone")!.index;
     return indexB - indexA;
   });
   return mainDeckEntities.slice(0, amount);
@@ -189,8 +197,8 @@ function getTopCardsOfDeck(world: World, amount: number): number[] {
 function drawInitialHand(world: World, amount: number) {
   const cardsToDraw = getTopCardsOfDeck(world, amount);
   cardsToDraw.forEach((entity) => {
-    const zone = world.getComponent(entity, ZoneComponent)!;
-    const status = world.getComponent(entity, StatusComponent)!;
+    const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
+    const status = world.getComponent<StatusComponent>(entity, "Status")!;
     zone.zone = "hand";
     status.isFaceUp = true;
     zone.index = 0;
@@ -201,32 +209,36 @@ function drawInitialHand(world: World, amount: number) {
 
 function shuffleMainDeck(world: World) {
   const mainDeckEntities = world
-    .query([ZoneComponent])
-    .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "mainDeck");
+    .query(["Zone"])
+    .filter(
+      (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "mainDeck"
+    );
 
   shuffle(mainDeckEntities); // Xáo trộn mảng entity ID
 
   // Gán lại index mới cho các lá bài
   mainDeckEntities.forEach((entity, i) => {
-    const zone = world.getComponent(entity, ZoneComponent)!;
+    const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
     zone.index = i;
   });
 }
 
 function reindexDeck(world: World) {
   const mainDeckEntities = world
-    .query([ZoneComponent])
-    .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "mainDeck");
+    .query(["Zone"])
+    .filter(
+      (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "mainDeck"
+    );
 
   mainDeckEntities.sort((a, b) => {
     // Sắp xếp lại để đảm bảo thứ tự đúng
-    const indexA = world.getComponent(a, ZoneComponent)!.index;
-    const indexB = world.getComponent(b, ZoneComponent)!.index;
+    const indexA = world.getComponent<ZoneComponent>(a, "Zone")!.index;
+    const indexB = world.getComponent<ZoneComponent>(b, "Zone")!.index;
     return indexA - indexB;
   });
 
   mainDeckEntities.forEach((entity, i) => {
-    const zone = world.getComponent(entity, ZoneComponent)!;
+    const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
     zone.index = i;
   });
 }

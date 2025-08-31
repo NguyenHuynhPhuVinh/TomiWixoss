@@ -7,7 +7,9 @@ import { allTexturePaths } from "@/data/assetPreloader";
 
 // Dùng hook của Drei để preload tất cả các texture
 // Đây chính là "bí mật" của City Builder
-useTexture.preload(allTexturePaths);
+allTexturePaths.forEach((path) => {
+  useTexture.preload(path);
+});
 
 function Loader() {
   const { progress } = useProgress();

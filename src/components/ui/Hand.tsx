@@ -35,16 +35,21 @@ export default function Hand({ onCardSelect }: HandProps) {
   const handEntities = useMemo(() => {
     if (!world) return [];
     return world
-      .query([CardInfoComponent, ZoneComponent])
-      .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "hand");
+      .query(["CardInfo", "Zone"])
+      .filter(
+        (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "hand"
+      );
   }, [world, worldVersion]);
 
   const hand: CardInstance[] = useMemo(() => {
     if (!world) return [];
     return handEntities.map((entity) => {
-      const cardInfo = world.getComponent(entity, CardInfoComponent)!;
-      const status = world.getComponent(entity, StatusComponent)!;
-      const zone = world.getComponent(entity, ZoneComponent)!;
+      const cardInfo = world.getComponent<CardInfoComponent>(
+        entity,
+        "CardInfo"
+      )!;
+      const status = world.getComponent<StatusComponent>(entity, "Status")!;
+      const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
       return {
         ...cardInfo.data,
         ...status,
@@ -65,7 +70,10 @@ export default function Hand({ onCardSelect }: HandProps) {
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
   const handRef = useRef<HTMLDivElement>(null);
 
-  const globalState = world?.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+  const globalState = world?.getComponent<GlobalStateComponent>(
+    GLOBAL_ENTITY,
+    "GlobalState"
+  );
   const mulliganSelection = globalState?.mulliganSelection ?? [];
 
   useOnClickOutside(handRef, () => {
@@ -98,15 +106,17 @@ export default function Hand({ onCardSelect }: HandProps) {
     if (!world || phase !== "main") return [];
 
     const lrigZoneEntities = world
-      .query([ZoneComponent])
-      .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "lrigZone");
+      .query(["Zone"])
+      .filter(
+        (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "lrigZone"
+      );
     const centerLrigEntity = lrigZoneEntities.find(
-      (e) => world.getComponent(e, ZoneComponent)!.index === 1
+      (e) => world.getComponent<ZoneComponent>(e, "Zone")!.index === 1
     );
     if (!centerLrigEntity) return [];
-    const centerLrigInfo = world.getComponent(
+    const centerLrigInfo = world.getComponent<CardInfoComponent>(
       centerLrigEntity,
-      CardInfoComponent
+      "CardInfo"
     )!;
     const lrigLevel = centerLrigInfo.data.level ?? 0;
     const lrigLimit =
@@ -115,13 +125,16 @@ export default function Hand({ onCardSelect }: HandProps) {
         : 99;
 
     const signiOnField = world
-      .query([ZoneComponent])
+      .query(["Zone"])
       .filter(
-        (e) => world.getComponent(e, ZoneComponent)!.zone === "signiZone"
+        (e) =>
+          world.getComponent<ZoneComponent>(e, "Zone")!.zone === "signiZone"
       );
     const currentTotalLevel = signiOnField.reduce((sum, entity) => {
       return (
-        sum + (world.getComponent(entity, CardInfoComponent)!.data.level ?? 0)
+        sum +
+        (world.getComponent<CardInfoComponent>(entity, "CardInfo")!.data
+          .level ?? 0)
       );
     }, 0);
 

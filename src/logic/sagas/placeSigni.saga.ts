@@ -16,7 +16,7 @@ export const placeSigniSaga: Saga<{
   payload: PlaceSigniPayload;
 }> = (action, world, { eventBus }) => {
   const { entityId, zoneIndex } = action.payload;
-  const cardInfo = world.getComponent(entityId, CardInfoComponent)!;
+  const cardInfo = world.getComponent<CardInfoComponent>(entityId, "CardInfo")!;
 
   // Phát event
   eventBus.dispatch(GameEvent.CARD_PLAYED, {

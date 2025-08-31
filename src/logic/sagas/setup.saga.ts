@@ -40,8 +40,10 @@ export const confirmMulliganSaga: Saga<{
 // Helper function
 function getHandEntities(world: World): Entity[] {
   return world
-    .query([ZoneComponent])
-    .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "hand");
+    .query(["Zone"])
+    .filter(
+      (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "hand"
+    );
 }
 
 // Import ZoneComponent for helper

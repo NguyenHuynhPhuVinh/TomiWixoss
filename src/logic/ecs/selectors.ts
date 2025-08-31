@@ -19,38 +19,39 @@ export function getValidGrowOptions(
   if (!world) return [];
 
   // === LẤY THÔNG TIN CENTER LRIG ĐỂ SO SÁNH ===
-  const centerLrigEntity = world.query([ZoneComponent]).find((e: number) => {
-    const zone = world.getComponent(e, ZoneComponent)!;
+  const centerLrigEntity = world.query(["Zone"]).find((e: number) => {
+    const zone = world.getComponent<ZoneComponent>(e, "Zone")!;
     return zone.zone === "lrigZone" && zone.index === 1;
   });
   // Nếu không có Center LRIG (trường hợp rất hiếm), không cho Grow gì cả
   if (!centerLrigEntity) return [];
-  const centerLrigInfo = world.getComponent(
+  const centerLrigInfo = world.getComponent<CardInfoComponent>(
     centerLrigEntity,
-    CardInfoComponent
+    "CardInfo"
   )!;
   const centerLrigLevel = centerLrigInfo.data.level ?? 0;
   // ============================================
 
-  const currentLrigEntity = world.query([ZoneComponent]).find((e: number) => {
-    const zone = world.getComponent(e, ZoneComponent)!;
+  const currentLrigEntity = world.query(["Zone"]).find((e: number) => {
+    const zone = world.getComponent<ZoneComponent>(e, "Zone")!;
     return zone.zone === "lrigZone" && zone.index === zoneIndex;
   });
 
   if (!currentLrigEntity) return [];
-  const currentLrigInfo = world.getComponent(
+  const currentLrigInfo = world.getComponent<CardInfoComponent>(
     currentLrigEntity,
-    CardInfoComponent
+    "CardInfo"
   )!;
 
   const lrigDeckEntities = world
-    .query([ZoneComponent])
+    .query(["Zone"])
     .filter(
-      (e: number) => world.getComponent(e, ZoneComponent)!.zone === "lrigDeck"
+      (e: number) =>
+        world.getComponent<ZoneComponent>(e, "Zone")!.zone === "lrigDeck"
     );
 
   return lrigDeckEntities.filter((entity: number) => {
-    const cardInfo = world.getComponent(entity, CardInfoComponent)!;
+    const cardInfo = world.getComponent<CardInfoComponent>(entity, "CardInfo")!;
 
     // === LOGIC KIỂM TRA MỚI ===
     const isCenterGrow = zoneIndex === 1;

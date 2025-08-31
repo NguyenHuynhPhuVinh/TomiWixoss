@@ -15,13 +15,13 @@ export const chargeEnerReducer: Reducer<{
   type: "CHARGE_ENER";
   payload: { source: "hand" | "signi"; entityId: Entity };
 }> = (draftWorld, payload) => {
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   );
-  const sideEffects = draftWorld.getComponent(
+  const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
-    SideEffectComponent
+    "SideEffect"
   )!;
 
   // Guard Clause: Chỉ chạy trong Ener Phase và khi chưa có hành động
@@ -31,8 +31,8 @@ export const chargeEnerReducer: Reducer<{
 
   const { source, entityId } = payload;
 
-  const zone = draftWorld.getComponent(entityId, ZoneComponent);
-  const status = draftWorld.getComponent(entityId, StatusComponent);
+  const zone = draftWorld.getComponent<ZoneComponent>(entityId, "Zone");
+  const status = draftWorld.getComponent<StatusComponent>(entityId, "Status");
 
   if (!zone || !status) {
     console.error(`Entity ${entityId} is not a valid card to charge ener.`);
@@ -40,7 +40,10 @@ export const chargeEnerReducer: Reducer<{
   }
 
   // Lấy thông tin lá bài để log
-  const cardInfo = draftWorld.getComponent(entityId, CardInfoComponent)!;
+  const cardInfo = draftWorld.getComponent<CardInfoComponent>(
+    entityId,
+    "CardInfo"
+  )!;
 
   // Thay đổi Component của lá bài được nạp
   zone.zone = "enerZone";

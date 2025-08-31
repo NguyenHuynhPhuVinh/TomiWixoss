@@ -15,13 +15,13 @@ export const discardCardReducer: Reducer<{
   type: "DISCARD_CARD";
   payload: { entityId: Entity };
 }> = (draftWorld, payload) => {
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   );
-  const sideEffects = draftWorld.getComponent(
+  const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
-    SideEffectComponent
+    "SideEffect"
   )!;
 
   if (!globalState) return;
@@ -29,10 +29,13 @@ export const discardCardReducer: Reducer<{
   const { entityId } = payload;
 
   // Di chuyển lá bài vào mộ
-  const zone = draftWorld.getComponent(entityId, ZoneComponent)!;
+  const zone = draftWorld.getComponent<ZoneComponent>(entityId, "Zone")!;
   zone.zone = "trash";
 
-  const cardInfo = draftWorld.getComponent(entityId, CardInfoComponent)!;
+  const cardInfo = draftWorld.getComponent<CardInfoComponent>(
+    entityId,
+    "CardInfo"
+  )!;
   sideEffects.queue.push({
     type: "LOG",
     message: `Bỏ bài: ${cardInfo.data.name}.`,
@@ -41,9 +44,9 @@ export const discardCardReducer: Reducer<{
 
   // Kiểm tra lại sau khi bỏ
   const handSize = draftWorld
-    .query([ZoneComponent])
+    .query(["Zone"])
     .filter(
-      (e) => draftWorld.getComponent(e, ZoneComponent)!.zone === "hand"
+      (e) => draftWorld.getComponent<ZoneComponent>(e, "Zone")!.zone === "hand"
     ).length;
   if (handSize <= 6) {
     sideEffects.queue.push({

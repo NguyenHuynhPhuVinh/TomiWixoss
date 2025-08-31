@@ -11,9 +11,9 @@ export class SideEffectSystem implements System {
 
   public update(world: World): void {
     // System này không nên chạy nếu không có gì để xử lý
-    const sideEffectComponent = world.getComponent(
+    const sideEffectComponent = world.getComponent<SideEffectComponent>(
       GLOBAL_ENTITY,
-      SideEffectComponent
+      "SideEffect"
     );
     if (!sideEffectComponent || sideEffectComponent.queue.length === 0) {
       return;

@@ -29,9 +29,10 @@ import { Reducer, Saga } from "../core/reducer.types";
 
 type UpdateListener = (world: World) => void;
 
-class GameManager {
+export class GameManager {
+  // <-- Thêm export ở đây
   public world: World | null = null;
-  private factory = new GameFactory();
+  private factory: GameFactory;
   private updateListeners: UpdateListener[] = [];
   private isLooping = false;
   private animationFrameId: number = 0;
@@ -48,10 +49,37 @@ class GameManager {
   private reducers: Map<GameActionType, Reducer<any>[]> = new Map();
   private sagas: Map<GameActionType, Saga<any>[]> = new Map();
 
+  // === THÊM REGISTRY MỚI ===
+  private componentRegistry: Map<string, any> = new Map();
+
+  constructor() {
+    // Tự tiêm chính nó vào factory
+    this.factory = new GameFactory(this);
+  }
+
+  // === THÊM PHƯƠNG THỨC ĐĂNG KÝ COMPONENT ===
+  public registerComponent(name: string, componentClass: any) {
+    this.componentRegistry.set(name, componentClass);
+  }
+
+  public getComponentClass(name: string): any | undefined {
+    return this.componentRegistry.get(name);
+  }
+  // =========================================
+
+  // Thêm phương thức tạo game mới
   public createNewGame(): World {
-    this.world = this.factory.createNewGame();
-    // XÓA: Không đăng ký system ở đây nữa - sẽ được làm từ bên ngoài
+    this.world = this.factory.createEmptyWorld();
     return this.world;
+  }
+
+  // Thêm phương thức hydrate deck
+  public hydrateDeck(
+    world: World,
+    mainDeckData: any[],
+    lrigDeckData: any[]
+  ): void {
+    this.factory.hydrateDeck(world, mainDeckData, lrigDeckData);
   }
 
   // Thêm phương thức đăng ký system
@@ -142,9 +170,9 @@ class GameManager {
     }
 
     let nextWorldState = this.world;
-    const effectStack = nextWorldState.getComponent(
+    const effectStack = nextWorldState.getComponent<EffectStackComponent>(
       GLOBAL_ENTITY,
-      EffectStackComponent
+      "EffectStack"
     )!;
 
     // --- LOGIC VÒNG LẶP MỚI, TUẦN TỰ TUYỆT ĐỐI ---
@@ -152,9 +180,9 @@ class GameManager {
     // Ưu tiên 1: Xử lý MỘT hiệu ứng từ Stack
     if (effectStack.stack.length > 0) {
       nextWorldState = produce(nextWorldState, (draftWorld) => {
-        const stack = draftWorld.getComponent(
+        const stack = draftWorld.getComponent<EffectStackComponent>(
           GLOBAL_ENTITY,
-          EffectStackComponent
+          "EffectStack"
         )!.stack;
         const effectToResolve = stack.pop()!;
         console.log(

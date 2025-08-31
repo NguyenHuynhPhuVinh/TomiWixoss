@@ -22,13 +22,13 @@ export const placeSigniReducer: Reducer<{
 }> = (draftWorld, payload) => {
   const { entityId, zoneIndex } = payload;
 
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   );
-  const sideEffects = draftWorld.getComponent(
+  const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
-    SideEffectComponent
+    "SideEffect"
   )!;
 
   // --- 1. KIỂM TRA ĐIỀU KIỆN ---
@@ -42,24 +42,31 @@ export const placeSigniReducer: Reducer<{
   }
 
   // Lấy thông tin cần thiết
-  const cardToPlayInfo = draftWorld.getComponent(entityId, CardInfoComponent);
-  const cardToPlayZone = draftWorld.getComponent(entityId, ZoneComponent);
+  const cardToPlayInfo = draftWorld.getComponent<CardInfoComponent>(
+    entityId,
+    "CardInfo"
+  );
+  const cardToPlayZone = draftWorld.getComponent<ZoneComponent>(
+    entityId,
+    "Zone"
+  );
   const lrigZoneEntities = draftWorld
-    .query([ZoneComponent])
+    .query(["Zone"])
     .filter(
-      (e) => draftWorld.getComponent(e, ZoneComponent)!.zone === "lrigZone"
+      (e) =>
+        draftWorld.getComponent<ZoneComponent>(e, "Zone")!.zone === "lrigZone"
     );
   const centerLrigEntity = lrigZoneEntities.find(
-    (e) => draftWorld.getComponent(e, ZoneComponent)!.index === 1
+    (e) => draftWorld.getComponent<ZoneComponent>(e, "Zone")!.index === 1
   );
 
   if (!cardToPlayInfo || cardToPlayZone?.zone !== "hand" || !centerLrigEntity) {
     console.error("Yêu cầu đặt SIGNI không hợp lệ.");
     return;
   }
-  const centerLrigInfo = draftWorld.getComponent(
+  const centerLrigInfo = draftWorld.getComponent<CardInfoComponent>(
     centerLrigEntity,
-    CardInfoComponent
+    "CardInfo"
   )!;
 
   // A. Kiểm tra Level
@@ -74,14 +81,16 @@ export const placeSigniReducer: Reducer<{
 
   // B. Kiểm tra Limit
   const signiOnField = draftWorld
-    .query([ZoneComponent])
+    .query(["Zone"])
     .filter(
-      (e) => draftWorld.getComponent(e, ZoneComponent)!.zone === "signiZone"
+      (e) =>
+        draftWorld.getComponent<ZoneComponent>(e, "Zone")!.zone === "signiZone"
     );
   const currentTotalLevel = signiOnField.reduce((sum, entity) => {
     return (
       sum +
-      (draftWorld.getComponent(entity, CardInfoComponent)!.data.level ?? 0)
+      (draftWorld.getComponent<CardInfoComponent>(entity, "CardInfo")!.data
+        .level ?? 0)
     );
   }, 0);
   const lrigLimit =
@@ -99,7 +108,10 @@ export const placeSigniReducer: Reducer<{
   }
 
   // --- 2. THỰC THI HÀNH ĐỘNG ---
-  const cardToPlayStatus = draftWorld.getComponent(entityId, StatusComponent)!;
+  const cardToPlayStatus = draftWorld.getComponent<StatusComponent>(
+    entityId,
+    "Status"
+  )!;
 
   cardToPlayZone.zone = "signiZone";
   cardToPlayZone.index = zoneIndex;

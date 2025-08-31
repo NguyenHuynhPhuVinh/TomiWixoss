@@ -16,12 +16,17 @@ export class DrawCardEffect implements IEffectResolver {
     world: World,
     payload: { amount: number; player: string }
   ): void {
-    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
+    const sideEffects = world.getComponent<SideEffectComponent>(
+      GLOBAL_ENTITY,
+      "SideEffect"
+    )!;
 
     // 1. Truy vấn tất cả các lá bài trong Main Deck
     const mainDeckEntities = world
-      .query([ZoneComponent])
-      .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "mainDeck");
+      .query(["Zone"])
+      .filter(
+        (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "mainDeck"
+      );
 
     if (mainDeckEntities.length === 0) {
       sideEffects.queue.push({
@@ -34,8 +39,8 @@ export class DrawCardEffect implements IEffectResolver {
 
     // 2. Sắp xếp deck theo index để lấy lá trên cùng
     mainDeckEntities.sort((a, b) => {
-      const indexA = world.getComponent(a, ZoneComponent)!.index;
-      const indexB = world.getComponent(b, ZoneComponent)!.index;
+      const indexA = world.getComponent<ZoneComponent>(a, "Zone")!.index;
+      const indexB = world.getComponent<ZoneComponent>(b, "Zone")!.index;
       return indexB - indexA; // Sắp xếp giảm dần, lá bài index cao nhất (trên cùng) sẽ ở đầu
     });
 
@@ -44,8 +49,8 @@ export class DrawCardEffect implements IEffectResolver {
 
     // 4. Thay đổi Component của các lá bài đã rút
     for (const entity of cardsToDraw) {
-      const zone = world.getComponent(entity, ZoneComponent)!;
-      const status = world.getComponent(entity, StatusComponent)!;
+      const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
+      const status = world.getComponent<StatusComponent>(entity, "Status")!;
 
       zone.zone = "hand"; // Chuyển sang tay
       status.isFaceUp = true; // Lật ngửa
@@ -57,7 +62,7 @@ export class DrawCardEffect implements IEffectResolver {
     // 5. Cập nhật lại index cho các lá còn lại trong deck
     const remainingDeck = mainDeckEntities.slice(payload.amount);
     remainingDeck.forEach((entity, i) => {
-      const zone = world.getComponent(entity, ZoneComponent)!;
+      const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
       zone.index = remainingDeck.length - 1 - i;
     });
 

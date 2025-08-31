@@ -33,7 +33,10 @@ export class PhaseSystem implements System {
 
   public update(world: World): World {
     // Không cần produce ở đây vì nó không thay đổi state trực tiếp
-    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+    const globalState = world.getComponent<GlobalStateComponent>(
+      GLOBAL_ENTITY,
+      "GlobalState"
+    );
     if (!globalState) return world;
 
     if (

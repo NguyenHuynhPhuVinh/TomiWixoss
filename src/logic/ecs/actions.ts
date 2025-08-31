@@ -65,7 +65,10 @@ export function dispatchUpdateMulliganSelection(selection: Entity[]) {
 export function dispatchConfirmMulliganAction() {
   const world = gameManager.world;
   if (!world) return;
-  const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+  const globalState = world.getComponent<GlobalStateComponent>(
+    GLOBAL_ENTITY,
+    "GlobalState"
+  );
   const entities = globalState ? globalState.mulliganSelection : [];
   const action: GameAction = {
     type: "CONFIRM_MULLIGAN",

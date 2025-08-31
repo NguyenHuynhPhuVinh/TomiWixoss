@@ -18,13 +18,13 @@ export const growLrigReducer: Reducer<{
   type: "GROW_LRIG";
   payload: { targetEntityId: Entity; zoneIndex: number };
 }> = (draftWorld, payload) => {
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   );
-  const sideEffects = draftWorld.getComponent(
+  const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
-    SideEffectComponent
+    "SideEffect"
   )!;
 
   if (!globalState) return;
@@ -39,9 +39,9 @@ export const growLrigReducer: Reducer<{
   });
 
   // Lấy dữ liệu targetLrigInfo sớm
-  const targetLrigInfo = draftWorld.getComponent(
+  const targetLrigInfo = draftWorld.getComponent<CardInfoComponent>(
     targetEntityId,
-    CardInfoComponent
+    "CardInfo"
   );
   if (!targetLrigInfo) {
     console.error("LRIG không hợp lệ để Grow.");
@@ -78,8 +78,8 @@ export const growLrigReducer: Reducer<{
   }
 
   // B. Lấy dữ liệu các lá bài liên quan
-  const currentLrigEntity = draftWorld.query([ZoneComponent]).find((e) => {
-    const zone = draftWorld.getComponent(e, ZoneComponent)!;
+  const currentLrigEntity = draftWorld.query(["Zone"]).find((e) => {
+    const zone = draftWorld.getComponent<ZoneComponent>(e, "Zone")!;
     return zone.zone === "lrigZone" && zone.index === zoneIndex;
   });
 
@@ -87,9 +87,9 @@ export const growLrigReducer: Reducer<{
     console.error("LRIG không hợp lệ để Grow.");
     return;
   }
-  const currentLrigInfo = draftWorld.getComponent(
+  const currentLrigInfo = draftWorld.getComponent<CardInfoComponent>(
     currentLrigEntity,
-    CardInfoComponent
+    "CardInfo"
   )!;
 
   // C. Kiểm tra luật Grow (level, type, etc.)
@@ -107,14 +107,14 @@ export const growLrigReducer: Reducer<{
 
   // === C. THÊM KIỂM TRA VỚI CENTER LRIG CHO ASSIST GROW ===
   if (!isCenterGrow) {
-    const centerLrigEntity = draftWorld.query([ZoneComponent]).find((e) => {
-      const zone = draftWorld.getComponent(e, ZoneComponent)!;
+    const centerLrigEntity = draftWorld.query(["Zone"]).find((e) => {
+      const zone = draftWorld.getComponent<ZoneComponent>(e, "Zone")!;
       return zone.zone === "lrigZone" && zone.index === 1;
     });
     if (centerLrigEntity) {
-      const centerLrigInfo = draftWorld.getComponent(
+      const centerLrigInfo = draftWorld.getComponent<CardInfoComponent>(
         centerLrigEntity,
-        CardInfoComponent
+        "CardInfo"
       )!;
       const centerLrigLevel = centerLrigInfo.data.level ?? 0;
       const targetLevel = targetLrigInfo.data.level ?? 0;
@@ -132,12 +132,15 @@ export const growLrigReducer: Reducer<{
 
   // --- 2. THANH TOÁN COST ---
   const enerZoneEntities = draftWorld
-    .query([ZoneComponent])
+    .query(["Zone"])
     .filter(
-      (e) => draftWorld.getComponent(e, ZoneComponent)!.zone === "enerZone"
+      (e) =>
+        draftWorld.getComponent<ZoneComponent>(e, "Zone")!.zone === "enerZone"
     );
   const enerZoneCards = enerZoneEntities.map(
-    (e) => draftWorld.getComponent(e, CardInfoComponent)!.data as CardInstance
+    (e) =>
+      draftWorld.getComponent<CardInfoComponent>(e, "CardInfo")!
+        .data as CardInstance
   );
 
   const cost = targetLrigInfo.data.growCost;
@@ -158,25 +161,27 @@ export const growLrigReducer: Reducer<{
   paymentResult.paidEner.forEach((paidCard: CardInstance) => {
     const paidEntity = enerZoneEntities.find(
       (e) =>
-        (draftWorld.getComponent(e, CardInfoComponent)!.data as CardInstance)
-          .uuid === paidCard.uuid
+        (
+          draftWorld.getComponent<CardInfoComponent>(e, "CardInfo")!
+            .data as CardInstance
+        ).uuid === paidCard.uuid
     )!;
-    const zone = draftWorld.getComponent(paidEntity, ZoneComponent)!;
+    const zone = draftWorld.getComponent<ZoneComponent>(paidEntity, "Zone")!;
     zone.zone = "trash";
   });
 
   // Thực hiện Grow và xử lý Underneath
-  const currentLrigStatus = draftWorld.getComponent(
+  const currentLrigStatus = draftWorld.getComponent<StatusComponent>(
     currentLrigEntity,
-    StatusComponent
+    "Status"
   )!;
-  const currentLrigZone = draftWorld.getComponent(
+  const currentLrigZone = draftWorld.getComponent<ZoneComponent>(
     currentLrigEntity,
-    ZoneComponent
+    "Zone"
   )!;
-  const currentLrigUnderneath = draftWorld.getComponent(
+  const currentLrigUnderneath = draftWorld.getComponent<UnderneathComponent>(
     currentLrigEntity,
-    UnderneathComponent
+    "Underneath"
   );
 
   // Gom tất cả các lá bài cũ lại
@@ -187,18 +192,18 @@ export const growLrigReducer: Reducer<{
 
   // Di chuyển các lá bài cũ ra khỏi bàn đấu (tạm thời)
   oldCardsStack.forEach((entityId) => {
-    const zone = draftWorld.getComponent(entityId, ZoneComponent)!;
+    const zone = draftWorld.getComponent<ZoneComponent>(entityId, "Zone")!;
     zone.zone = "underneath"; // Một "zone" ảo
   });
 
   // Đặt LRIG mới ra sân
-  const targetLrigZone = draftWorld.getComponent(
+  const targetLrigZone = draftWorld.getComponent<ZoneComponent>(
     targetEntityId,
-    ZoneComponent
+    "Zone"
   )!;
-  const targetLrigStatus = draftWorld.getComponent(
+  const targetLrigStatus = draftWorld.getComponent<StatusComponent>(
     targetEntityId,
-    StatusComponent
+    "Status"
   )!;
   targetLrigZone.zone = "lrigZone";
   targetLrigZone.index = zoneIndex;
@@ -207,6 +212,7 @@ export const growLrigReducer: Reducer<{
   // Gắn component Underneath mới vào LRIG mới
   draftWorld.addComponent(
     targetEntityId,
+    "Underneath",
     new UnderneathComponent(oldCardsStack)
   );
 

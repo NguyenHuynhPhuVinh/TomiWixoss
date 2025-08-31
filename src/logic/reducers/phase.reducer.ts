@@ -16,17 +16,17 @@ export const advancePhaseReducer: Reducer<{
   type: "ADVANCE_PHASE";
   payload: {};
 }> = (draftWorld, payload) => {
-  const globalState = draftWorld.getComponent(
+  const globalState = draftWorld.getComponent<GlobalStateComponent>(
     GLOBAL_ENTITY,
-    GlobalStateComponent
+    "GlobalState"
   )!;
-  const sideEffects = draftWorld.getComponent(
+  const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
-    SideEffectComponent
+    "SideEffect"
   )!;
-  const effectStack = draftWorld.getComponent(
+  const effectStack = draftWorld.getComponent<EffectStackComponent>(
     GLOBAL_ENTITY,
-    EffectStackComponent
+    "EffectStack"
   )!;
 
   // Kiểm tra effect stack
@@ -75,9 +75,10 @@ export const advancePhaseReducer: Reducer<{
   // Thêm side effects cho phase mới
   if (nextPhase === "end") {
     const handEntities = draftWorld
-      .query([ZoneComponent])
+      .query(["Zone"])
       .filter(
-        (e) => draftWorld.getComponent(e, ZoneComponent)!.zone === "hand"
+        (e) =>
+          draftWorld.getComponent<ZoneComponent>(e, "Zone")!.zone === "hand"
       );
 
     if (handEntities.length > 6) {

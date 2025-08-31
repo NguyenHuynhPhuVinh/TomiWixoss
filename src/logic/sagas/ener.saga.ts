@@ -12,7 +12,7 @@ export const chargeEnerSaga: Saga<{
 }> = (action, world, { eventBus }) => {
   const { source, entityId } = action.payload;
 
-  const cardInfo = world.getComponent(entityId, CardInfoComponent)!;
+  const cardInfo = world.getComponent<CardInfoComponent>(entityId, "CardInfo")!;
 
   // PHÁT SỰ KIỆN
   eventBus.dispatch(GameEvent.CARD_CHARGED, {
