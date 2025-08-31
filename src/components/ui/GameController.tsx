@@ -5,6 +5,9 @@ import { Button } from "./button";
 import { useStore } from "zustand";
 import commandService from "@/logic/core/command.service";
 import { DrawCardCommand } from "@/logic/commands/drawCard.command";
+import { AdvancePhaseCommand } from "@/logic/commands/advancePhase.command";
+import { UpAllCardsCommand } from "@/logic/commands/upAllCards.command";
+import setupService from "@/logic/core/setup.service";
 
 // Thêm props mới
 interface GameControllerProps {
@@ -16,53 +19,36 @@ export default function GameController({
 }: GameControllerProps) {
   const phase = useStore(useGameStore, (state) => state.phase);
   const turn = useStore(useGameStore, (state) => state.turn);
-  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
   const handSize = useStore(useGameStore, (state) => state.player.hand.length);
-  const prepareDecks = useStore(useGameStore, (state) => state.prepareDecks);
-  const performMulligan = useStore(
-    useGameStore,
-    (state) => state.performMulligan
-  );
-  const goToNextPhase = useStore(useGameStore, (state) => state.goToNextPhase);
-  const upAllCards = useStore(useGameStore, (state) => state.upAllCards);
   const mainDeckCount = useStore(
     useGameStore,
     (state) => state.player.mainDeck.length
   );
-  // --- LẤY STATE MỚI ---
   const actionTakenInPhase = useStore(
     useGameStore,
     (state) => state.actionTakenInPhase
   );
 
-  const openZoneViewer = useStore(
-    useGameStore,
-    (state) => state.openZoneViewer
-  );
-  const playerAction = useStore(useGameStore, (state) => state.playerAction);
-  const cancelPlayerAction = useStore(
-    useGameStore,
-    (state) => state.cancelPlayerAction
-  );
-
   const renderContent = () => {
     // Xử lý trạng thái hành động đặc biệt trước
-    if (playerAction?.type === "place_signi") {
-      return (
-        <>
-          <p className="text-sm text-blue-400 mb-2">
-            Chọn một ô SIGNI trống trên sân...
-          </p>
-          <Button onClick={cancelPlayerAction} variant="destructive" size="sm">
-            Hủy
-          </Button>
-        </>
-      );
-    }
+    // if (playerAction?.type === "place_signi") {
+    //   return (
+    //     <>
+    //       <p className="text-sm text-blue-400 mb-2">
+    //         Chọn một ô SIGNI trống trên sân...
+    //       </p>
+    //       <Button onClick={cancelPlayerAction} variant="destructive" size="sm">
+    //         Hủy
+    //       </Button>
+    //     </>
+    //   );
+    // }
 
     switch (phase) {
       case "pre_game":
-        return <Button onClick={prepareDecks}>Chuẩn bị</Button>;
+        return (
+          <Button onClick={() => setupService.startSetup()}>Chuẩn bị</Button>
+        );
       case "selecting_lrigs":
         return (
           <p className="text-muted-foreground animate-pulse">
@@ -81,7 +67,7 @@ export default function GameController({
             <Button
               onClick={() => {
                 // Gửi danh sách đã chọn vào action
-                performMulligan(selectedCardsForMulligan);
+                // performMulligan(selectedCardsForMulligan);
               }}
               className="w-full"
             >
@@ -93,11 +79,20 @@ export default function GameController({
         return (
           <>
             <h3 className="font-bold">Turn {turn} - Up Phase</h3>
-            <Button onClick={upAllCards} className="w-full mt-2">
+            <Button
+              onClick={() => {
+                const command = new UpAllCardsCommand();
+                commandService.dispatch(command);
+              }}
+              className="w-full mt-2"
+            >
               Up All Cards
             </Button>
             <Button
-              onClick={goToNextPhase}
+              onClick={() => {
+                const command = new AdvancePhaseCommand();
+                commandService.dispatch(command);
+              }}
               variant="outline"
               className="w-full mt-2"
             >
@@ -126,7 +121,10 @@ export default function GameController({
               {actionTakenInPhase ? "Đã rút bài" : `Rút ${amountToDraw} lá`}
             </Button>
             <Button
-              onClick={goToNextPhase}
+              onClick={() => {
+                const command = new AdvancePhaseCommand();
+                commandService.dispatch(command);
+              }}
               variant="outline"
               className="w-full mt-2"
             >
@@ -147,7 +145,13 @@ export default function GameController({
                 Zone.
               </p>
             )}
-            <Button onClick={goToNextPhase} className="w-full mt-2">
+            <Button
+              onClick={() => {
+                const command = new AdvancePhaseCommand();
+                commandService.dispatch(command);
+              }}
+              className="w-full mt-2"
+            >
               Next Phase
             </Button>
           </>
@@ -165,7 +169,7 @@ export default function GameController({
                 </p>
                 {/* Nút này chỉ để mở viewer, hành động chính là click vào lá bài trong viewer */}
                 <Button
-                  onClick={openZoneViewer}
+                  onClick={() => {}}
                   className="w-full mt-2"
                   variant="secondary"
                 >
@@ -173,7 +177,13 @@ export default function GameController({
                 </Button>
               </>
             )}
-            <Button onClick={goToNextPhase} className="w-full mt-2">
+            <Button
+              onClick={() => {
+                const command = new AdvancePhaseCommand();
+                commandService.dispatch(command);
+              }}
+              className="w-full mt-2"
+            >
               Next Phase
             </Button>
           </>
@@ -184,17 +194,20 @@ export default function GameController({
           return (
             <>
               <h3 className="font-bold">Turn {turn} - End Phase</h3>
-              {mustDiscard && (
+              {/* {mustDiscard && (
                 <p className="text-destructive text-sm my-2">
                   Tay bạn có {handSize} lá.
                   <br />
                   Hãy bỏ {handSize - 6} lá.
                 </p>
-              )}
+              )} */}
               <Button
-                onClick={goToNextPhase}
+                onClick={() => {
+                  const command = new AdvancePhaseCommand();
+                  commandService.dispatch(command);
+                }}
                 className="w-full mt-2"
-                disabled={mustDiscard} // <-- Vô hiệu hóa nút khi buộc phải bỏ bài
+                // disabled={mustDiscard} // <-- Vô hiệu hóa nút khi buộc phải bỏ bài
               >
                 Kết thúc Lượt
               </Button>
@@ -206,7 +219,13 @@ export default function GameController({
             <h3 className="font-bold">
               Turn {turn} - {phaseText} Phase
             </h3>
-            <Button onClick={goToNextPhase} className="w-full mt-2">
+            <Button
+              onClick={() => {
+                const command = new AdvancePhaseCommand();
+                commandService.dispatch(command);
+              }}
+              className="w-full mt-2"
+            >
               Next Phase
             </Button>
           </>
@@ -224,7 +243,7 @@ export default function GameController({
         <p className="text-muted-foreground mb-6">
           Sẵn sàng để bắt đầu một trận đấu.
         </p>
-        <Button onClick={prepareDecks} className="w-full" size="lg">
+        <Button onClick={() => {}} className="w-full" size="lg">
           Chuẩn bị
         </Button>
       </div>

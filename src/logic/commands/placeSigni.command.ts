@@ -1,61 +1,54 @@
 // src/logic/commands/placeSigni.command.ts
-import { ICommand, GameStoreGet, GameStoreSet } from "./command.interface";
+import { ICommand, GameStoreGet } from "./command.interface"; // Không cần Set nữa
+import useGameStore from "@/store/gameStore";
 import eventService, { GameEvent } from "../core/event.service";
+import { CardInstance } from "@/types/game";
 
 export class PlaceSigniCommand implements ICommand {
-  // Command sẽ nhận các tham số cần thiết khi được tạo
   constructor(private cardUuid: string, private toZoneIndex: number) {}
 
   public canExecute(get: GameStoreGet): boolean {
-    const state = get();
-    const cardToPlay = state.player.hand.find((c) => c.uuid === this.cardUuid);
-    const targetSlotIsEmpty = state.player.signiZone[this.toZoneIndex] === null;
+    const game = get().game;
+    if (!game) return false;
 
-    if (!cardToPlay || !targetSlotIsEmpty) {
-      return false;
-    }
+    const player = game.getCurrentPlayer();
+    const cardToPlay = player.hand.find(
+      (c: CardInstance) => c.uuid === this.cardUuid
+    );
+    const targetSlotIsEmpty = player.signiZone[this.toZoneIndex] === null;
 
-    // TODO: Thêm lại logic kiểm tra Level và Limit ở đây
-    // const lrig = state.player.lrigZone[1];
-    // ...
-
-    return true;
+    return !!cardToPlay && targetSlotIsEmpty;
   }
 
-  public execute(get: GameStoreGet, set: GameStoreSet): void {
-    if (!this.canExecute(get)) {
-      console.warn("Cannot execute PlaceSigniCommand.");
+  public execute(get: GameStoreGet): void {
+    // Không cần Set nữa
+    if (!this.canExecute(get)) return;
+
+    const game = get().game!; // Chúng ta biết chắc là game tồn tại
+    const player = game.getCurrentPlayer();
+
+    // Gọi phương thức từ model
+    const cardToPlay = player.placeSigniFromHand(
+      this.cardUuid,
+      this.toZoneIndex
+    );
+
+    if (!cardToPlay) {
+      console.error("Failed to place signi", this.cardUuid, this.toZoneIndex);
       return;
     }
 
-    const cardToPlay = get().player.hand.find((c) => c.uuid === this.cardUuid)!;
-
+    // 2. Log và phát sự kiện
     get().addLog(
       `Đặt SIGNI: ${cardToPlay.name} vào vị trí ${this.toZoneIndex + 1}.`,
       "action"
     );
-
-    set((state) => {
-      const newHand = state.player.hand.filter((c) => c.uuid !== this.cardUuid);
-      const newSigniZone = [...state.player.signiZone];
-
-      cardToPlay.isFaceUp = true;
-      newSigniZone[this.toZoneIndex] = cardToPlay;
-
-      return {
-        player: {
-          ...state.player,
-          hand: newHand,
-          signiZone: newSigniZone,
-        },
-        playerAction: null, // Hoàn thành và thoát chế độ hành động
-      };
-    });
-
-    // Phát sự kiện sau khi state đã được cập nhật
     eventService.dispatch(GameEvent.CARD_PLAYED, {
       cardId: cardToPlay.id,
       player: "player1",
     });
+
+    // 3. Báo cho Zustand cập nhật UI
+    useGameStore.getState().updateGame(game);
   }
 }

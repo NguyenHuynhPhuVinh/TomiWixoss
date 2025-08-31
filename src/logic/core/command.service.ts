@@ -4,10 +4,10 @@ import { ICommand } from "../commands/command.interface";
 
 class CommandService {
   public dispatch(command: ICommand): void {
-    const { getState, setState } = useGameStore;
+    const { getState } = useGameStore;
 
     if (command.canExecute(getState)) {
-      command.execute(getState, setState);
+      command.execute(getState);
     } else {
       console.error(
         "Command cannot be executed in the current state.",

@@ -59,50 +59,35 @@ export interface GameState {
   turn: number;
   player: PlayerState;
   ai: PlayerState;
-  mulliganSelection: string[]; // Thêm để lưu các lá bài được chọn cho mulligan
-  mustDiscard: boolean;
+  logs: LogEntry[];
   actionTakenInPhase: boolean;
+  // Các state liên quan đến UI sẽ nằm ở đây
   playerAction: PlayerAction | null;
   isZoneViewerOpen: boolean;
   viewingLrigDeckForGrow: { forAssistIndex: number | null } | null;
-  logs: LogEntry[];
+  mustDiscard: boolean;
 }
 
 // Interface cho tất cả các action
 export interface GameActions {
-  // Setup Actions
-  prepareDecks: () => void;
-  drawInitialHand: () => void;
-  performMulligan: (cardsToReturnUuids: string[]) => void;
-  dealRemainingSetup: (
-    centerUuid: string,
-    assist1Uuid: string,
-    assist2Uuid: string
-  ) => void;
-  dealRemainingSetupAfterMulligan: () => void;
-  setMulliganSelection: (selection: string[]) => void;
+  // Log Actions
+  addLog: (message: string, type?: LogType) => void;
 
-  // Phase Actions
-  goToNextPhase: () => void;
+  // Game Slice Actions
+  initializeGame: (initialState: GameState) => void;
+  updateGame: (gameInstance: any) => void; // Sử dụng any tạm thời cho Game
 
-  // Player Actions
-  upAllCards: () => void;
-  discardCardFromHand: (cardUuid: string) => void;
-  checkEndPhaseConditions: () => void;
-  growCenterLrig: (targetLrigUuid: string) => void;
-  growAssistLrig: (targetLrigUuid: string, fromZoneIndex: number) => void;
+  // UI Slice Actions
   initiatePlaceSigni: (cardUuid: string) => void;
   cancelPlayerAction: () => void;
-
-  // UI Actions
   openZoneViewer: () => void;
   closeZoneViewer: () => void;
   openLrigDeckViewerForAssist: (zoneIndex: number) => void;
   closeLrigDeckViewer: () => void;
-
-  // Log Actions
-  addLog: (message: string, type?: LogType) => void;
+  setMustDiscard: (mustDiscard: boolean) => void;
 }
 
 // Đây sẽ là interface tổng hợp, bao gồm cả state và các action từ các slice
-export interface GameStore extends GameState, GameActions {}
+export interface GameStore extends GameState, GameActions {
+  game: any; // Thêm game instance
+}

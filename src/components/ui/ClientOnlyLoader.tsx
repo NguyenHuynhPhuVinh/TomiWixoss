@@ -12,6 +12,9 @@ import useGameStore from "@/store/gameStore";
 import DeckViewer from "./DeckViewer"; // Đảm bảo đã import
 import GameLog from "./GameLog"; // <-- IMPORT COMPONENT MỚI
 import "@/logic/effects/effect.system"; // Chỉ cần import là đủ để khởi tạo
+import { GrowLrigCommand } from "@/logic/commands/growLrig.command";
+import commandService from "@/logic/core/command.service";
+import setupService from "@/logic/core/setup.service";
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -30,10 +33,6 @@ export default function ClientOnlyLoader() {
 
   const phase = useStore(useGameStore, (state) => state.phase);
   const fullLrigDeck = useStore(useGameStore, (state) => state.player.lrigDeck);
-  const dealRemainingSetup = useStore(
-    useGameStore,
-    (state) => state.dealRemainingSetup
-  );
 
   const isZoneViewerOpen = useStore(
     useGameStore,
@@ -48,10 +47,6 @@ export default function ClientOnlyLoader() {
     useGameStore,
     (state) => state.player.lrigZone[1]
   );
-  const growCenterLrig = useStore(
-    useGameStore,
-    (state) => state.growCenterLrig
-  );
   const viewingLrigDeckForGrow = useStore(
     useGameStore,
     (state) => state.viewingLrigDeckForGrow
@@ -61,10 +56,6 @@ export default function ClientOnlyLoader() {
     (state) => state.closeLrigDeckViewer
   );
   const lrigZone = useStore(useGameStore, (state) => state.player.lrigZone);
-  const growAssistLrig = useStore(
-    useGameStore,
-    (state) => state.growAssistLrig
-  );
 
   // Lọc ra các lựa chọn Grow hợp lệ
   const growOptions = (() => {
@@ -134,7 +125,7 @@ export default function ClientOnlyLoader() {
       <LrigSelector
         isOpen={phase === "selecting_lrigs"}
         fullLrigDeck={fullLrigDeck}
-        onConfirm={dealRemainingSetup}
+        onConfirm={() => {}} // Tạm thời
       />
 
       <DeckViewer
@@ -147,13 +138,19 @@ export default function ClientOnlyLoader() {
         isOpen={isZoneViewerOpen}
         onOpenChange={closeLrigDeckViewer}
         onCardClick={(card) => {
+          let zoneIndex = -1;
           if (phase === "grow") {
-            growCenterLrig(card.uuid);
+            zoneIndex = 1; // Center LRIG
           } else if (
             viewingLrigDeckForGrow?.forAssistIndex !== null &&
             viewingLrigDeckForGrow?.forAssistIndex !== undefined
           ) {
-            growAssistLrig(card.uuid, viewingLrigDeckForGrow.forAssistIndex);
+            zoneIndex = viewingLrigDeckForGrow.forAssistIndex;
+          }
+
+          if (zoneIndex !== -1) {
+            const command = new GrowLrigCommand(card.uuid, zoneIndex);
+            commandService.dispatch(command);
           }
         }}
       />

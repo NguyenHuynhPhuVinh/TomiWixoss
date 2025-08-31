@@ -1,11 +1,8 @@
 // src/logic/commands/command.interface.ts
 import { GameStore } from "@/store/types";
 
-// Lấy ra kiểu của get và set từ Zustand để truyền vào Command
+// Lấy ra kiểu của get từ Zustand để truyền vào Command
 export type GameStoreGet = () => GameStore;
-export type GameStoreSet = (
-  partial: Partial<GameStore> | ((state: GameStore) => Partial<GameStore>)
-) => void;
 
 export interface ICommand {
   /**
@@ -17,7 +14,6 @@ export interface ICommand {
   /**
    * Thực thi logic chính của Command.
    * @param get - Hàm để đọc state.
-   * @param set - Hàm để ghi vào state.
    */
-  execute(get: GameStoreGet, set: GameStoreSet): void;
+  execute(get: GameStoreGet): void;
 }

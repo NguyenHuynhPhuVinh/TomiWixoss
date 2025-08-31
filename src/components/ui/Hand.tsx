@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"; // Import cn utility
 import ContextMenu from "./ContextMenu"; // Thêm import ContextMenu
 import { ChargeEnerCommand } from "@/logic/commands/chargeEner.command";
 import commandService from "@/logic/core/command.service";
+import { DiscardCardCommand } from "@/logic/commands/discardCard.command";
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
@@ -30,10 +31,6 @@ export default function Hand({
   const hand = useStore(useGameStore, (state) => state.player.hand);
   const phase = useStore(useGameStore, (state) => state.phase); // Lấy phase hiện tại
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
-  const discardCardAction = useStore(
-    useGameStore,
-    (state) => state.discardCardFromHand
-  );
   // LẤY ACTION MỚI
   const initiatePlaceSigni = useStore(
     useGameStore,
@@ -99,7 +96,8 @@ export default function Hand({
   };
 
   const handleDiscard = (cardUuid: string) => {
-    discardCardAction(cardUuid);
+    const command = new DiscardCardCommand(cardUuid);
+    commandService.dispatch(command);
     // Không cần bỏ chọn vì người chơi có thể cần bỏ nhiều lá
   };
 
