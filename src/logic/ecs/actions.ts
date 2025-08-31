@@ -23,3 +23,21 @@ export function dispatchChargeEnerAction(
     gameManager.forceUpdate();
   }
 }
+
+// === ACTION MỚI ===
+export function dispatchAdvancePhaseAction() {
+  const world = gameManager.world;
+  if (!world) return;
+
+  const actionRequest = world.getComponent(
+    GLOBAL_ENTITY,
+    ActionRequestComponent
+  );
+  if (actionRequest) {
+    actionRequest.request = {
+      type: "ADVANCE_PHASE",
+      payload: null, // Không cần payload
+    };
+    gameManager.forceUpdate();
+  }
+}

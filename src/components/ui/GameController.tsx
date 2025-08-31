@@ -6,46 +6,17 @@ import gameManager from "@/logic/ecs/game.manager";
 import { GamePhase } from "@/types/game";
 import { GlobalStateComponent } from "@/logic/ecs/components/card.components";
 import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
+import { dispatchAdvancePhaseAction } from "@/logic/ecs/actions"; // <-- IMPORT ACTION MỚI
 
 export default function GameController() {
   const phase = useGameStore((state) => state.phase);
   const turn = useGameStore((state) => state.turn);
   const actionTakenInPhase = useGameStore((state) => state.actionTakenInPhase);
   const initializeGame = useGameStore((state) => state.initializeGame);
-  const setPhase = useGameStore((state) => state.setPhase);
+  // const setPhase = useGameStore((state) => state.setPhase); // Không còn cần thiết
 
-  const handleNextPhase = () => {
-    // Tạm thời hard-code luồng phase
-    const phaseOrder: GamePhase[] = [
-      "up",
-      "draw",
-      "ener",
-      "grow",
-      "main",
-      "attack",
-      "end",
-    ];
-    const currentIndex = phaseOrder.indexOf(phase);
-    let nextIndex = currentIndex + 1;
-    let nextPhase: GamePhase;
-    if (nextIndex >= phaseOrder.length) {
-      nextPhase = phaseOrder[0];
-    } else {
-      nextPhase = phaseOrder[nextIndex];
-    }
-
-    // Cập nhật state trong world
-    const world = gameManager.world;
-    if (world) {
-      const globalState = world.getComponent(
-        GLOBAL_ENTITY,
-        GlobalStateComponent
-      )!;
-      globalState.phase = nextPhase;
-      globalState.actionTakenInPhase = false; // Reset cho phase mới
-      gameManager.forceUpdate();
-    }
-  };
+  // Xóa hàm handleNextPhase cũ
+  // const handleNextPhase = () => { ... };
 
   const renderContent = () => {
     switch (phase) {
@@ -62,8 +33,9 @@ export default function GameController() {
             >
               Up All Cards
             </Button>
+            {/* Sử dụng action dispatcher mới */}
             <Button
-              onClick={handleNextPhase}
+              onClick={dispatchAdvancePhaseAction}
               variant="outline"
               className="w-full mt-2"
             >
@@ -85,7 +57,7 @@ export default function GameController() {
               {actionTakenInPhase ? "Đã rút bài" : `Rút ${amountToDraw} lá`}
             </Button>
             <Button
-              onClick={handleNextPhase}
+              onClick={dispatchAdvancePhaseAction}
               variant="outline"
               className="w-full mt-2"
             >
@@ -105,7 +77,10 @@ export default function GameController() {
                 Chọn một lá bài trên tay hoặc trên sân để nạp Ener.
               </p>
             )}
-            <Button onClick={handleNextPhase} className="w-full mt-2">
+            <Button
+              onClick={dispatchAdvancePhaseAction}
+              className="w-full mt-2"
+            >
               Next Phase
             </Button>
           </>
@@ -119,7 +94,10 @@ export default function GameController() {
             <h3 className="font-bold">
               Turn {turn} - {phaseText} Phase
             </h3>
-            <Button onClick={handleNextPhase} className="w-full mt-2">
+            <Button
+              onClick={dispatchAdvancePhaseAction}
+              className="w-full mt-2"
+            >
               Next Phase
             </Button>
           </>

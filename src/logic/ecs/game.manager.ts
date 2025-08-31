@@ -4,6 +4,7 @@ import { GameFactory } from "./game.factory";
 import { UpSystem } from "./systems/up.system";
 import { DrawSystem } from "./systems/draw.system";
 import { EnerSystem } from "./systems/ener.system"; // <-- IMPORT
+import { PhaseSystem } from "./systems/phase.system"; // <-- IMPORT
 
 type UpdateListener = (world: World) => void;
 
@@ -19,6 +20,7 @@ class GameManager {
     this.world.addSystem(new UpSystem());
     this.world.addSystem(new DrawSystem());
     this.world.addSystem(new EnerSystem()); // <-- THÊM VÀO ĐÂY
+    this.world.addSystem(new PhaseSystem()); // <-- THÊM VÀO ĐÂY
     // ... thêm các system khác
     return this.world;
   }
