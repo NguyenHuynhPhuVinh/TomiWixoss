@@ -2,6 +2,7 @@
 import { Component } from "../ecs.types";
 import { CardData, ZoneKey, GamePhase } from "@/types/game"; // Import GamePhase
 import { Entity } from "../ecs.types"; // Import Entity
+import { LogType } from "@/store/types"; // Import LogType
 
 /**
  * Chứa dữ liệu tĩnh của lá bài, không bao giờ thay đổi.
@@ -79,4 +80,27 @@ export class ActionRequestComponent implements Component {
  */
 export class UnderneathComponent implements Component {
   constructor(public entities: Entity[] = []) {}
+}
+
+// Định nghĩa các loại hiệu ứng phụ
+interface LogSideEffect {
+  type: "LOG";
+  message: string;
+  logType: LogType;
+}
+interface UpdateUIFlagSideEffect {
+  type: "UPDATE_UI_FLAG";
+  flag: "mustDiscard" | "isZoneViewerOpen";
+  value: boolean;
+}
+// Thêm các loại khác sau này
+
+export type SideEffect = LogSideEffect | UpdateUIFlagSideEffect;
+
+/**
+ * Component singleton chứa một hàng đợi các "hiệu ứng phụ"
+ * mà engine muốn thông báo cho thế giới bên ngoài (UI).
+ */
+export class SideEffectComponent implements Component {
+  public queue: SideEffect[] = [];
 }

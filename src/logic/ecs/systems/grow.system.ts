@@ -9,9 +9,10 @@ import {
   StatusComponent,
   ZoneComponent,
   UnderneathComponent,
+  SideEffectComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import useGameStore from "@/store/gameStore";
+// import useGameStore from "@/store/gameStore";
 import { checkCost } from "@/logic/payment";
 import { CardInstance } from "@/types/game";
 import { GamePhase } from "@/types/game";
@@ -33,11 +34,15 @@ export class GrowSystem implements System {
       return;
     }
 
-    const { addLog, closeZoneViewer } = useGameStore.getState();
+    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
     const { targetEntityId, zoneIndex } = actionRequest.request.payload;
 
     // Đóng modal ngay lập tức để đảm bảo phản hồi UI
-    closeZoneViewer();
+    sideEffects.queue.push({
+      type: "UPDATE_UI_FLAG",
+      flag: "isZoneViewerOpen",
+      value: false,
+    });
 
     // Lấy dữ liệu targetLrigInfo sớm
     const targetLrigInfo = world.getComponent(
@@ -54,7 +59,11 @@ export class GrowSystem implements System {
     const isCenterGrow = zoneIndex === 1;
     if (isCenterGrow) {
       if (globalState.phase !== "grow" || globalState.actionTakenInPhase) {
-        addLog("Chỉ có thể Grow Center LRIG một lần trong Grow Phase.", "info");
+        sideEffects.queue.push({
+          type: "LOG",
+          message: "Chỉ có thể Grow Center LRIG một lần trong Grow Phase.",
+          logType: "info",
+        });
         return;
       }
     } else {
@@ -68,10 +77,11 @@ export class GrowSystem implements System {
         !allowedTimings ||
         !allowedTimings.includes(globalState.phase as any)
       ) {
-        addLog(
-          `Không thể Grow ${targetLrigInfo.data.name} trong ${globalState.phase} phase.`,
-          "info"
-        );
+        sideEffects.queue.push({
+          type: "LOG",
+          message: `Không thể Grow ${targetLrigInfo.data.name} trong ${globalState.phase} phase.`,
+          logType: "info",
+        });
         return;
       }
     }
@@ -97,7 +107,11 @@ export class GrowSystem implements System {
       targetLrigInfo.data.level !== (currentLrigInfo.data.level ?? -1) + 1 ||
       targetLrigInfo.data.lrigType !== currentLrigInfo.data.lrigType
     ) {
-      addLog("Mục tiêu Grow không hợp lệ.", "info");
+      sideEffects.queue.push({
+        type: "LOG",
+        message: "Mục tiêu Grow không hợp lệ.",
+        logType: "info",
+      });
       return;
     }
 
@@ -116,10 +130,11 @@ export class GrowSystem implements System {
         const targetLevel = targetLrigInfo.data.level ?? 0;
 
         if (targetLevel > centerLrigLevel) {
-          addLog(
-            `Không thể Grow Assist LRIG: Level (${targetLevel}) cao hơn Center LRIG (${centerLrigLevel}).`,
-            "info"
-          );
+          sideEffects.queue.push({
+            type: "LOG",
+            message: `Không thể Grow Assist LRIG: Level (${targetLevel}) cao hơn Center LRIG (${centerLrigLevel}).`,
+            logType: "info",
+          });
           return;
         }
       }
@@ -138,7 +153,11 @@ export class GrowSystem implements System {
     const paymentResult = checkCost(cost, enerZoneCards);
 
     if (!paymentResult.canPay) {
-      addLog("Không thể Grow: Không đủ Ener.", "info");
+      sideEffects.queue.push({
+        type: "LOG",
+        message: "Không thể Grow: Không đủ Ener.",
+        logType: "info",
+      });
       return;
     }
 
@@ -201,8 +220,16 @@ export class GrowSystem implements System {
       // Chỉ set cờ khi Grow Center LRIG
       globalState.actionTakenInPhase = true;
     }
-    addLog(`Trả ${paymentResult.paidEner.length} Ener.`, "cost");
-    addLog(`Grow LRIG thành ${targetLrigInfo.data.name}!`, "action");
+    sideEffects.queue.push({
+      type: "LOG",
+      message: `Trả ${paymentResult.paidEner.length} Ener.`,
+      logType: "cost",
+    });
+    sideEffects.queue.push({
+      type: "LOG",
+      message: `Grow LRIG thành ${targetLrigInfo.data.name}!`,
+      logType: "action",
+    });
 
     // PHÁT SỰ KIỆN CHO GROW
     eventBus.dispatch(GameEvent.CARD_GROWN, {

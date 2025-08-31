@@ -7,9 +7,10 @@ import {
   GlobalStateComponent,
   StatusComponent,
   ZoneComponent,
+  SideEffectComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import useGameStore from "@/store/gameStore";
+// import useGameStore from "@/store/gameStore";
 import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class DiscardSystem implements System {
@@ -29,7 +30,7 @@ export class DiscardSystem implements System {
     }
 
     console.log("--- Running DiscardSystem ---");
-    const { addLog, setMustDiscard } = useGameStore.getState();
+    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
     const { entityId } = actionRequest.request.payload;
 
     // Di chuyển lá bài vào mộ
@@ -37,7 +38,11 @@ export class DiscardSystem implements System {
     zone.zone = "trash";
 
     const cardInfo = world.getComponent(entityId, CardInfoComponent)!;
-    addLog(`Bỏ bài: ${cardInfo.data.name}.`, "action");
+    sideEffects.queue.push({
+      type: "LOG",
+      message: `Bỏ bài: ${cardInfo.data.name}.`,
+      logType: "action",
+    });
 
     // Kiểm tra lại sau khi bỏ
     const handSize = world
@@ -46,7 +51,11 @@ export class DiscardSystem implements System {
         (e) => world.getComponent(e, ZoneComponent)!.zone === "hand"
       ).length;
     if (handSize <= 6) {
-      setMustDiscard(false); // Tắt chế độ bỏ bài
+      sideEffects.queue.push({
+        type: "UPDATE_UI_FLAG",
+        flag: "mustDiscard",
+        value: false,
+      });
     }
 
     // PHÁT SỰ KIỆN BỎ BÀI

@@ -229,7 +229,11 @@ export default function Scene() {
 
               if (canTryGrowAssist) {
                 // 1. Kiểm tra xem có lựa chọn nào không
-                const options = getValidGrowOptions(zoneInfo.index);
+                const options = getValidGrowOptions(
+                  world,
+                  phase,
+                  zoneInfo.index
+                );
 
                 if (options.length > 0) {
                   // 2. Nếu có, MỚI mở modal

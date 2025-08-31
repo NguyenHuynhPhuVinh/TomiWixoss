@@ -9,6 +9,7 @@ import {
   StatusComponent,
   GlobalStateComponent,
   ActionRequestComponent, // <-- IMPORT
+  SideEffectComponent, // <-- THÊM IMPORT
 } from "./components/card.components";
 
 // Định nghĩa một hằng số cho entity toàn cục để dễ nhận biết
@@ -28,6 +29,7 @@ export class GameFactory {
       new GlobalStateComponent("pre_game", 0, false)
     );
     world.addComponent(globalEntity, new ActionRequestComponent()); // <-- THÊM VÀO ĐÂY
+    world.addComponent(globalEntity, new SideEffectComponent()); // <-- THÊM VÀO ĐÂY
     // ===============================================
 
     // 1. Lấy dữ liệu deck

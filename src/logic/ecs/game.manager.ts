@@ -3,7 +3,11 @@ import { World } from "./world";
 import { GameFactory } from "./game.factory";
 import { System } from "./ecs.types";
 import { GLOBAL_ENTITY } from "./game.factory";
-import { ActionRequestComponent } from "./components/card.components";
+import {
+  ActionRequestComponent,
+  SideEffectComponent,
+} from "./components/card.components";
+import useGameStore from "@/store/gameStore";
 
 // Import tất cả các system
 import { SetupSystem } from "./systems/setup.system";
@@ -103,8 +107,41 @@ class GameManager {
       system.update(this.world);
     }
 
+    // BƯỚC CUỐI CÙNG TRONG LOOP
+    this.processSideEffects();
+
     this.notifyUpdate();
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
+  }
+
+  private processSideEffects() {
+    if (!this.world) return;
+    const sideEffectComponent = this.world.getComponent(
+      GLOBAL_ENTITY,
+      SideEffectComponent
+    )!;
+
+    // Xử lý tất cả các yêu cầu trong hàng đợi
+    while (sideEffectComponent.queue.length > 0) {
+      const effect = sideEffectComponent.queue.shift()!;
+      const { addLog, setMustDiscard, openZoneViewer } =
+        useGameStore.getState();
+
+      switch (effect.type) {
+        case "LOG":
+          addLog(effect.message, effect.logType);
+          break;
+        case "UPDATE_UI_FLAG":
+          if (effect.flag === "mustDiscard") {
+            setMustDiscard(effect.value);
+          }
+          if (effect.flag === "isZoneViewerOpen") {
+            if (effect.value) openZoneViewer();
+            // else closeZoneViewer() // Cần thêm action này
+          }
+          break;
+      }
+    }
   }
 
   public notifyUpdate() {

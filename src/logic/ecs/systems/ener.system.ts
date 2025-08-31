@@ -7,9 +7,10 @@ import {
   StatusComponent,
   ZoneComponent,
   CardInfoComponent,
+  SideEffectComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import useGameStore from "@/store/gameStore";
+// import useGameStore from "@/store/gameStore";
 import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class EnerSystem implements System {
@@ -31,7 +32,7 @@ export class EnerSystem implements System {
     }
 
     console.log("--- Running EnerSystem ---", actionRequest.request.payload);
-    const { addLog } = useGameStore.getState();
+    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
     const { source, entityId } = actionRequest.request.payload;
 
     const zone = world.getComponent(entityId, ZoneComponent);
@@ -51,7 +52,11 @@ export class EnerSystem implements System {
 
     // Đánh dấu đã thực hiện hành động
     globalState.actionTakenInPhase = true;
-    addLog(`Nạp Ener từ ${source}: ${cardInfo.data.name}.`, "action");
+    sideEffects.queue.push({
+      type: "LOG",
+      message: `Nạp Ener từ ${source}: ${cardInfo.data.name}.`,
+      logType: "action",
+    });
 
     // PHÁT SỰ KIỆN
     eventBus.dispatch(GameEvent.CARD_CHARGED, {

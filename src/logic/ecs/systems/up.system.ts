@@ -5,9 +5,10 @@ import {
   StatusComponent,
   ZoneComponent,
   GlobalStateComponent,
+  SideEffectComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import useGameStore from "@/store/gameStore";
+// import useGameStore from "@/store/gameStore";
 import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class UpSystem implements System {
@@ -24,7 +25,7 @@ export class UpSystem implements System {
     }
 
     console.log("--- Running UpSystem ---");
-    const { addLog } = useGameStore.getState();
+    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
 
     let uppedCardCount = 0;
     const entitiesToUp = world.query([StatusComponent, ZoneComponent]);
@@ -46,12 +47,20 @@ export class UpSystem implements System {
     }
 
     if (uppedCardCount > 0) {
-      addLog(`Up ${uppedCardCount} lá bài trên sân.`, "action");
+      sideEffects.queue.push({
+        type: "LOG",
+        message: `Up ${uppedCardCount} lá bài trên sân.`,
+        logType: "action",
+      });
       eventBus.dispatch(GameEvent.CARDS_UPPED, {
         count: uppedCardCount,
       });
     } else {
-      addLog("Không có lá bài nào cần Up.", "info");
+      sideEffects.queue.push({
+        type: "LOG",
+        message: "Không có lá bài nào cần Up.",
+        logType: "info",
+      });
     }
 
     // Quan trọng: Báo cho toàn bộ game biết hành động của phase này đã hoàn thành

@@ -7,9 +7,10 @@ import {
   GlobalStateComponent,
   StatusComponent,
   ZoneComponent,
+  SideEffectComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import useGameStore from "@/store/gameStore";
+// import useGameStore from "@/store/gameStore";
 import shuffle from "shuffle-array";
 import { Entity } from "../ecs.types"; // Import Entity
 import gameManager from "../game.manager"; // <-- IMPORT GameManager
@@ -25,7 +26,7 @@ export class SetupSystem implements System {
     if (!globalState || !actionRequest || !actionRequest.request) return;
 
     const { type, payload } = actionRequest.request;
-    const { addLog } = useGameStore.getState();
+    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
 
     // Xử lý các yêu cầu liên quan đến setup
     switch (type) {
@@ -35,10 +36,18 @@ export class SetupSystem implements System {
 
         // Logic validate deck nên được thực hiện ở đây
         // (Tạm thời bỏ qua để đơn giản hóa)
-        addLog("Bắt đầu chuẩn bị trận đấu...", "system");
+        sideEffects.queue.push({
+          type: "LOG",
+          message: "Bắt đầu chuẩn bị trận đấu...",
+          logType: "system",
+        });
 
         globalState.phase = "selecting_lrigs";
-        addLog("Chọn LRIG để bắt đầu trận đấu.", "system");
+        sideEffects.queue.push({
+          type: "LOG",
+          message: "Chọn LRIG để bắt đầu trận đấu.",
+          logType: "system",
+        });
         break;
       }
       // ===========================
@@ -59,13 +68,21 @@ export class SetupSystem implements System {
           status.isFaceUp = true;
         });
 
-        addLog("Đã chọn LRIG. Rút 5 lá bài khởi đầu.", "action");
+        sideEffects.queue.push({
+          type: "LOG",
+          message: "Đã chọn LRIG. Rút 5 lá bài khởi đầu.",
+          logType: "action",
+        });
 
         // Rút 5 lá bài đầu tiên (logic giống DrawSystem)
         this.drawInitialHand(world, 5);
 
         globalState.phase = "mulligan";
-        addLog("Bắt đầu giai đoạn Mulligan.", "system");
+        sideEffects.queue.push({
+          type: "LOG",
+          message: "Bắt đầu giai đoạn Mulligan.",
+          logType: "system",
+        });
         break;
       }
 
@@ -77,7 +94,11 @@ export class SetupSystem implements System {
         const amountToRedraw = cardsToReturnEntities.length;
 
         if (amountToRedraw > 0) {
-          addLog(`Đổi ${amountToRedraw} lá bài.`, "action");
+          sideEffects.queue.push({
+            type: "LOG",
+            message: `Đổi ${amountToRedraw} lá bài.`,
+            logType: "action",
+          });
 
           // Trả bài về deck
           cardsToReturnEntities.forEach((entity) => {
@@ -93,7 +114,11 @@ export class SetupSystem implements System {
           // Rút lại bài
           this.drawInitialHand(world, amountToRedraw);
         } else {
-          addLog("Không đổi bài.", "info");
+          sideEffects.queue.push({
+            type: "LOG",
+            message: "Không đổi bài.",
+            logType: "info",
+          });
         }
 
         // Chia Life Cloth
@@ -103,12 +128,20 @@ export class SetupSystem implements System {
           zone.zone = "lifeCloth";
           zone.index = index;
         });
-        addLog("Chia 7 lá Life Cloth.", "system");
+        sideEffects.queue.push({
+          type: "LOG",
+          message: "Chia 7 lá Life Cloth.",
+          logType: "system",
+        });
 
         // Bắt đầu game
         globalState.phase = "up";
         globalState.turn = 1;
-        addLog(`Bắt đầu Turn 1 - Up Phase`, "system");
+        sideEffects.queue.push({
+          type: "LOG",
+          message: `Bắt đầu Turn 1 - Up Phase`,
+          logType: "system",
+        });
 
         // Khởi động vòng lặp tự động cho các phase đầu tiên
         gameManager.startLoop();

@@ -5,9 +5,10 @@ import {
   GlobalStateComponent,
   StatusComponent,
   ZoneComponent,
+  SideEffectComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import useGameStore from "@/store/gameStore";
+// import useGameStore from "@/store/gameStore";
 import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class DrawSystem implements System {
@@ -21,7 +22,7 @@ export class DrawSystem implements System {
     }
 
     console.log("--- Running DrawSystem ---");
-    const { addLog } = useGameStore.getState();
+    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
 
     // 1. Xác định số lá bài cần rút
     const amountToDraw = globalState.turn === 1 ? 1 : 2;
@@ -32,7 +33,11 @@ export class DrawSystem implements System {
       .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "mainDeck");
 
     if (mainDeckEntities.length === 0) {
-      addLog("Deck đã hết bài!", "system");
+      sideEffects.queue.push({
+        type: "LOG",
+        message: "Deck đã hết bài!",
+        logType: "system",
+      });
       globalState.actionTakenInPhase = true; // Đánh dấu đã xong để không chạy lại
       return;
     }
@@ -66,7 +71,11 @@ export class DrawSystem implements System {
       zone.index = remainingDeck.length - 1 - i;
     });
 
-    addLog(`Rút ${cardsToDraw.length} lá bài.`, "action");
+    sideEffects.queue.push({
+      type: "LOG",
+      message: `Rút ${cardsToDraw.length} lá bài.`,
+      logType: "action",
+    });
     globalState.actionTakenInPhase = true; // Đánh dấu đã thực hiện
 
     // Dispatch event so other systems (scripting, audio, UI) can react

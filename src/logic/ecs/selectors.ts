@@ -1,18 +1,25 @@
 // src/logic/ecs/selectors.ts
-import useGameStore from "@/store/gameStore";
+// import useGameStore from "@/store/gameStore";
+import { World } from "./world";
+import { GamePhase } from "@/types/game";
 import { CardInfoComponent, ZoneComponent } from "./components/card.components";
 
 /**
  * Lấy ra các lựa chọn Grow hợp lệ cho một LRIG cụ thể trên sân.
+ * @param world Thế giới ECS
+ * @param phase Phase hiện tại
  * @param zoneIndex Vị trí của LRIG trên sân (0, 1, hoặc 2).
  * @returns Mảng các Entity ID của các lá bài có thể Grow.
  */
-export function getValidGrowOptions(zoneIndex: number): number[] {
-  const { world, phase } = useGameStore.getState();
+export function getValidGrowOptions(
+  world: World,
+  phase: GamePhase,
+  zoneIndex: number
+): number[] {
   if (!world) return [];
 
   // === LẤY THÔNG TIN CENTER LRIG ĐỂ SO SÁNH ===
-  const centerLrigEntity = world.query([ZoneComponent]).find((e) => {
+  const centerLrigEntity = world.query([ZoneComponent]).find((e: number) => {
     const zone = world.getComponent(e, ZoneComponent)!;
     return zone.zone === "lrigZone" && zone.index === 1;
   });
@@ -25,7 +32,7 @@ export function getValidGrowOptions(zoneIndex: number): number[] {
   const centerLrigLevel = centerLrigInfo.data.level ?? 0;
   // ============================================
 
-  const currentLrigEntity = world.query([ZoneComponent]).find((e) => {
+  const currentLrigEntity = world.query([ZoneComponent]).find((e: number) => {
     const zone = world.getComponent(e, ZoneComponent)!;
     return zone.zone === "lrigZone" && zone.index === zoneIndex;
   });
@@ -38,9 +45,11 @@ export function getValidGrowOptions(zoneIndex: number): number[] {
 
   const lrigDeckEntities = world
     .query([ZoneComponent])
-    .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "lrigDeck");
+    .filter(
+      (e: number) => world.getComponent(e, ZoneComponent)!.zone === "lrigDeck"
+    );
 
-  return lrigDeckEntities.filter((entity) => {
+  return lrigDeckEntities.filter((entity: number) => {
     const cardInfo = world.getComponent(entity, CardInfoComponent)!;
 
     // === LOGIC KIỂM TRA MỚI ===
@@ -52,7 +61,7 @@ export function getValidGrowOptions(zoneIndex: number): number[] {
     } else {
       // Assist LRIG phải kiểm tra timing trên lá bài
       const enterAbility = cardInfo.data.abilities?.find(
-        (a) => a.type === "Enter"
+        (a: any) => a.type === "Enter"
       );
       const allowedTimings = enterAbility?.timing;
 

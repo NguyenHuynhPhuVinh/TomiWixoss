@@ -7,9 +7,10 @@ import {
   GlobalStateComponent,
   StatusComponent,
   ZoneComponent,
+  SideEffectComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import useGameStore from "@/store/gameStore";
+// import useGameStore from "@/store/gameStore";
 import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class PlaceSigniSystem implements System {
@@ -29,12 +30,16 @@ export class PlaceSigniSystem implements System {
     }
 
     console.log("--- Running PlaceSigniSystem ---");
-    const { addLog } = useGameStore.getState();
+    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
     const { entityId, zoneIndex } = actionRequest.request.payload;
 
     // --- 1. KIỂM TRA ĐIỀU KIỆN ---
     if (globalState.phase !== "main") {
-      addLog("Chỉ có thể đặt SIGNI trong Main Phase.", "info");
+      sideEffects.queue.push({
+        type: "LOG",
+        message: "Chỉ có thể đặt SIGNI trong Main Phase.",
+        logType: "info",
+      });
       return;
     }
 
@@ -63,10 +68,11 @@ export class PlaceSigniSystem implements System {
 
     // A. Kiểm tra Level
     if ((cardToPlayInfo.data.level ?? 0) > (centerLrigInfo.data.level ?? 0)) {
-      addLog(
-        `Không thể đặt SIGNI: Level quá cao (yêu cầu <= ${centerLrigInfo.data.level}).`,
-        "info"
-      );
+      sideEffects.queue.push({
+        type: "LOG",
+        message: `Không thể đặt SIGNI: Level quá cao (yêu cầu <= ${centerLrigInfo.data.level}).`,
+        logType: "info",
+      });
       return;
     }
 
@@ -87,10 +93,11 @@ export class PlaceSigniSystem implements System {
         : 99;
 
     if (currentTotalLevel + (cardToPlayInfo.data.level ?? 0) > lrigLimit) {
-      addLog(
-        `Không thể đặt SIGNI: Vượt quá giới hạn Level trên sân (Limit: ${lrigLimit}).`,
-        "info"
-      );
+      sideEffects.queue.push({
+        type: "LOG",
+        message: `Không thể đặt SIGNI: Vượt quá giới hạn Level trên sân (Limit: ${lrigLimit}).`,
+        logType: "info",
+      });
       return;
     }
 
@@ -101,10 +108,13 @@ export class PlaceSigniSystem implements System {
     cardToPlayZone.index = zoneIndex;
     cardToPlayStatus.isFaceUp = true;
 
-    addLog(
-      `Đặt SIGNI: ${cardToPlayInfo.data.name} vào vị trí ${zoneIndex + 1}.`,
-      "action"
-    );
+    sideEffects.queue.push({
+      type: "LOG",
+      message: `Đặt SIGNI: ${cardToPlayInfo.data.name} vào vị trí ${
+        zoneIndex + 1
+      }.`,
+      logType: "action",
+    });
 
     // === PHÁT SỰ KIỆN ===
     eventBus.dispatch(GameEvent.CARD_PLAYED, {
