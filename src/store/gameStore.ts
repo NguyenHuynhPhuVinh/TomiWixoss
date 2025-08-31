@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 // Định nghĩa state mới
 export interface GameStore {
   world: World | null;
+  worldVersion: number; // <-- THÊM THUỘC TÍNH MỚI
   phase: GamePhase;
   turn: number;
   // Các state UI khác có thể thêm ở đây sau
@@ -17,6 +18,7 @@ export interface GameStore {
   playerAction: PlayerAction | null;
 
   // Actions
+  _updateWorld: (world: World) => void; // Action nội bộ mới
   _setWorld: (world: World) => void; // Action nội bộ để cập nhật world
   startGame: () => void;
   setPhase: (phase: GamePhase) => void; // Tạm thời cần action này
@@ -28,17 +30,27 @@ export interface GameStore {
 const useGameStore = create<GameStore>((set, get) => {
   // Kết nối store với GameManager
   gameManager.onUpdate((updatedWorld) => {
-    // Tạo một bản sao nông để trigger re-render
-    set({ world: { ...updatedWorld } as World });
+    // Thay vì set trực tiếp, chúng ta gọi một action nội bộ
+    get()._updateWorld(updatedWorld);
   });
 
   return {
     world: null,
+    worldVersion: 0, // Giá trị ban đầu
     phase: "pre_game",
     turn: 0,
     isZoneViewerOpen: false,
     logs: [], // Thêm lại state ban đầu
     playerAction: null,
+
+    _updateWorld: (world) => {
+      // Chúng ta lưu trực tiếp instance World
+      // và tăng `worldVersion` để báo cho React biết có sự thay đổi
+      set((state) => ({
+        world: world,
+        worldVersion: state.worldVersion + 1,
+      }));
+    },
 
     _setWorld: (world) => set({ world }),
 
@@ -46,6 +58,7 @@ const useGameStore = create<GameStore>((set, get) => {
       const newWorld = gameManager.createNewGame();
       set({
         world: newWorld,
+        worldVersion: 1,
         phase: "up", // Bắt đầu thẳng vào Up Phase của Lượt 1
         turn: 1,
       });

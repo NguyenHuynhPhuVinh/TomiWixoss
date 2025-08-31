@@ -2,20 +2,14 @@
 "use client";
 import useGameStore from "@/store/gameStore";
 import { Button } from "./button";
-import { useStore } from "zustand";
 import gameManager from "@/logic/ecs/game.manager";
 import { GamePhase } from "@/types/game";
 
 export default function GameController() {
-  const { phase, turn, startGame, setPhase } = useStore(
-    useGameStore,
-    (state) => ({
-      phase: state.phase,
-      turn: state.turn,
-      startGame: state.startGame,
-      setPhase: state.setPhase,
-    })
-  );
+  const phase = useGameStore((state) => state.phase);
+  const turn = useGameStore((state) => state.turn);
+  const startGame = useGameStore((state) => state.startGame);
+  const setPhase = useGameStore((state) => state.setPhase);
 
   const handleNextPhase = () => {
     // Tạm thời hard-code luồng phase

@@ -23,6 +23,7 @@ export default function InteractiveZone({
 }: InteractiveZoneProps) {
   const playerAction = useStore(useGameStore, (state) => state.playerAction);
   const world = useStore(useGameStore, (state) => state.world);
+  const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
 
   const signiInSlot = world?.query([ZoneComponent]).find((e) => {
     const zone = world.getComponent(e, ZoneComponent)!;

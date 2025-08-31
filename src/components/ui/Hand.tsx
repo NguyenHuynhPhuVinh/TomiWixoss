@@ -33,6 +33,7 @@ export default function Hand({
   onMulliganSelectionChange,
 }: HandProps) {
   const world = useStore(useGameStore, (state) => state.world);
+  const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
 
   // === TRUY VẤN DỮ LIỆU TAY BÀI TỪ WORLD ===
   const handEntities = useMemo(() => {
@@ -40,7 +41,7 @@ export default function Hand({
     return world
       .query([CardInfoComponent, ZoneComponent])
       .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "hand");
-  }, [world]);
+  }, [world, worldVersion]);
 
   const hand: CardInstance[] = useMemo(() => {
     if (!world) return [];
@@ -55,7 +56,7 @@ export default function Hand({
         owner: zone.owner,
       };
     });
-  }, [world, handEntities]);
+  }, [world, handEntities, worldVersion]);
   // ==========================================
 
   const phase = useStore(useGameStore, (state) => state.phase);

@@ -21,6 +21,7 @@ import { Entity } from "@/logic/ecs/ecs.types";
 
 export default function Scene() {
   const world = useStore(useGameStore, (state) => state.world);
+  const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
   const coords = P1_ZONE_COORDINATES;
 
   if (!world) return null; // Không render gì nếu chưa có world
