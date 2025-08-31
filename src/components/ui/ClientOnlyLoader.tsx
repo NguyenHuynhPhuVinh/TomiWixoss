@@ -50,14 +50,59 @@ export default function ClientOnlyLoader() {
     useGameStore,
     (state) => state.growCenterLrig
   );
+  const viewingLrigDeckForGrow = useStore(
+    useGameStore,
+    (state) => state.viewingLrigDeckForGrow
+  );
+  const closeLrigDeckViewer = useStore(
+    useGameStore,
+    (state) => state.closeLrigDeckViewer
+  );
+  const lrigZone = useStore(useGameStore, (state) => state.player.lrigZone);
+  const growAssistLrig = useStore(
+    useGameStore,
+    (state) => state.growAssistLrig
+  );
 
   // Lọc ra các lựa chọn Grow hợp lệ
-  const validGrowOptions = lrigDeck.filter(
-    (card) =>
-      currentCenterLrig &&
-      card.level === (currentCenterLrig.level ?? -1) + 1 &&
-      card.lrigType === currentCenterLrig.lrigType
-  );
+  const growOptions = (() => {
+    // Grow cho Center LRIG (logic cũ)
+    if (phase === "grow") {
+      return lrigDeck.filter(
+        (card) =>
+          currentCenterLrig &&
+          card.level === (currentCenterLrig.level ?? -1) + 1 &&
+          card.lrigType === currentCenterLrig.lrigType
+      );
+    }
+    // Grow cho Assist LRIG (logic mới)
+    if (
+      viewingLrigDeckForGrow?.forAssistIndex !== null &&
+      viewingLrigDeckForGrow?.forAssistIndex !== undefined
+    ) {
+      const assistIndex = viewingLrigDeckForGrow.forAssistIndex;
+      const currentAssist = lrigZone[assistIndex];
+      const currentCenter = lrigZone[1];
+      if (!currentAssist || !currentCenter) return [];
+
+      return lrigDeck.filter((card) => {
+        const requiredTimings = card.abilities?.find(
+          (a) => a.type === "Enter"
+        )?.timing;
+        const timingOk = requiredTimings
+          ? requiredTimings.includes(phase as any)
+          : true; // Nếu ko ghi timing thì mặc định là được
+
+        return (
+          timingOk &&
+          card.level === (currentAssist.level ?? -1) + 1 &&
+          card.lrigType === currentAssist.lrigType &&
+          card.level <= (currentCenter.level ?? 0)
+        );
+      });
+    }
+    return lrigDeck; // Mặc định hiển thị tất cả
+  })();
 
   return (
     <>
@@ -87,13 +132,22 @@ export default function ClientOnlyLoader() {
       />
 
       <DeckViewer
-        title="LRIG Deck - Chọn để Grow"
-        cards={phase === "grow" ? validGrowOptions : lrigDeck}
+        title={
+          viewingLrigDeckForGrow
+            ? "Chọn Assist LRIG để Grow"
+            : "LRIG Deck - Chọn để Grow"
+        }
+        cards={growOptions}
         isOpen={isZoneViewerOpen}
-        onOpenChange={closeZoneViewer}
+        onOpenChange={closeLrigDeckViewer}
         onCardClick={(card) => {
           if (phase === "grow") {
             growCenterLrig(card.uuid);
+          } else if (
+            viewingLrigDeckForGrow?.forAssistIndex !== null &&
+            viewingLrigDeckForGrow?.forAssistIndex !== undefined
+          ) {
+            growAssistLrig(card.uuid, viewingLrigDeckForGrow.forAssistIndex);
           }
         }}
       />

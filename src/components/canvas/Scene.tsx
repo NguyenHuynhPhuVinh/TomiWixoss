@@ -35,6 +35,10 @@ export default function Scene() {
     useGameStore,
     (state) => state.chargeEnerFromSigni
   );
+  const openLrigDeckViewerForAssist = useStore(
+    useGameStore,
+    (state) => state.openLrigDeckViewerForAssist
+  );
 
   const handleLrigDeckClick = () => {
     if (phase === "grow" && !actionTakenInPhase) {
@@ -144,12 +148,23 @@ export default function Scene() {
           coords.CENTER_LRIG,
           coords.ASSIST_LRIG_2,
         ][index];
+
+        // Chỉ làm cho Assist LRIG (vị trí 0 và 2) có thể click
+        const isAssistLrig = index === 0 || index === 2;
+        const canGrowAssist =
+          isAssistLrig && (phase === "main" || phase === "attack"); // Các phase cho phép
+
         return (
           <Card
             key={card.uuid}
             card={card}
             position={[lrigCoords.x, lrigCoords.y, lrigCoords.z]}
             rotation={[-Math.PI / 2, 0, 0]}
+            onClick={() => {
+              if (canGrowAssist) {
+                openLrigDeckViewerForAssist(index);
+              }
+            }}
           />
         );
       })}

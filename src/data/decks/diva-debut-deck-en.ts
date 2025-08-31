@@ -63,9 +63,8 @@ export const divaDebutDeckEn: CardData[] = [
       },
       {
         type: "Enter",
-        cost: { Green: 1, Colorless: 1 },
         description:
-          "If the cards put into your Ener Zone this way do not share a class, [Ener Charge 1].",
+          "[Ener Charge 2]. If the cards put into your Ener Zone this way do not share a class, [Ener Charge 1].",
       },
     ],
     imageUrl: `${IMG_PATH}/WXDi-D01-004[EN].webp`,

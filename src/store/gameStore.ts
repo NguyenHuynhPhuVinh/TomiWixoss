@@ -80,9 +80,13 @@ interface GameState {
   chargeEnerFromSigni: (cardUuid: string, fromZoneIndex: number) => void; // <-- ACTION MỚI
   // --- ACTION MỚI CHO GROW PHASE ---
   growCenterLrig: (targetLrigUuid: string) => void;
+  growAssistLrig: (targetLrigUuid: string, fromZoneIndex: number) => void; // <-- ACTION MỚI
   isZoneViewerOpen: boolean; // State mới để điều khiển modal
   openZoneViewer: () => void;
   closeZoneViewer: () => void;
+  viewingLrigDeckForGrow: { forAssistIndex: number | null } | null; // <-- STATE MỚI
+  openLrigDeckViewerForAssist: (zoneIndex: number) => void; // <-- ACTION MỚI
+  closeLrigDeckViewer: () => void; // <-- ACTION MỚI
   // --- ACTIONS MỚI CHO MAIN PHASE ---
   initiatePlaceSigni: (cardUuid: string) => void;
   placeSigni: (toZoneIndex: number) => void;
@@ -110,6 +114,7 @@ const useGameStore = create<GameState>((set, get) => ({
   actionTakenInPhase: false, // Giá trị ban đầu
   playerAction: null, // Ban đầu không có hành động nào
   isZoneViewerOpen: false, // Giá trị ban đầu
+  viewingLrigDeckForGrow: null, // Giá trị ban đầu
 
   player: {
     mainDeck: [],
@@ -626,6 +631,124 @@ const useGameStore = create<GameState>((set, get) => ({
 
   openZoneViewer: () => set({ isZoneViewerOpen: true }),
   closeZoneViewer: () => set({ isZoneViewerOpen: false }),
+
+  // --- ACTION MỚI CHO ASSIST LRIG ---
+  openLrigDeckViewerForAssist: (zoneIndex: number) => {
+    set({
+      isZoneViewerOpen: true,
+      viewingLrigDeckForGrow: { forAssistIndex: zoneIndex },
+    });
+  },
+  closeLrigDeckViewer: () => {
+    set({ isZoneViewerOpen: false, viewingLrigDeckForGrow: null });
+  },
+
+  growAssistLrig: (targetLrigUuid: string, fromZoneIndex: number) => {
+    const state = get();
+    const targetLrig = state.player.lrigDeck.find(
+      (c) => c.uuid === targetLrigUuid
+    );
+    const currentAssistLrig = state.player.lrigZone[fromZoneIndex];
+    const currentCenterLrig = state.player.lrigZone[1]; // Cần để kiểm tra giới hạn level
+
+    // --- 1. KIỂM TRA ĐIỀU KIỆN ---
+    if (!targetLrig || !currentAssistLrig || !currentCenterLrig) return;
+
+    const requiredTimings = targetLrig.abilities?.find(
+      (a) => a.type === "Enter"
+    )?.timing;
+    if (requiredTimings && !requiredTimings.includes(state.phase as any)) {
+      console.error("Cannot grow Assist LRIG outside of its specified timing.");
+      return;
+    }
+
+    // Kiểm tra các điều kiện Grow cơ bản
+    if (
+      targetLrig.level !== (currentAssistLrig.level ?? -1) + 1 ||
+      targetLrig.lrigType !== currentAssistLrig.lrigType ||
+      targetLrig.level > (currentCenterLrig.level ?? 0)
+    ) {
+      console.error("Invalid Assist LRIG Grow target.");
+      return;
+    }
+
+    // --- 2. XỬ LÝ THANH TOÁN COST (Tái sử dụng logic cũ) ---
+    // (Phần này giống hệt `growCenterLrig`, bạn có thể tách ra thành hàm helper sau này)
+    const growCost = targetLrig.growCost;
+    if (!growCost) return;
+    const { canPay, tempEnerZone, paidEner } = (() => {
+      const tempEnerZone = [...state.player.enerZone];
+      const paidEner: CardInstance[] = [];
+      let canPay = true;
+
+      for (const color in growCost) {
+        for (let i = 0; i < growCost[color]; i++) {
+          let enerIndex = -1;
+          if (color === "Colorless") {
+            enerIndex = tempEnerZone.findIndex((e) => e); // Lấy bất kỳ lá nào
+          } else {
+            // Ưu tiên lá có màu chính xác trước
+            enerIndex = tempEnerZone.findIndex((e) =>
+              e.colors.includes(color as any)
+            );
+            // Nếu không có, tìm lá Multi Ener
+            if (enerIndex === -1) {
+              enerIndex = tempEnerZone.findIndex((e) =>
+                e.abilities?.some((a) => a.description.includes("[Multi Ener]"))
+              );
+            }
+          }
+
+          if (enerIndex !== -1) {
+            paidEner.push(tempEnerZone.splice(enerIndex, 1)[0]);
+          } else {
+            canPay = false;
+            break;
+          }
+        }
+        if (!canPay) break;
+      }
+
+      return { canPay, tempEnerZone, paidEner };
+    })();
+
+    if (!canPay) {
+      console.error("Cannot pay Grow Cost.", growCost);
+      alert("Không đủ Ener để thực hiện Grow!");
+      return;
+    }
+
+    // --- 3. CẬP NHẬT STATE ---
+    set((currentState) => {
+      const newTrash = [...currentState.player.trash, ...paidEner];
+      const newAssistLrig: CardInstance = {
+        ...targetLrig,
+        isFaceUp: true,
+        underneathCards: [
+          currentAssistLrig,
+          ...(currentAssistLrig.underneathCards || []),
+        ],
+      };
+      const newLrigZone = [...currentState.player.lrigZone];
+      newLrigZone[fromZoneIndex] = newAssistLrig;
+      const newLrigDeck = currentState.player.lrigDeck.filter(
+        (c) => c.uuid !== targetLrigUuid
+      );
+
+      return {
+        player: {
+          ...currentState.player,
+          enerZone: tempEnerZone,
+          trash: newTrash,
+          lrigDeck: newLrigDeck,
+          lrigZone: newLrigZone,
+        },
+        // KHÔNG set actionTakenInPhase, vì có thể Grow nhiều lần
+        isZoneViewerOpen: false,
+        viewingLrigDeckForGrow: null,
+      };
+    });
+  },
 
   // --- ACTIONS MỚI ---
   initiatePlaceSigni: (cardUuid) => {
