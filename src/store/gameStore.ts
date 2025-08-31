@@ -46,6 +46,7 @@ interface GameState {
   player: PlayerState;
   ai: PlayerState;
   mulliganSelection: string[]; // Thêm để lưu các lá bài được chọn cho mulligan
+  mustDiscard: boolean; // <-- STATE MỚI
   // --- ACTIONS ĐÃ ĐƯỢC CẤU TRÚC LẠI ---
   prepareDecks: () => void; // Bước 1: Chỉ xáo bài
   drawInitialHand: () => void; // Bước 2: Chỉ rút 5 lá đầu
@@ -56,6 +57,8 @@ interface GameState {
   goToNextPhase: () => void;
   upAllCards: () => void;
   drawCardForTurn: () => void;
+  discardCardFromHand: (cardUuid: string) => void;
+  checkEndPhaseConditions: () => void; // Kiểm tra và set cờ mustDiscard
 }
 
 // Hàm helper giữ nguyên
@@ -75,6 +78,7 @@ const useGameStore = create<GameState>((set, get) => ({
   phase: "pre_game",
   turn: 0,
   mulliganSelection: [],
+  mustDiscard: false, // Ban đầu là false
   player: {
     mainDeck: [],
     lrigDeck: [],
@@ -237,7 +241,16 @@ const useGameStore = create<GameState>((set, get) => ({
         nextPhaseIndex = 0; // Quay về Up Phase
         newTurn += 1;
       }
-      return { phase: TURN_PHASES[nextPhaseIndex], turn: newTurn };
+      const nextPhase = TURN_PHASES[nextPhaseIndex];
+      let mustDiscardNow = false;
+
+      // === LOGIC MỚI CHO END PHASE ===
+      if (nextPhase === "end" && state.player.hand.length > 6) {
+        mustDiscardNow = true;
+      }
+      // =============================
+
+      return { phase: nextPhase, turn: newTurn, mustDiscard: mustDiscardNow };
     });
   },
 
@@ -269,6 +282,37 @@ const useGameStore = create<GameState>((set, get) => ({
         },
       };
     });
+  },
+
+  // --- ACTION MỚI ---
+  checkEndPhaseConditions: () => {
+    // Action này được gọi sau mỗi lần discard, để kiểm tra xem đã đủ chưa
+    const handSize = get().player.hand.length;
+    if (handSize <= 6) {
+      set({ mustDiscard: false });
+    }
+  },
+
+  discardCardFromHand: (cardUuid: string) => {
+    set((state) => {
+      const cardToDiscard = state.player.hand.find((c) => c.uuid === cardUuid);
+      if (!cardToDiscard) return state;
+
+      const newHand = state.player.hand.filter((c) => c.uuid !== cardUuid);
+      // Lá bài bỏ đi sẽ vào Trash và lật ngửa
+      cardToDiscard.isFaceUp = true;
+      const newTrash = [...state.player.trash, cardToDiscard];
+
+      return {
+        player: {
+          ...state.player,
+          hand: newHand,
+          trash: newTrash,
+        },
+      };
+    });
+    // Sau khi bỏ bài, gọi hàm kiểm tra lại
+    get().checkEndPhaseConditions();
   },
 }));
 

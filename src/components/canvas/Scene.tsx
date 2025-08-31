@@ -176,6 +176,41 @@ export default function Scene() {
         );
       })}
 
+      {/* TRASH (Mộ bài chính) */}
+      {player.trash.map((card, index) => (
+        <Card
+          key={card.uuid}
+          card={card}
+          position={[
+            coords.TRASH.x,
+            coords.TRASH.y + index * CARD_DIMENSIONS.thickness, // Xếp chồng lên
+            coords.TRASH.z,
+          ]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        />
+      ))}
+
+      {/* Vùng click động cho Trash */}
+      {player.trash.length > 0 && (
+        <mesh
+          position={[
+            coords.TRASH.x,
+            coords.TRASH.y +
+              (player.trash.length * CARD_DIMENSIONS.thickness) / 2,
+            coords.TRASH.z,
+          ]}
+        >
+          <boxGeometry
+            args={[
+              CARD_DIMENSIONS.width + 0.1,
+              CARD_DIMENSIONS.height + 0.1,
+              player.trash.length * CARD_DIMENSIONS.thickness,
+            ]}
+          />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
+      )}
+
       {/* Tạm thời ẩn các zone khác để tập trung vào mainDeck và lrigDeck */}
 
       {/* Tạm thời ẩn các zone khác để tập trung vào mainDeck và lrigDeck */}

@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { Button } from "./button";
 
 interface ContextMenuProps {
-  onDiscard: () => void;
+  onDiscard?: () => void; // Thay đổi onDiscard thành optional
   onChargeEner?: () => void; // Thêm prop mới, optional
   showChargeEner?: boolean; // Cờ để hiển thị
   onPlaySigni?: () => void; // Thêm prop mới, optional
   showPlaySigni?: boolean; // Cờ để hiển thị
+  showDiscard?: boolean;
 }
 
 export default function ContextMenu({
@@ -16,6 +17,7 @@ export default function ContextMenu({
   showChargeEner,
   onPlaySigni,
   showPlaySigni,
+  showDiscard,
 }: ContextMenuProps) {
   return (
     <motion.div
@@ -44,9 +46,11 @@ export default function ContextMenu({
           Play SIGNI
         </Button>
       )}
-      <Button variant="destructive" size="sm" onClick={onDiscard}>
-        Bỏ bài
-      </Button>
+      {showDiscard && onDiscard && (
+        <Button variant="destructive" size="sm" onClick={onDiscard}>
+          Bỏ bài
+        </Button>
+      )}
     </motion.div>
   );
 }

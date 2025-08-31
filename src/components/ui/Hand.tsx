@@ -9,6 +9,7 @@ import { CardInstance } from "@/types/game";
 import { AnimatePresence, motion } from "framer-motion";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { cn } from "@/lib/utils"; // Import cn utility
+import ContextMenu from "./ContextMenu"; // Thêm import ContextMenu
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
@@ -26,6 +27,11 @@ export default function Hand({
   // Bỏ onReturnSingleCard
   const hand = useStore(useGameStore, (state) => state.player.hand);
   const phase = useStore(useGameStore, (state) => state.phase); // Lấy phase hiện tại
+  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
+  const discardCardAction = useStore(
+    useGameStore,
+    (state) => state.discardCardFromHand
+  );
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
@@ -80,10 +86,10 @@ export default function Hand({
     }
   };
 
-  // Xóa các hàm handler không dùng đến
-  // const handleDiscard = () => { ... };
-  // const handleChargeEner = (cardUuid: string) => { ... };
-  // const handlePlaySigni = (card: CardInstance) => { ... };
+  const handleDiscard = (cardUuid: string) => {
+    discardCardAction(cardUuid);
+    // Không cần bỏ chọn vì người chơi có thể cần bỏ nhiều lá
+  };
 
   if (numCards === 0) return null;
 
@@ -144,7 +150,12 @@ export default function Hand({
 
                 onClick={() => handleCardClick(card)}
               >
-                {/* Tạm thời xóa ContextMenu */}
+                {isSelectedForPreview && (
+                  <ContextMenu
+                    showDiscard={phase === "end" && mustDiscard}
+                    onDiscard={() => handleDiscard(card.uuid)}
+                  />
+                )}
 
                 <div
                   className={cn(

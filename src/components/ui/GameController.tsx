@@ -14,6 +14,8 @@ export default function GameController({
 }: GameControllerProps) {
   const phase = useStore(useGameStore, (state) => state.phase);
   const turn = useStore(useGameStore, (state) => state.turn);
+  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
+  const handSize = useStore(useGameStore, (state) => state.player.hand.length);
   const prepareDecks = useStore(useGameStore, (state) => state.prepareDecks);
   const performMulligan = useStore(
     useGameStore,
@@ -84,6 +86,27 @@ export default function GameController({
         );
       default: // Các phase còn lại (ener, main, ...)
         const phaseText = phase.charAt(0).toUpperCase() + phase.slice(1);
+        if (phase === "end") {
+          return (
+            <>
+              <h3 className="font-bold">Turn {turn} - End Phase</h3>
+              {mustDiscard && (
+                <p className="text-destructive text-sm my-2">
+                  Tay bạn có {handSize} lá.
+                  <br />
+                  Hãy bỏ {handSize - 6} lá.
+                </p>
+              )}
+              <Button
+                onClick={goToNextPhase}
+                className="w-full mt-2"
+                disabled={mustDiscard} // <-- Vô hiệu hóa nút khi buộc phải bỏ bài
+              >
+                Kết thúc Lượt
+              </Button>
+            </>
+          );
+        }
         return (
           <>
             <h3 className="font-bold">
