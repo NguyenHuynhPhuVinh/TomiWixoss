@@ -12,15 +12,15 @@ import eventBus from "../core/event.bus";
 import { GameEvent } from "../core/events.types";
 import { GameAction } from "../core/actions.types"; // <-- IMPORT
 
-// Import tất cả các system
-import { SetupSystem } from "./systems/setup.system";
-import { EnerSystem } from "./systems/ener.system";
-import { GrowSystem } from "./systems/grow.system";
-import { PlaceSigniSystem } from "./systems/placeSigni.system";
-import { DiscardSystem } from "./systems/discard.system";
-import { UpSystem } from "./systems/up.system";
-import { DrawSystem } from "./systems/draw.system";
-import { PhaseSystem } from "./systems/phase.system";
+// XÓA: Import tất cả các system - chúng sẽ được đăng ký từ bên ngoài
+// import { SetupSystem } from "./systems/setup.system";
+// import { EnerSystem } from "./systems/ener.system";
+// import { GrowSystem } from "./systems/grow.system";
+// import { PlaceSigniSystem } from "./systems/placeSigni.system";
+// import { DiscardSystem } from "./systems/discard.system";
+// import { UpSystem } from "./systems/up.system";
+// import { DrawSystem } from "./systems/draw.system";
+// import { PhaseSystem } from "./systems/phase.system";
 
 type UpdateListener = (world: World) => void;
 
@@ -38,21 +38,18 @@ class GameManager {
 
   public createNewGame(): World {
     this.world = this.factory.createNewGame();
+    // XÓA: Không đăng ký system ở đây nữa - sẽ được làm từ bên ngoài
+    return this.world;
+  }
 
-    // Thứ tự rất quan trọng
-    // Các system xử lý action của người chơi nên ở trên
-    this.systems.push(new SetupSystem());
-    this.systems.push(new EnerSystem());
-    this.systems.push(new GrowSystem());
-    this.systems.push(new PlaceSigniSystem());
-    this.systems.push(new DiscardSystem());
-    // Các system tự động ở dưới
-    this.systems.push(new UpSystem());
-    this.systems.push(new DrawSystem());
-    this.systems.push(new PhaseSystem());
+  // Thêm phương thức đăng ký system
+  public registerSystem(system: System): void {
+    this.systems.push(system);
+  }
 
-    // Tiêm dependency cho tất cả các system có hàm setup
-    const dependencies: SystemDependencies = { eventBus, gameManager };
+  // Khởi tạo các system sau khi đã đăng ký xong
+  public initializeSystems(): void {
+    const dependencies: SystemDependencies = { eventBus, gameManager: this };
     for (const system of this.systems) {
       system.setup?.(dependencies);
     }
@@ -61,8 +58,6 @@ class GameManager {
     eventBus.on(GameEvent.STOP_GAME_LOOP, () => {
       this.stopLoop();
     });
-
-    return this.world;
   }
 
   public onUpdate(listener: UpdateListener) {

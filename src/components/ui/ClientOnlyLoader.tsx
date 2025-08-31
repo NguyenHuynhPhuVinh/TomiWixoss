@@ -16,6 +16,7 @@ import { getValidGrowOptions } from "@/logic/ecs/selectors";
 import { dispatchGrowLrigAction } from "@/logic/ecs/actions";
 import { useEffect } from "react";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside"; // <-- Import hook
+import { initializeWixossEngine } from "@/logic/game.bootstrap";
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -74,7 +75,8 @@ export default function ClientOnlyLoader() {
 
   // Khởi tạo game một lần khi component được mount
   useEffect(() => {
-    initializeGame();
+    initializeWixossEngine(); // Đăng ký các system
+    initializeGame(); // Tạo world và bắt đầu game
   }, [initializeGame]);
 
   const gameAreaRef = useRef<HTMLDivElement>(null); // <-- Tạo ref cho toàn bộ khu vực game
