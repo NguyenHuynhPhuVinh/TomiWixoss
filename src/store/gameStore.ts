@@ -4,6 +4,7 @@ import { CardInstance, CardData } from "@/types/game"; // Chắc chắn rằng c
 import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array";
+import { findInitialLrigs } from "@/logic/setup"; // <-- IMPORT HÀM MỚI
 
 // Thêm phase 'mulligan'
 type GamePhase =
@@ -191,29 +192,30 @@ const useGameStore = create<GameState>((set, get) => ({
 
       const lifeClothStack = playerMainDeck.splice(0, 7);
 
-      const initialLrigs: (CardInstance | null)[] = [null, null, null];
-      const assist1 = playerLrigDeck.find((c) => c.id === "WXDi-D01-005");
-      const center = playerLrigDeck.find((c) => c.id === "WXDi-D01-001");
-      const assist2 = playerLrigDeck.find((c) => c.id === "WXDi-D01-008");
-      if (assist1) assist1.isFaceUp = true;
-      if (center) center.isFaceUp = true;
-      if (assist2) assist2.isFaceUp = true;
-      initialLrigs[0] = assist1 || null;
-      initialLrigs[1] = center || null;
-      initialLrigs[2] = assist2 || null;
+      // === THAY THẾ LOGIC HARD-CODE BẰNG HÀM MỚI ===
+      const { centerLrig, assistLrigs, remainingDeck } =
+        findInitialLrigs(playerLrigDeck);
 
-      const remainingLrigDeck = playerLrigDeck.filter(
-        (c) =>
-          c.uuid !== assist1?.uuid &&
-          c.uuid !== center?.uuid &&
-          c.uuid !== assist2?.uuid
-      );
+      const initialLrigs: (CardInstance | null)[] = [null, null, null];
+
+      if (centerLrig && assistLrigs[0] && assistLrigs[1]) {
+        // "OPEN!": Lật ngửa 3 LRIG
+        centerLrig.isFaceUp = true;
+        assistLrigs[0].isFaceUp = true;
+        assistLrigs[1].isFaceUp = true;
+
+        // Đặt vào đúng vị trí: Assist - Center - Assist
+        initialLrigs[0] = assistLrigs[0];
+        initialLrigs[1] = centerLrig;
+        initialLrigs[2] = assistLrigs[1];
+      }
+      // ===============================================
 
       return {
         player: {
           ...state.player,
           mainDeck: playerMainDeck,
-          lrigDeck: remainingLrigDeck,
+          lrigDeck: remainingDeck, // Sử dụng bộ bài còn lại đã được lọc
           lifeCloth: lifeClothStack,
           lrigZone: initialLrigs,
         },
