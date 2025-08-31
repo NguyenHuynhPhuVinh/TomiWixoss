@@ -59,7 +59,10 @@ export default function Hand({ onCardSelect }: HandProps) {
   const phase = useStore(useGameStore, (state) => state.phase);
   // Tạm thời comment out các state/action chưa dùng
   // const mustDiscard = ...
-  // const initiatePlaceSigni = ...
+  const initiatePlaceSigni = useStore(
+    useGameStore,
+    (state) => state.initiatePlaceSigni
+  );
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
@@ -119,7 +122,48 @@ export default function Hand({ onCardSelect }: HandProps) {
   };
 
   // Tạm thời vô hiệu hóa logic playableSigniUuids
-  const playableSigniUuids: string[] = [];
+  const playableSigniUuids = useMemo(() => {
+    if (!world || phase !== "main") return [];
+
+    // Logic kiểm tra Level/Limit y hệt như trong PlaceSigniSystem
+    const lrigZoneEntities = world
+      .query([ZoneComponent])
+      .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "lrigZone");
+    const centerLrigEntity = lrigZoneEntities.find(
+      (e) => world.getComponent(e, ZoneComponent)!.index === 1
+    );
+    if (!centerLrigEntity) return [];
+    const centerLrigInfo = world.getComponent(
+      centerLrigEntity,
+      CardInfoComponent
+    )!;
+    const lrigLevel = centerLrigInfo.data.level ?? 0;
+    const lrigLimit =
+      typeof centerLrigInfo.data.limit === "number"
+        ? centerLrigInfo.data.limit
+        : 99;
+
+    const signiOnField = world
+      .query([ZoneComponent])
+      .filter(
+        (e) => world.getComponent(e, ZoneComponent)!.zone === "signiZone"
+      );
+    const currentTotalLevel = signiOnField.reduce((sum, entity) => {
+      return (
+        sum + (world.getComponent(entity, CardInfoComponent)!.data.level ?? 0)
+      );
+    }, 0);
+
+    return hand
+      .filter((card) => {
+        if (card.type !== "SIGNI") return false;
+        const cardLevel = card.level ?? 0;
+        const levelOk = cardLevel <= lrigLevel;
+        const limitOk = currentTotalLevel + cardLevel <= lrigLimit;
+        return levelOk && limitOk;
+      })
+      .map((card) => card.uuid);
+  }, [world, worldVersion, phase, hand]);
 
   // ... logic state và ref của component giữ nguyên ...
 
@@ -256,8 +300,8 @@ export default function Hand({ onCardSelect }: HandProps) {
                       playableSigniUuids.includes(card.uuid)
                     }
                     onPlaySigni={() => {
-                      // initiatePlaceSigni(card.uuid);
-                      setSelectedCardUuid(null); // Tắt context menu sau khi click
+                      initiatePlaceSigni(card.uuid); // Kích hoạt chế độ đặt bài trong uiSlice
+                      setSelectedCardUuid(null);
                       onCardSelect(null);
                     }}
                   />

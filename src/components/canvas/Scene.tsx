@@ -23,8 +23,7 @@ import {
 import { Entity } from "@/logic/ecs/ecs.types";
 import { CardInstance } from "@/types/game";
 import { dispatchChargeEnerAction } from "@/logic/ecs/actions"; // <-- IMPORT
-// Tạm thời comment out InteractiveZone để tập trung vào render
-// import InteractiveZone from "./InteractiveZone";
+import InteractiveZone from "./InteractiveZone";
 
 export default function Scene() {
   const world = useStore(useGameStore, (state) => state.world);
@@ -34,6 +33,13 @@ export default function Scene() {
     useGameStore,
     (state) => state.actionTakenInPhase
   );
+  const playerAction = useStore(useGameStore, (state) => state.playerAction); // <-- LẤY playerAction Ở ĐÂY
+  const cancelPlayerAction = useStore(
+    useGameStore,
+    (state) => state.cancelPlayerAction
+  ); // <-- LẤY cancelPlayerAction
+
+  const boardState = useStore(useGameStore, (state) => state.boardState); // Lấy boardState riêng
 
   const coords = P1_ZONE_COORDINATES;
 
@@ -214,6 +220,23 @@ export default function Scene() {
           />
         );
       })}
+
+      {/* THÊM VÙNG TƯƠNG TÁC CHO SIGNI ZONE */}
+      {[coords.SIGNI_1, coords.SIGNI_2, coords.SIGNI_3].map(
+        (signiCoords, index) => (
+          <InteractiveZone
+            key={`interactive-signi-${index}`}
+            position={[signiCoords.x, signiCoords.y, signiCoords.z]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            size={[2, 2]}
+            zoneIndex={index}
+            // === TRUYỀN PROPS XUỐNG ===
+            playerAction={playerAction}
+            isSlotEmpty={boardState.player.signiZone[index] === null}
+            cancelPlayerAction={cancelPlayerAction}
+          />
+        )
+      )}
 
       <Suspense fallback={null}>
         <Preload all />

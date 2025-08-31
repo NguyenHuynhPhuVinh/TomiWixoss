@@ -1,18 +1,23 @@
 // src/components/canvas/InteractiveZone.tsx
 "use client";
-import { useStore } from "zustand";
-import useGameStore from "@/store/gameStore";
+// import { useStore } from "zustand";
+// import useGameStore from "@/store/gameStore";
 import { Plane } from "@react-three/drei";
 import * as THREE from "three";
 // import commandService from "@/logic/core/command.service";
 // import { PlaceSigniCommand } from "@/logic/commands/placeSigni.command";
-import { ZoneComponent } from "@/logic/ecs/components/card.components";
+// import { ZoneComponent } from "@/logic/ecs/components/card.components";
+import { dispatchPlaceSigniAction } from "@/logic/ecs/actions";
+import { PlayerAction } from "@/store/types"; // Import type nếu cần
 
 interface InteractiveZoneProps {
   position: [number, number, number];
   rotation: [number, number, number];
   size: [number, number];
   zoneIndex: number;
+  playerAction: PlayerAction | null;
+  isSlotEmpty: boolean;
+  cancelPlayerAction: () => void;
 }
 
 export default function InteractiveZone({
@@ -20,19 +25,17 @@ export default function InteractiveZone({
   rotation,
   size,
   zoneIndex,
+  playerAction,
+  isSlotEmpty,
+  cancelPlayerAction,
 }: InteractiveZoneProps) {
-  const playerAction = useStore(useGameStore, (state) => state.playerAction);
-  const world = useStore(useGameStore, (state) => state.world);
-  const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
-
-  const signiInSlot = world?.query([ZoneComponent]).find((e) => {
-    const zone = world.getComponent(e, ZoneComponent)!;
-    return zone.zone === "signiZone" && zone.index === zoneIndex;
-  });
-
-  const isMySlotEmpty = !signiInSlot;
+  // Logic tính toán giờ chỉ dựa vào props
   const isPlacingSigni = playerAction?.type === "place_signi";
-  const shouldHighlight = isMySlotEmpty && isPlacingSigni;
+  const shouldHighlight = isSlotEmpty && isPlacingSigni;
+
+  console.log(
+    `[InteractiveZone ${zoneIndex}] isSlotEmpty: ${isSlotEmpty}, isPlacingSigni: ${isPlacingSigni}, shouldHighlight: ${shouldHighlight}`
+  );
 
   if (!shouldHighlight) return null;
 
@@ -44,11 +47,9 @@ export default function InteractiveZone({
       onClick={(e) => {
         e.stopPropagation();
         if (playerAction) {
-          // Tạm thời log ra, sẽ thay bằng System sau
-          console.log(
-            `TODO: Place card ${playerAction.cardUuid} in zone ${zoneIndex}`
-          );
-          useGameStore.getState().cancelPlayerAction();
+          const entityId = parseInt(playerAction.cardUuid);
+          dispatchPlaceSigniAction(entityId, zoneIndex);
+          cancelPlayerAction();
         }
       }}
     >

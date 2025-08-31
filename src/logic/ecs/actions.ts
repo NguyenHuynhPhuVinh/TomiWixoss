@@ -125,3 +125,20 @@ export function dispatchGrowLrigAction(
     gameManager.handlePlayerAction();
   }
 }
+
+export function dispatchPlaceSigniAction(entityId: number, zoneIndex: number) {
+  const world = gameManager.world;
+  if (!world) return;
+
+  const actionRequest = world.getComponent(
+    GLOBAL_ENTITY,
+    ActionRequestComponent
+  );
+  if (actionRequest) {
+    actionRequest.request = {
+      type: "PLACE_SIGNI",
+      payload: { entityId, zoneIndex },
+    };
+    gameManager.handlePlayerAction();
+  }
+}

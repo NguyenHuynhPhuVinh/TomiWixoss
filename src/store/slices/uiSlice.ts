@@ -24,9 +24,17 @@ export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
   viewingLrigDeckForGrow: null,
   mustDiscard: false, // <-- THÊM LẠI VÌ CẦN CHO STORE
 
-  initiatePlaceSigni: (cardUuid) =>
-    set({ playerAction: { type: "place_signi", cardUuid } }),
-  cancelPlayerAction: () => set({ playerAction: null }),
+  initiatePlaceSigni: (cardUuid) => {
+    console.log(
+      `%c[STORE] Action: initiatePlaceSigni, cardUuid: ${cardUuid}`,
+      "color: #FFA500"
+    );
+    set({ playerAction: { type: "place_signi", cardUuid } });
+  },
+  cancelPlayerAction: () => {
+    console.log("%c[STORE] Action: cancelPlayerAction", "color: #FFA500");
+    set({ playerAction: null });
+  },
 
   openZoneViewer: () => set({ isZoneViewerOpen: true }),
   closeZoneViewer: () => set({ isZoneViewerOpen: false }),

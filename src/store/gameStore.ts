@@ -2,11 +2,25 @@
 import { create } from "zustand";
 import { World } from "@/logic/ecs/world";
 import gameManager from "@/logic/ecs/game.manager";
-import { GamePhase } from "@/types/game"; // Lấy GamePhase từ types/game.ts
+import { GamePhase, CardInstance } from "@/types/game"; // Lấy GamePhase từ types/game.ts
 import { LogEntry, LogType, PlayerAction } from "./types"; // Import lại types
 import { v4 as uuidv4 } from "uuid";
-import { GlobalStateComponent } from "@/logic/ecs/components/card.components";
+import {
+  GlobalStateComponent,
+  ZoneComponent,
+  CardInfoComponent,
+  StatusComponent,
+} from "@/logic/ecs/components/card.components";
 import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
+
+// Định nghĩa một kiểu đơn giản cho trạng thái bàn đấu
+export interface BoardState {
+  player: {
+    signiZone: (CardInstance | null)[];
+    lrigZone: (CardInstance | null)[];
+    // Thêm các zone khác nếu cần
+  };
+}
 
 export interface GameStore {
   world: World | null;
@@ -20,6 +34,9 @@ export interface GameStore {
   logs: LogEntry[];
   playerAction: PlayerAction | null;
   isZoneViewerOpen: boolean;
+
+  // Board state đơn giản hóa
+  boardState: BoardState;
 
   // Actions
   initializeGame: () => void;
@@ -48,12 +65,50 @@ const useGameStore = create<GameStore>((set, get) => {
     logs: [],
     playerAction: null,
     isZoneViewerOpen: false,
+    boardState: {
+      player: { signiZone: [null, null, null], lrigZone: [null, null, null] },
+    },
 
     _syncStateFromWorld: (world) => {
       const globalState = world.getComponent(
         GLOBAL_ENTITY,
         GlobalStateComponent
       );
+
+      // === TẠO VÀ CẬP NHẬT boardState ===
+      const newBoardState: BoardState = {
+        player: {
+          signiZone: [null, null, null],
+          lrigZone: [null, null, null],
+        },
+      };
+
+      const entitiesOnField = world.query([
+        ZoneComponent,
+        CardInfoComponent,
+        StatusComponent,
+      ]);
+      for (const entity of entitiesOnField) {
+        const zone = world.getComponent(entity, ZoneComponent)!;
+        const cardInfo = world.getComponent(entity, CardInfoComponent)!;
+        const status = world.getComponent(entity, StatusComponent)!;
+
+        const cardInstance: CardInstance = {
+          ...cardInfo.data,
+          ...status,
+          uuid: entity.toString(),
+          owner: zone.owner,
+        };
+
+        if (zone.zone === "signiZone") {
+          newBoardState.player.signiZone[zone.index] = cardInstance;
+        }
+        if (zone.zone === "lrigZone") {
+          newBoardState.player.lrigZone[zone.index] = cardInstance;
+        }
+      }
+      // ===================================
+
       set((state) => ({
         world: world, // <-- Lưu trực tiếp instance, KHÔNG sao chép
         worldVersion: state.worldVersion + 1,
@@ -62,6 +117,7 @@ const useGameStore = create<GameStore>((set, get) => {
         turn: globalState?.turn ?? state.turn,
         actionTakenInPhase:
           globalState?.actionTakenInPhase ?? state.actionTakenInPhase,
+        boardState: newBoardState,
       }));
     },
 
@@ -81,6 +137,12 @@ const useGameStore = create<GameStore>((set, get) => {
         phase: globalState.phase,
         turn: globalState.turn,
         actionTakenInPhase: globalState.actionTakenInPhase,
+        boardState: {
+          player: {
+            signiZone: [null, null, null],
+            lrigZone: [null, null, null],
+          },
+        },
       });
       gameManager.startLoop(); // Bắt đầu vòng lặp game
     },

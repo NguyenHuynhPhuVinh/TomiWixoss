@@ -5,6 +5,7 @@ import { UpSystem } from "./systems/up.system";
 import { DrawSystem } from "./systems/draw.system";
 import { EnerSystem } from "./systems/ener.system"; // <-- IMPORT
 import { GrowSystem } from "./systems/grow.system"; // <-- IMPORT
+import { PlaceSigniSystem } from "./systems/placeSigni.system"; // <-- IMPORT
 import { PhaseSystem } from "./systems/phase.system"; // <-- IMPORT
 import { SetupSystem } from "./systems/setup.system"; // <-- IMPORT
 import { System } from "./ecs.types";
@@ -30,6 +31,7 @@ class GameManager {
     this.actionSystems["SETUP"] = new SetupSystem();
     this.actionSystems["ENER"] = new EnerSystem();
     this.actionSystems["GROW"] = new GrowSystem(); // <-- THÊM VÀO ĐÂY
+    this.actionSystems["PLACE_SIGNI"] = new PlaceSigniSystem(); // <-- THÊM VÀO ĐÂY
     this.actionSystems["PHASE"] = new PhaseSystem();
     // ... các system hành động khác
 
@@ -107,6 +109,9 @@ class GameManager {
         break;
       case "GROW_LRIG":
         systemKey = "GROW";
+        break;
+      case "PLACE_SIGNI":
+        systemKey = "PLACE_SIGNI"; // <-- THÊM VÀO ĐÂY
         break;
       case "ADVANCE_PHASE":
         systemKey = "PHASE";
