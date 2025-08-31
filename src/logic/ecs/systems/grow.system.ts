@@ -38,41 +38,53 @@ export class GrowSystem implements System {
     // Đóng modal ngay lập tức để đảm bảo phản hồi UI
     closeZoneViewer();
 
-    // --- 1. KIỂM TRA ĐIỀU KIỆN (Mở rộng) ---
-    // A. Kiểm tra Phase và cờ actionTaken
+    // Lấy dữ liệu targetLrigInfo sớm
+    const targetLrigInfo = world.getComponent(
+      targetEntityId,
+      CardInfoComponent
+    );
+    if (!targetLrigInfo) {
+      console.error("LRIG không hợp lệ để Grow.");
+      actionRequest.request = null;
+      return;
+    }
+
+    // --- 1. KIỂM TRA ĐIỀU KIỆN (Nâng cấp) ---
+    // A. Kiểm tra Phase và timing
     const isCenterGrow = zoneIndex === 1;
     if (isCenterGrow) {
-      // Luật cho Center LRIG
       if (globalState.phase !== "grow" || globalState.actionTakenInPhase) {
         addLog("Chỉ có thể Grow Center LRIG một lần trong Grow Phase.", "info");
         actionRequest.request = null;
         return;
       }
     } else {
-      // Luật cho Assist LRIG
-      const allowedPhases: GamePhase[] = ["main", "attack"];
-      if (!allowedPhases.includes(globalState.phase)) {
+      // Assist LRIG
+      const enterAbility = targetLrigInfo.data.abilities?.find(
+        (a) => a.type === "Enter"
+      );
+      const allowedTimings = enterAbility?.timing;
+
+      if (
+        !allowedTimings ||
+        !allowedTimings.includes(globalState.phase as any)
+      ) {
         addLog(
-          "Chỉ có thể Grow Assist LRIG trong Main hoặc Attack Phase.",
+          `Không thể Grow ${targetLrigInfo.data.name} trong ${globalState.phase} phase.`,
           "info"
         );
         actionRequest.request = null;
         return;
       }
-      // TODO: Kiểm tra timing trên lá bài Assist LRIG
     }
 
     // B. Lấy dữ liệu các lá bài liên quan
-    const targetLrigInfo = world.getComponent(
-      targetEntityId,
-      CardInfoComponent
-    );
     const currentLrigEntity = world.query([ZoneComponent]).find((e) => {
       const zone = world.getComponent(e, ZoneComponent)!;
       return zone.zone === "lrigZone" && zone.index === zoneIndex;
     });
 
-    if (!targetLrigInfo || !currentLrigEntity) {
+    if (!currentLrigEntity) {
       console.error("LRIG không hợp lệ để Grow.");
       actionRequest.request = null;
       return;

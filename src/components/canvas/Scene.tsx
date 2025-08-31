@@ -23,6 +23,7 @@ import {
 import { Entity } from "@/logic/ecs/ecs.types";
 import { CardInstance } from "@/types/game";
 import { dispatchChargeEnerAction } from "@/logic/ecs/actions"; // <-- IMPORT
+import { getValidGrowOptions } from "@/logic/ecs/selectors"; // <-- IMPORT SELECTOR MỚI
 import InteractiveZone from "./InteractiveZone";
 
 export default function Scene() {
@@ -223,11 +224,22 @@ export default function Scene() {
               const isAssistLrig =
                 zoneInfo.zone === "lrigZone" &&
                 (zoneInfo.index === 0 || zoneInfo.index === 2);
-              const canGrowAssist =
+              const canTryGrowAssist =
                 isAssistLrig && ["main", "attack"].includes(phase);
 
-              if (canGrowAssist) {
-                openLrigDeckViewerForAssist(zoneInfo.index);
+              if (canTryGrowAssist) {
+                // 1. Kiểm tra xem có lựa chọn nào không
+                const options = getValidGrowOptions(zoneInfo.index);
+
+                if (options.length > 0) {
+                  // 2. Nếu có, MỚI mở modal
+                  openLrigDeckViewerForAssist(zoneInfo.index);
+                } else {
+                  // 3. Nếu không, thông báo cho người chơi
+                  useGameStore
+                    .getState()
+                    .addLog("Không có lựa chọn Grow hợp lệ.", "info");
+                }
               }
               // ... các logic click khác
             }}
