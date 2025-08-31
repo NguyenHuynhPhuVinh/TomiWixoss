@@ -12,7 +12,11 @@ import Card from "./Card";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import { P1_ZONE_COORDINATES } from "@/data/zoneCoordinates";
-import { CardInfoComponent, ZoneComponent, StatusComponent } from "@/logic/ecs/components/card.components";
+import {
+  CardInfoComponent,
+  ZoneComponent,
+  StatusComponent,
+} from "@/logic/ecs/components/card.components";
 import { Entity } from "@/logic/ecs/ecs.types";
 
 export default function Scene() {
@@ -23,22 +27,40 @@ export default function Scene() {
 
   // Tạo một hàm helper để render một zone
   const renderZone = (zoneName: string) => {
-    const entitiesInZone = world.query([ZoneComponent])
-      .filter((e: Entity) => world.getComponent(e, ZoneComponent)!.zone === zoneName);
-    
+    const entitiesInZone = world
+      .query([ZoneComponent])
+      .filter(
+        (e: Entity) => world.getComponent(e, ZoneComponent)!.zone === zoneName
+      );
+
     return entitiesInZone.map((entity: Entity) => {
       const cardInfo = world.getComponent(entity, CardInfoComponent)!;
       const status = world.getComponent(entity, StatusComponent)!;
       const zoneInfo = world.getComponent(entity, ZoneComponent)!;
-      
+
       // Logic để tính toán position, rotation dựa trên zoneInfo
       // Tạm thời hard-code cho mainDeck
-      const position: [number, number, number] = [coords.MAIN_DECK.x, coords.MAIN_DECK.y, coords.MAIN_DECK.z];
+      const position: [number, number, number] = [
+        coords.MAIN_DECK.x,
+        coords.MAIN_DECK.y,
+        coords.MAIN_DECK.z,
+      ];
       const rotation: [number, number, number] = [-Math.PI / 2, 0, 0];
-      
-      const cardInstance = { ...cardInfo.data, ...status, uuid: entity.toString() };
 
-      return <Card key={entity} card={cardInstance} position={position} rotation={rotation} />;
+      const cardInstance = {
+        ...cardInfo.data,
+        ...status,
+        uuid: entity.toString(),
+      };
+
+      return (
+        <Card
+          key={entity}
+          card={cardInstance}
+          position={position}
+          rotation={rotation}
+        />
+      );
     });
   };
 
@@ -51,16 +73,13 @@ export default function Scene() {
       <ambientLight intensity={1} />
       <directionalLight position={[0, 20, 10]} intensity={1.5} castShadow />
 
-      <GameBoard
-        position={[0, 0, 0.5]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      />
+      <GameBoard position={[0, 0, 0.5]} rotation={[-Math.PI / 2, 0, 0]} />
       <GameBoard
         position={[0, 0, -0.5]}
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
 
-      {renderZone('mainDeck')}
+      {renderZone("mainDeck")}
       {/* Tạm thời chỉ render mainDeck */}
     </Canvas>
   );

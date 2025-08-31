@@ -27,7 +27,7 @@ const useGameStore = create<GameStore>((set, get) => {
 
   return {
     world: null,
-    phase: 'pre_game',
+    phase: "pre_game",
     turn: 0,
     isZoneViewerOpen: false,
 
@@ -35,9 +35,9 @@ const useGameStore = create<GameStore>((set, get) => {
 
     startGame: () => {
       const newWorld = gameManager.createNewGame();
-      set({ 
+      set({
         world: newWorld,
-        phase: 'up', // Bắt đầu thẳng vào Up Phase của Lượt 1
+        phase: "up", // Bắt đầu thẳng vào Up Phase của Lượt 1
         turn: 1,
       });
       gameManager.startLoop(); // Bắt đầu vòng lặp game

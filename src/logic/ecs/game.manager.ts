@@ -25,16 +25,16 @@ class GameManager {
 
   private loop() {
     if (!this.isLooping || !this.world) return;
-    
+
     // Chạy các system
     this.world.update();
-    
+
     // Thông báo cho listener (Zustand)
-    this.updateListeners.forEach(listener => listener(this.world!));
+    this.updateListeners.forEach((listener) => listener(this.world!));
 
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
-  
+
   public startLoop() {
     if (this.isLooping) return;
     this.isLooping = true;
@@ -46,7 +46,7 @@ class GameManager {
     this.isLooping = false;
     cancelAnimationFrame(this.animationFrameId);
   }
-  
+
   /**
    * Tạm dừng vòng lặp, chạy các system một lần, và thông báo cập nhật.
    * Dùng cho các hành động cần phản hồi ngay lập tức từ người chơi.
@@ -54,10 +54,10 @@ class GameManager {
   public forceUpdate() {
     if (!this.world) return;
     this.stopLoop(); // Tạm dừng vòng lặp tự động
-    
+
     this.world.update();
-    this.updateListeners.forEach(listener => listener(this.world!));
-    
+    this.updateListeners.forEach((listener) => listener(this.world!));
+
     this.startLoop(); // Khởi động lại vòng lặp
   }
 }
