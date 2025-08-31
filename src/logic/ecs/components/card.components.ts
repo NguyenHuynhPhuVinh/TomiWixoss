@@ -72,3 +72,11 @@ export class GlobalStateComponent implements Component {
 export class ActionRequestComponent implements Component {
   public request: { type: string; payload: any } | null = null;
 }
+
+/**
+ * Component chứa danh sách các Entity đang nằm bên dưới Entity này.
+ * Dùng cho cơ chế Grow và Rise.
+ */
+export class UnderneathComponent implements Component {
+  constructor(public entities: Entity[] = []) {}
+}

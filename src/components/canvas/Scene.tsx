@@ -38,6 +38,10 @@ export default function Scene() {
     useGameStore,
     (state) => state.cancelPlayerAction
   ); // <-- LẤY cancelPlayerAction
+  const openLrigDeckViewerForAssist = useStore(
+    useGameStore,
+    (state) => state.openLrigDeckViewerForAssist
+  ); // <-- LẤY openLrigDeckViewerForAssist
 
   const boardState = useStore(useGameStore, (state) => state.boardState); // Lấy boardState riêng
 
@@ -215,7 +219,17 @@ export default function Scene() {
               ) {
                 dispatchChargeEnerAction("signi", entity);
               }
-              // Thêm các logic click khác ở đây sau
+              // Thêm logic click cho Assist LRIG
+              const isAssistLrig =
+                zoneInfo.zone === "lrigZone" &&
+                (zoneInfo.index === 0 || zoneInfo.index === 2);
+              const canGrowAssist =
+                isAssistLrig && ["main", "attack"].includes(phase);
+
+              if (canGrowAssist) {
+                openLrigDeckViewerForAssist(zoneInfo.index);
+              }
+              // ... các logic click khác
             }}
           />
         );

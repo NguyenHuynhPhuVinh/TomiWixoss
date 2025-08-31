@@ -82,4 +82,5 @@ export type ZoneKey =
   | "enerZone"
   | "trash"
   | "lrigTrash"
-  | "checkZone";
+  | "checkZone"
+  | "underneath";

@@ -1,17 +1,20 @@
 // src/logic/ecs/systems/grow.system.ts
 import { System } from "../ecs.types";
 import { World } from "../world";
+import { Entity } from "../ecs.types";
 import {
   ActionRequestComponent,
   CardInfoComponent,
   GlobalStateComponent,
   StatusComponent,
   ZoneComponent,
+  UnderneathComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import useGameStore from "@/store/gameStore";
 import { checkCost } from "@/logic/payment";
 import { CardInstance } from "@/types/game";
+import { GamePhase } from "@/types/game";
 
 export class GrowSystem implements System {
   public update(world: World): void {
@@ -35,18 +38,28 @@ export class GrowSystem implements System {
     // Đóng modal ngay lập tức để đảm bảo phản hồi UI
     closeZoneViewer();
 
-    // --- 1. KIỂM TRA ĐIỀU KIỆN ---
+    // --- 1. KIỂM TRA ĐIỀU KIỆN (Mở rộng) ---
     // A. Kiểm tra Phase và cờ actionTaken
-    const isGrowPhaseAction =
-      globalState.phase === "grow" && !globalState.actionTakenInPhase;
-    const isMainOrAttackPhaseAction = ["main", "attack"].includes(
-      globalState.phase
-    );
-
-    if (!isGrowPhaseAction && !isMainOrAttackPhaseAction) {
-      addLog("Không thể Grow ở phase này.", "info");
-      actionRequest.request = null;
-      return;
+    const isCenterGrow = zoneIndex === 1;
+    if (isCenterGrow) {
+      // Luật cho Center LRIG
+      if (globalState.phase !== "grow" || globalState.actionTakenInPhase) {
+        addLog("Chỉ có thể Grow Center LRIG một lần trong Grow Phase.", "info");
+        actionRequest.request = null;
+        return;
+      }
+    } else {
+      // Luật cho Assist LRIG
+      const allowedPhases: GamePhase[] = ["main", "attack"];
+      if (!allowedPhases.includes(globalState.phase)) {
+        addLog(
+          "Chỉ có thể Grow Assist LRIG trong Main hoặc Attack Phase.",
+          "info"
+        );
+        actionRequest.request = null;
+        return;
+      }
+      // TODO: Kiểm tra timing trên lá bài Assist LRIG
     }
 
     // B. Lấy dữ liệu các lá bài liên quan
@@ -97,7 +110,7 @@ export class GrowSystem implements System {
       return;
     }
 
-    // --- 3. THỰC THI HÀNH ĐỘNG ---
+    // --- 3. THỰC THI HÀNH ĐỘNG (Nâng cấp) ---
     console.log("--- Running GrowSystem ---");
 
     // Trừ Ener
@@ -111,13 +124,34 @@ export class GrowSystem implements System {
       zone.zone = "trash";
     });
 
-    // Thực hiện Grow
+    // Thực hiện Grow và xử lý Underneath
+    const currentLrigStatus = world.getComponent(
+      currentLrigEntity,
+      StatusComponent
+    )!;
     const currentLrigZone = world.getComponent(
       currentLrigEntity,
       ZoneComponent
     )!;
-    currentLrigZone.zone = "lrigTrash"; // Chuyển LRIG cũ vào mộ
+    const currentLrigUnderneath = world.getComponent(
+      currentLrigEntity,
+      UnderneathComponent
+    );
 
+    // Gom tất cả các lá bài cũ lại
+    const oldCardsStack: Entity[] = [
+      currentLrigEntity,
+      ...(currentLrigUnderneath?.entities ?? []),
+    ];
+
+    // Di chuyển các lá bài cũ ra khỏi bàn đấu (tạm thời)
+    // Thay vì vào mộ, chúng ta chỉ thay đổi zone của chúng
+    oldCardsStack.forEach((entityId) => {
+      const zone = world.getComponent(entityId, ZoneComponent)!;
+      zone.zone = "underneath"; // Một "zone" ảo
+    });
+
+    // Đặt LRIG mới ra sân
     const targetLrigZone = world.getComponent(targetEntityId, ZoneComponent)!;
     const targetLrigStatus = world.getComponent(
       targetEntityId,
@@ -127,11 +161,14 @@ export class GrowSystem implements System {
     targetLrigZone.index = zoneIndex;
     targetLrigStatus.isFaceUp = true;
 
+    // Gắn component Underneath mới vào LRIG mới
+    world.addComponent(targetEntityId, new UnderneathComponent(oldCardsStack));
+
     // --- 4. CẬP NHẬT STATE VÀ LOG ---
-    if (globalState.phase === "grow") {
+    if (isCenterGrow) {
+      // Chỉ set cờ khi Grow Center LRIG
       globalState.actionTakenInPhase = true;
     }
-
     addLog(`Trả ${paymentResult.paidEner.length} Ener.`, "cost");
     addLog(`Grow LRIG thành ${targetLrigInfo.data.name}!`, "action");
 
