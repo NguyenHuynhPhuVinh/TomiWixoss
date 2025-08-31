@@ -11,6 +11,7 @@ import { useStore } from "zustand";
 import useGameStore from "@/store/gameStore";
 import DeckViewer from "./DeckViewer"; // Đảm bảo đã import
 import GameLog from "./GameLog"; // <-- IMPORT COMPONENT MỚI
+import "@/logic/effects/effect.system"; // Chỉ cần import là đủ để khởi tạo
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,

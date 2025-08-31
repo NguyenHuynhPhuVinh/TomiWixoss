@@ -1,5 +1,6 @@
 // src/logic/commands/placeSigni.command.ts
 import { ICommand, GameStoreGet, GameStoreSet } from "./command.interface";
+import eventService, { GameEvent } from "../core/event.service";
 
 export class PlaceSigniCommand implements ICommand {
   // Command sẽ nhận các tham số cần thiết khi được tạo
@@ -51,6 +52,10 @@ export class PlaceSigniCommand implements ICommand {
       };
     });
 
-    // TODO: Phát ra sự kiện "CARD_WAS_PLAYED" ở đây
+    // Phát sự kiện sau khi state đã được cập nhật
+    eventService.dispatch(GameEvent.CARD_PLAYED, {
+      cardId: cardToPlay.id,
+      player: "player1",
+    });
   }
 }

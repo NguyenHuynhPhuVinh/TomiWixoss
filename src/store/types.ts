@@ -87,11 +87,8 @@ export interface GameActions {
 
   // Player Actions
   upAllCards: () => void;
-  drawCardForTurn: () => void;
   discardCardFromHand: (cardUuid: string) => void;
   checkEndPhaseConditions: () => void;
-  chargeEnerFromHand: (cardUuid: string) => void;
-  chargeEnerFromSigni: (cardUuid: string, fromZoneIndex: number) => void;
   growCenterLrig: (targetLrigUuid: string) => void;
   growAssistLrig: (targetLrigUuid: string, fromZoneIndex: number) => void;
   initiatePlaceSigni: (cardUuid: string) => void;

@@ -15,6 +15,8 @@ import InteractiveZone from "./InteractiveZone"; // Import component mới
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
+import { ChargeEnerCommand } from "@/logic/commands/chargeEner.command";
+import commandService from "@/logic/core/command.service";
 
 // Component này không cần props nữa vì nó lấy mọi thứ từ store
 export default function Scene() {
@@ -31,10 +33,6 @@ export default function Scene() {
     (state) => state.openZoneViewer
   );
   // LẤY ACTION MỚI TỪ STORE
-  const chargeEnerFromSigni = useStore(
-    useGameStore,
-    (state) => state.chargeEnerFromSigni
-  );
   const openLrigDeckViewerForAssist = useStore(
     useGameStore,
     (state) => state.openLrigDeckViewerForAssist
@@ -230,7 +228,11 @@ export default function Scene() {
             onClick={() => {
               // Chỉ cho phép click khi ở Ener Phase VÀ chưa có hành động nào được thực hiện
               if (phase === "ener" && !actionTakenInPhase) {
-                chargeEnerFromSigni(card.uuid, index);
+                const command = new ChargeEnerCommand({
+                  from: "signi",
+                  zoneIndex: index,
+                });
+                commandService.dispatch(command);
               }
             }}
           />

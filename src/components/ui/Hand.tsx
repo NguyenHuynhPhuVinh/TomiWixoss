@@ -10,6 +10,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { cn } from "@/lib/utils"; // Import cn utility
 import ContextMenu from "./ContextMenu"; // Thêm import ContextMenu
+import { ChargeEnerCommand } from "@/logic/commands/chargeEner.command";
+import commandService from "@/logic/core/command.service";
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
@@ -33,10 +35,6 @@ export default function Hand({
     (state) => state.discardCardFromHand
   );
   // LẤY ACTION MỚI
-  const chargeEnerAction = useStore(
-    useGameStore,
-    (state) => state.chargeEnerFromHand
-  );
   const initiatePlaceSigni = useStore(
     useGameStore,
     (state) => state.initiatePlaceSigni
@@ -106,8 +104,8 @@ export default function Hand({
   };
 
   const handleChargeEner = (cardUuid: string) => {
-    chargeEnerAction(cardUuid);
-    // Sau khi nạp, lá bài biến mất khỏi tay, nên chúng ta cần bỏ chọn
+    const command = new ChargeEnerCommand({ from: "hand", cardUuid });
+    commandService.dispatch(command);
     setSelectedCardUuid(null);
     onCardSelect(null);
   };

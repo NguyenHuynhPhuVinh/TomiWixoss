@@ -3,6 +3,8 @@
 import useGameStore from "@/store/gameStore";
 import { Button } from "./button";
 import { useStore } from "zustand";
+import commandService from "@/logic/core/command.service";
+import { DrawCardCommand } from "@/logic/commands/drawCard.command";
 
 // Thêm props mới
 interface GameControllerProps {
@@ -23,10 +25,6 @@ export default function GameController({
   );
   const goToNextPhase = useStore(useGameStore, (state) => state.goToNextPhase);
   const upAllCards = useStore(useGameStore, (state) => state.upAllCards);
-  const drawCardForTurn = useStore(
-    useGameStore,
-    (state) => state.drawCardForTurn
-  );
   const mainDeckCount = useStore(
     useGameStore,
     (state) => state.player.mainDeck.length
@@ -118,9 +116,12 @@ export default function GameController({
               Deck: {mainDeckCount} lá
             </p>
             <Button
-              onClick={drawCardForTurn}
+              onClick={() => {
+                const command = new DrawCardCommand();
+                commandService.dispatch(command);
+              }}
               className="w-full mt-2"
-              disabled={!canDraw} // <-- Điều kiện vô hiệu hóa giờ đã thông minh hơn
+              disabled={!canDraw} // Kiểm tra điều kiện trực tiếp
             >
               {actionTakenInPhase ? "Đã rút bài" : `Rút ${amountToDraw} lá`}
             </Button>
