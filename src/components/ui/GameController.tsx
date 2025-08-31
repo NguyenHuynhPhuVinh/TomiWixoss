@@ -23,6 +23,8 @@ export default function GameController({
   const turn = game?.turn ?? 0;
   const mainDeckCount = game?.player.mainDeck.length ?? 0;
   const actionTakenInPhase = game?.actionTakenInPhase ?? false;
+  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
+  const handSize = game?.player.hand.length ?? 0;
 
   const renderContent = () => {
     // Xử lý trạng thái hành động đặc biệt trước
@@ -189,20 +191,20 @@ export default function GameController({
           return (
             <>
               <h3 className="font-bold">Turn {turn} - End Phase</h3>
-              {/* {mustDiscard && (
+              {mustDiscard && (
                 <p className="text-destructive text-sm my-2">
                   Tay bạn có {handSize} lá.
                   <br />
                   Hãy bỏ {handSize - 6} lá.
                 </p>
-              )} */}
+              )}
               <Button
                 onClick={() => {
                   const command = new AdvancePhaseCommand();
                   commandService.dispatch(command);
                 }}
                 className="w-full mt-2"
-                // disabled={mustDiscard} // <-- Vô hiệu hóa nút khi buộc phải bỏ bài
+                disabled={mustDiscard}
               >
                 Kết thúc Lượt
               </Button>

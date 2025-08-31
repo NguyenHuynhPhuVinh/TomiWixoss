@@ -9,7 +9,7 @@ export class Game {
   public player: Player;
   public ai: Player;
   public actionTakenInPhase: boolean; // State này thuộc về game tổng thể
-  // ... các state toàn cục khác
+  public mustDiscard: boolean; // <-- THÊM LẠI STATE NÀY
 
   constructor(initialState: GameState) {
     this.turn = initialState.turn;
@@ -17,6 +17,7 @@ export class Game {
     this.player = new Player(initialState.player, "Player 1");
     this.ai = new Player(initialState.ai, "AI");
     this.actionTakenInPhase = initialState.actionTakenInPhase;
+    this.mustDiscard = initialState.mustDiscard; // <-- GÁN GIÁ TRỊ BAN ĐẦU
   }
 
   public getCurrentPlayer(): Player {

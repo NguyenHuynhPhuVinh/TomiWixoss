@@ -65,7 +65,7 @@ export interface GameState {
   playerAction: PlayerAction | null;
   isZoneViewerOpen: boolean;
   viewingLrigDeckForGrow: { forAssistIndex: number | null } | null;
-  mustDiscard: boolean;
+  mustDiscard: boolean; // <-- THÊM LẠI VÌ CẦN CHO STORE
 }
 
 // Interface cho tất cả các action
@@ -91,7 +91,7 @@ export interface GameActions {
   closeZoneViewer: () => void;
   openLrigDeckViewerForAssist: (zoneIndex: number) => void;
   closeLrigDeckViewer: () => void;
-  setMustDiscard: (mustDiscard: boolean) => void;
+  // setMustDiscard: (mustDiscard: boolean) => void; // <-- XÓA ACTION NÀY
 }
 
 // Đây sẽ là interface tổng hợp, bao gồm cả state và các action từ các slice

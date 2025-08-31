@@ -34,9 +34,13 @@ export class DiscardCardCommand implements ICommand {
 
     get().addLog(`Bỏ bài: ${cardToDiscard.name}.`, "action");
 
-    // Sau khi bỏ bài, kiểm tra lại điều kiện end phase
-    const mustDiscard = player.hand.length > 6;
-    useGameStore.getState().setMustDiscard(mustDiscard);
+    // === THAY THẾ LOGIC CŨ ===
+    // Sau khi bỏ bài, kiểm tra lại điều kiện và cập nhật trực tiếp vào model
+    if (player.hand.length <= 6) {
+      game.mustDiscard = false;
+    }
+    // Xóa dòng: useGameStore.getState().setMustDiscard(mustDiscard);
+    // ========================
 
     useGameStore.getState().updateGame(game);
   }

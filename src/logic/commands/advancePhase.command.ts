@@ -7,21 +7,38 @@ export class AdvancePhaseCommand implements ICommand {
 
   public canExecute(get: GameStoreGet): boolean {
     const game = get().game;
-    // Tạm thời cho phép chuyển phase bất cứ lúc nào (trừ setup)
-    return !!game && game.phase !== "pre_game" && game.phase !== "mulligan";
+    if (!game) return false;
+
+    // Thêm điều kiện: không thể chuyển phase nếu đang phải bỏ bài
+    if (game.mustDiscard) {
+      get().addLog("Phải bỏ bài cho đến khi còn 6 lá trên tay.", "info");
+      return false;
+    }
+
+    return game.phase !== "pre_game" && game.phase !== "mulligan";
   }
 
   public execute(get: GameStoreGet): void {
     if (!this.canExecute(get)) return;
     const game = get().game!;
 
-    // Lấy tên phase mới TRƯỚC khi thay đổi để log
-    const oldPhase = game.phase;
+    // 1. Thực hiện chuyển phase
     game.advancePhase();
-    const newPhase = game.phase;
 
-    // Log sự kiện chuyển phase (đã được xử lý bên trong advancePhase qua event)
-    const phaseText = newPhase.charAt(0).toUpperCase() + newPhase.slice(1);
+    // 2. Sau khi chuyển phase, kiểm tra xem phase mới có phải là 'end' không
+    const player = game.getCurrentPlayer();
+    if (game.phase === "end" && player.hand.length > 6) {
+      game.mustDiscard = true;
+      get().addLog(
+        `Tay bài có ${player.hand.length} lá. Phải bỏ ${
+          player.hand.length - 6
+        } lá.`,
+        "system"
+      );
+    }
+
+    // 3. Log và cập nhật UI
+    const phaseText = game.phase.charAt(0).toUpperCase() + game.phase.slice(1);
     get().addLog(`Turn ${game.turn} - ${phaseText} Phase`, "system");
 
     useGameStore.getState().updateGame(game);

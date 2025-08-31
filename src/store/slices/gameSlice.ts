@@ -34,6 +34,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
       player: gameInstance.player,
       ai: gameInstance.ai,
       actionTakenInPhase: gameInstance.actionTakenInPhase,
+      mustDiscard: gameInstance.mustDiscard, // <-- THÊM DÒNG ĐỒNG BỘ HÓA
       gameStarted: true,
     });
   },
@@ -50,6 +51,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
       player: newGameInstance.player,
       ai: newGameInstance.ai,
       actionTakenInPhase: newGameInstance.actionTakenInPhase,
+      mustDiscard: newGameInstance.mustDiscard, // <-- THÊM DÒNG ĐỒNG BỘ HÓA
     });
   },
 
