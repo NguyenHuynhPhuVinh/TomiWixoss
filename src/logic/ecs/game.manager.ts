@@ -35,6 +35,7 @@ class GameManager {
   private updateListeners: UpdateListener[] = [];
   private isLooping = false;
   private animationFrameId: number = 0;
+  private justProcessedAction = false;
 
   private actionQueue: GameAction[] = [];
 
@@ -196,16 +197,22 @@ class GameManager {
           (saga as Saga<any>)(action, nextWorldState, dependencies);
         }
       }
+
+      this.justProcessedAction = true;
     }
     // Ưu tiên 3: (Nếu cả hai đều rỗng) Chạy các system tự động
-    else {
+    else if (!this.justProcessedAction) {
       nextWorldState = produce(nextWorldState, (draftWorld) => {
-        for (const system of this.systems) {
+        for (const system of this.loopSystems) {
           system.update(draftWorld as World);
         }
       });
     }
     // ===========================================
+
+    if (this.justProcessedAction) {
+      this.justProcessedAction = false;
+    }
 
     this.world = nextWorldState;
     this.processSideEffects();

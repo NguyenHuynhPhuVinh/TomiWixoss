@@ -19,6 +19,7 @@ import { chargeEnerReducer } from "./reducers/ener.reducer";
 import { growLrigReducer } from "./reducers/grow.reducer";
 import { placeSigniReducer } from "./reducers/placeSigni.reducer";
 import { discardCardReducer } from "./reducers/discard.reducer";
+import { advancePhaseReducer } from "./reducers/phase.reducer";
 
 import {
   confirmLrigSelectionSaga,
@@ -28,6 +29,7 @@ import { chargeEnerSaga } from "./sagas/ener.saga";
 import { growLrigSaga } from "./sagas/grow.saga";
 import { placeSigniSaga } from "./sagas/placeSigni.saga";
 import { discardCardSaga } from "./sagas/discard.saga";
+import { advancePhaseSaga } from "./sagas/phase.saga";
 
 export function initializeWixossEngine() {
   // === KÍCH HOẠT IMMER PLUGIN CHO MAP/SET ===
@@ -49,6 +51,7 @@ export function initializeWixossEngine() {
   gameManager.registerReducer("GROW_LRIG", growLrigReducer);
   gameManager.registerReducer("PLACE_SIGNI", placeSigniReducer);
   gameManager.registerReducer("DISCARD_CARD", discardCardReducer);
+  gameManager.registerReducer("ADVANCE_PHASE", advancePhaseReducer);
 
   // Đăng ký tất cả các Sagas
   gameManager.registerSaga("CONFIRM_LRIG_SELECTION", confirmLrigSelectionSaga);
@@ -57,6 +60,7 @@ export function initializeWixossEngine() {
   gameManager.registerSaga("GROW_LRIG", growLrigSaga);
   gameManager.registerSaga("PLACE_SIGNI", placeSigniSaga);
   gameManager.registerSaga("DISCARD_CARD", discardCardSaga);
+  gameManager.registerSaga("ADVANCE_PHASE", advancePhaseSaga);
 
   // Đăng ký các loop systems (vẫn giữ nguyên)
   gameManager.registerSystem(new UpSystem(), "loop");
