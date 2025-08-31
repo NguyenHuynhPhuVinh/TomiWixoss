@@ -55,8 +55,8 @@ export class GlobalStateComponent implements Component {
     public actionTakenInPhase: boolean = false,
 
     // === THÊM CÁC STATE MỚI CHO SETUP ===
-    // Mảng UUID của các lá bài người chơi chọn để mulligan
-    public mulliganSelection: string[] = [],
+    // Mảng Entity ID của các lá bài người chơi chọn để mulligan
+    public mulliganSelection: Entity[] = [],
     // Trạng thái chọn LRIG
     public lrigSelection: {
       center: Entity | null;

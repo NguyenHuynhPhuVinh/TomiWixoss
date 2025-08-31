@@ -11,28 +11,24 @@ import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { cn } from "@/lib/utils"; // Import cn utility
 import ContextMenu from "./ContextMenu"; // Thêm import ContextMenu
 import { dispatchChargeEnerAction } from "@/logic/ecs/actions"; // <-- IMPORT
-// import { ChargeEnerCommand } from "@/logic/commands/chargeEner.command";
-// import commandService from "@/logic/core/command.service";
-// import { DiscardCardCommand } from "@/logic/commands/discardCard.command";
+import { dispatchUpdateMulliganSelection } from "@/logic/ecs/actions";
 import {
   CardInfoComponent,
   ZoneComponent,
   StatusComponent,
+  GlobalStateComponent,
 } from "@/logic/ecs/components/card.components";
+import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
-  // Prop mới để gửi danh sách bài chọn mulligan lên component cha
-  onMulliganSelectionChange: (selectedUuids: string[]) => void;
+  // Xóa prop onMulliganSelectionChange vì không còn cần thiết
 }
 
 const CARD_BASE_WIDTH = 120;
 const CARD_BASE_HEIGHT = 168;
 
-export default function Hand({
-  onCardSelect,
-  onMulliganSelectionChange,
-}: HandProps) {
+export default function Hand({ onCardSelect }: HandProps) {
   const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
 
@@ -67,9 +63,13 @@ export default function Hand({
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
-  // State mới để theo dõi các lá bài được chọn cho mulligan
-  const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
+  // Xóa state mulliganSelection cục bộ
+  // const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
   const handRef = useRef<HTMLDivElement>(null);
+
+  // Lấy mulliganSelection từ global state
+  const globalState = world?.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+  const mulliganSelection = globalState?.mulliganSelection ?? [];
 
   // === XÓA CÁC DÒNG GỌI ACTION KHÔNG TỒN TẠI ===
   // const phase = useGameStore((state) => state.phase);
@@ -78,12 +78,12 @@ export default function Hand({
   // const setPlayerAction = useGameStore((state) => state.setPlayerAction);
   // ===========================================
 
-  // Gửi thay đổi lên component cha mỗi khi danh sách chọn mulligan thay đổi
-  useEffect(() => {
-    if (phase === "mulligan") {
-      onMulliganSelectionChange(mulliganSelection);
-    }
-  }, [mulliganSelection, onMulliganSelectionChange, phase]);
+  // Xóa useEffect gửi thay đổi lên component cha
+  // useEffect(() => {
+  //   if (phase === "mulligan") {
+  //     onMulliganSelectionChange(mulliganSelection);
+  //   }
+  // }, [mulliganSelection, onMulliganSelectionChange, phase]);
 
   useOnClickOutside(handRef, () => {
     if (phase !== "mulligan") {
@@ -96,15 +96,15 @@ export default function Hand({
   const handleCardClick = (card: CardInstance) => {
     // Luôn cập nhật preview khi click, bất kể phase nào
     onCardSelect(card);
+    const cardEntityId = parseInt(card.uuid);
 
     if (phase === "mulligan") {
-      // Logic chọn/bỏ chọn cho mulligan
-      setMulliganSelection(
-        (prev) =>
-          prev.includes(card.uuid)
-            ? prev.filter((uuid) => uuid !== card.uuid) // Bỏ chọn
-            : [...prev, card.uuid] // Thêm vào danh sách chọn
-      );
+      const newSelection = mulliganSelection.includes(cardEntityId)
+        ? mulliganSelection.filter((id) => id !== cardEntityId)
+        : [...mulliganSelection, cardEntityId];
+
+      // Gửi lựa chọn mới lên global state
+      dispatchUpdateMulliganSelection(newSelection);
     } else {
       // Logic click bình thường (chỉ để hiển thị preview, đã được xử lý ở dòng đầu tiên)
       // Chúng ta có thể thêm lại logic selectedUuid nếu muốn có hiệu ứng "khóa"
@@ -180,7 +180,8 @@ export default function Hand({
         <AnimatePresence>
           {hand.map((card, index) => {
             const isSelectedForMulligan =
-              phase === "mulligan" && mulliganSelection.includes(card.uuid);
+              phase === "mulligan" &&
+              mulliganSelection.includes(parseInt(card.uuid));
             const isSelectedForPreview =
               phase !== "mulligan" && selectedCardUuid === card.uuid;
 

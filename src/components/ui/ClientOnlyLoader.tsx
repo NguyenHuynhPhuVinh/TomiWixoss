@@ -79,10 +79,7 @@ export default function ClientOnlyLoader() {
       {/* Các component UI 2D nằm ở đây */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
         <GameController />
-        <Hand
-          onCardSelect={setSelectedCard}
-          onMulliganSelectionChange={setMulliganSelection}
-        />
+        <Hand onCardSelect={setSelectedCard} />
         <SideCardPreview card={selectedCard} />
         <GameLog />
       </div>

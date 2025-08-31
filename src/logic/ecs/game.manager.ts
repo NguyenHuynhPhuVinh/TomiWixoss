@@ -68,6 +68,15 @@ class GameManager {
 
     this.startLoop(); // Khởi động lại vòng lặp
   }
+
+  /**
+   * Chỉ thông báo cho listener (Zustand) để re-render UI.
+   * Dùng cho các thay đổi state không cần chạy System ngay lập tức.
+   */
+  public notifyUpdate() {
+    if (!this.world) return;
+    this.updateListeners.forEach((listener) => listener(this.world!));
+  }
 }
 
 const gameManager = new GameManager();
