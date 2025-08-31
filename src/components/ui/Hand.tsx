@@ -58,7 +58,6 @@ export default function Hand({ onCardSelect }: HandProps) {
   // ==========================================
 
   const phase = useStore(useGameStore, (state) => state.phase);
-  // Tạm thời comment out các state/action chưa dùng
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
   const initiatePlaceSigni = useStore(
     useGameStore,
@@ -67,27 +66,11 @@ export default function Hand({ onCardSelect }: HandProps) {
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
-  // Xóa state mulliganSelection cục bộ
-  // const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
   const handRef = useRef<HTMLDivElement>(null);
 
   // Lấy mulliganSelection từ global state
   const globalState = world?.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
   const mulliganSelection = globalState?.mulliganSelection ?? [];
-
-  // === XÓA CÁC DÒNG GỌI ACTION KHÔNG TỒN TẠI ===
-  // const phase = useGameStore((state) => state.phase);
-  // const chargeEnerAction = useGameStore((state) => state.chargeEner);
-  // const playSigniAction = useGameStore((state) => state.playSigni);
-  // const setPlayerAction = useGameStore((state) => state.setPlayerAction);
-  // ===========================================
-
-  // Xóa useEffect gửi thay đổi lên component cha
-  // useEffect(() => {
-  //   if (phase === "mulligan") {
-  //     onMulliganSelectionChange(mulliganSelection);
-  //   }
-  // }, [mulliganSelection, onMulliganSelectionChange, phase]);
 
   useOnClickOutside(handRef, () => {
     if (phase !== "mulligan") {
@@ -166,54 +149,6 @@ export default function Hand({ onCardSelect }: HandProps) {
       .map((card) => card.uuid);
   }, [world, worldVersion, phase, hand]);
 
-  // ... logic state và ref của component giữ nguyên ...
-
-  // Tạm thời comment out các hàm handler
-  // const handleDiscard = (cardUuid: string) => {
-  //   const command = new DiscardCardCommand(cardUuid);
-  //   commandService.dispatch(command);
-  //   // Không cần bỏ chọn vì người chơi có thể cần bỏ nhiều lá
-  // };
-
-  // const handleChargeEner = (cardUuid: string) => {
-  //   const command = new ChargeEnerCommand({ from: "hand", cardUuid });
-  //   commandService.dispatch(command);
-  //   setSelectedCardUuid(null);
-  //   onCardSelect(null);
-  // };
-
-  // --- LOGIC MỚI: XÁC ĐỊNH SIGNI HỢP LỆ ---
-  // Tạm thời comment out vì chưa có dữ liệu từ world
-  // const playableSigniUuids = useMemo(() => {
-  //   if (phase !== "main" || !currentCenterLrig) return [];
-
-  //   const lrigLevel = currentCenterLrig.level ?? 0;
-  //   // Tạm thời xử lý limit là số, sẽ nâng cấp sau
-  //   const lrigLimit =
-  //     typeof currentCenterLrig.limit === "number"
-  //       ? currentCenterLrig.limit
-  //       : 99;
-  //   const signiOnField = signiZone.filter(
-  //     (card): card is CardInstance => card !== null
-  //   );
-  //   const currentTotalLevelOnField = signiOnField.reduce(
-  //     (sum: number, signi) => sum + (signi?.level ?? 0),
-  //     0
-  //   );
-
-  //   return hand
-  //     .filter((card) => {
-  //       if (card.type !== "SIGNI") return false;
-  //       const cardLevel = card.level ?? 0;
-  //       // Điều kiện 1: Level lá bài <= Level LRIG
-  //       const levelOk = cardLevel <= lrigLevel;
-  //       // Điều kiện 2: Tổng level trên sân + level lá bài <= Limit LRIG
-  //       const limitOk = currentTotalLevelOnField + cardLevel <= lrigLimit;
-  //       return levelOk && limitOk;
-  //     })
-  //     .map((card) => card.uuid);
-  // }, [hand, phase, currentCenterLrig, signiZone]); // Thêm các dependency vào đây
-
   if (numCards === 0) return null;
 
   return (
@@ -266,19 +201,14 @@ export default function Hand({ onCardSelect }: HandProps) {
                     : "drop-shadow(0 0 0 rgba(255, 255, 255, 0))", // Thay màu shadow cho đẹp hơn
                   transition: { type: "spring", stiffness: 400, damping: 30 },
                 }}
-                // === THÊM LẠI WHILEHOVER ===
                 whileHover={{
-                  // Chỉ áp dụng hiệu ứng hover nếu lá bài không đang được chọn
                   ...(!(isSelectedForMulligan || isSelectedForPreview) && {
                     y: -40,
                     scale: 1.15,
                     filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.7))",
                   }),
-                  // Luôn đưa lá bài đang hover lên trên cùng
                   zIndex: numCards + 1,
                 }}
-                // === KẾT THÚC THÊM LẠI WHILEHOVER ===
-
                 onClick={() => handleCardClick(card)}
               >
                 {isSelectedForPreview && (

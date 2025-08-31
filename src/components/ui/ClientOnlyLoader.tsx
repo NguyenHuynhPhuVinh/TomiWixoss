@@ -171,7 +171,6 @@ export default function ClientOnlyLoader() {
       return lrigDeckEntities
         .filter((entity) => {
           const cardInfo = world.getComponent(entity, CardInfoComponent)!;
-          // TODO: Thêm logic kiểm tra timing của Assist LRIG
           return (
             cardInfo.data.level === (assistLrigInfo.data.level ?? -1) + 1 &&
             cardInfo.data.lrigType === assistLrigInfo.data.lrigType
@@ -214,8 +213,6 @@ export default function ClientOnlyLoader() {
         <Scene />
       </TomiwixossSceneLoader>
 
-      {/* Các component Modal nằm ở đây - tạm thời comment out vì cần props phức tạp */}
-      {/* === BỎ COMMENT VÀ CẬP NHẬT LRIG SELECTOR === */}
       <LrigSelector
         isOpen={phase === "selecting_lrigs"}
         fullLrigDeck={lrigDeckForSelector}
@@ -226,7 +223,6 @@ export default function ClientOnlyLoader() {
           dispatchConfirmLrigSelectionAction(centerId, assistIds);
         }}
       />
-      {/* =========================================== */}
       <DeckViewer
         title={
           viewingLrigDeckForGrow
@@ -246,7 +242,6 @@ export default function ClientOnlyLoader() {
           dispatchGrowLrigAction(targetEntityId, zoneIndex);
         }}
       />
-      {/* <DeckViewer /> */}
     </div>
   );
 }
