@@ -54,3 +54,11 @@ export class GlobalStateComponent implements Component {
     public actionTakenInPhase: boolean = false
   ) {}
 }
+
+/**
+ * Component singleton chứa các yêu cầu hành động từ người chơi.
+ * Các System sẽ đọc component này để biết cần phải làm gì.
+ */
+export class ActionRequestComponent implements Component {
+  public request: { type: string; payload: any } | null = null;
+}

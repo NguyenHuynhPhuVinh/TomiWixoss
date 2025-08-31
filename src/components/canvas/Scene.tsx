@@ -22,12 +22,18 @@ import {
 } from "@/logic/ecs/components/card.components";
 import { Entity } from "@/logic/ecs/ecs.types";
 import { CardInstance } from "@/types/game";
+import { dispatchChargeEnerAction } from "@/logic/ecs/actions"; // <-- IMPORT
 // Tạm thời comment out InteractiveZone để tập trung vào render
 // import InteractiveZone from "./InteractiveZone";
 
 export default function Scene() {
   const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
+  const phase = useStore(useGameStore, (state) => state.phase);
+  const actionTakenInPhase = useStore(
+    useGameStore,
+    (state) => state.actionTakenInPhase
+  );
 
   const coords = P1_ZONE_COORDINATES;
 
@@ -193,6 +199,16 @@ export default function Scene() {
             card={cardInstance}
             position={position}
             rotation={rotation}
+            onClick={() => {
+              if (
+                zoneInfo.zone === "signiZone" &&
+                phase === "ener" &&
+                !actionTakenInPhase
+              ) {
+                dispatchChargeEnerAction("signi", entity);
+              }
+              // Thêm các logic click khác ở đây sau
+            }}
           />
         );
       })}

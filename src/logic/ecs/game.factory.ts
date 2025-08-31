@@ -7,7 +7,8 @@ import {
   CardInfoComponent,
   ZoneComponent,
   StatusComponent,
-  GlobalStateComponent, // <-- 1. IMPORT COMPONENT MỚI
+  GlobalStateComponent,
+  ActionRequestComponent, // <-- IMPORT
 } from "./components/card.components";
 
 // Định nghĩa một hằng số cho entity toàn cục để dễ nhận biết
@@ -23,6 +24,7 @@ export class GameFactory {
     // === 2. TẠO ENTITY TOÀN CỤC VÀ GẮN COMPONENT ===
     const globalEntity = world.createEntity(); // Sẽ là entity 0
     world.addComponent(globalEntity, new GlobalStateComponent("up", 1, false));
+    world.addComponent(globalEntity, new ActionRequestComponent()); // <-- THÊM VÀO ĐÂY
     // ===============================================
 
     // 1. Lấy dữ liệu deck

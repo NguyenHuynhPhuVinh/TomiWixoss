@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { cn } from "@/lib/utils"; // Import cn utility
 import ContextMenu from "./ContextMenu"; // Thêm import ContextMenu
+import { dispatchChargeEnerAction } from "@/logic/ecs/actions"; // <-- IMPORT
 // import { ChargeEnerCommand } from "@/logic/commands/chargeEner.command";
 // import commandService from "@/logic/core/command.service";
 // import { DiscardCardCommand } from "@/logic/commands/discardCard.command";
@@ -238,7 +239,10 @@ export default function Hand({
                   <ContextMenu
                     showChargeEner={phase === "ener"}
                     onChargeEner={() => {
-                      /* handleChargeEner(card.uuid) */
+                      // Chuyển đổi uuid (string) thành entityId (number)
+                      dispatchChargeEnerAction("hand", parseInt(card.uuid));
+                      setSelectedCardUuid(null);
+                      onCardSelect(null);
                     }}
                     // Logic cũ cho End Phase
                     showDiscard={false /* phase === "end" && mustDiscard */}
