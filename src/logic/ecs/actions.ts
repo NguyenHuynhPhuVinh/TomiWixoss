@@ -165,3 +165,16 @@ export function dispatchPlaceSigniAction(entityId: number, zoneIndex: number) {
     gameManager.handlePlayerAction();
   }
 }
+
+export function dispatchDiscardCardAction(entityId: number) {
+  const world = gameManager.world;
+  if (!world) return;
+  const actionRequest = world.getComponent(
+    GLOBAL_ENTITY,
+    ActionRequestComponent
+  );
+  if (actionRequest) {
+    actionRequest.request = { type: "DISCARD_CARD", payload: { entityId } };
+    gameManager.handlePlayerAction();
+  }
+}

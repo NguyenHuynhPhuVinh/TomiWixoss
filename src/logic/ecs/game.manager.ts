@@ -8,6 +8,7 @@ import { GrowSystem } from "./systems/grow.system"; // <-- IMPORT
 import { PlaceSigniSystem } from "./systems/placeSigni.system"; // <-- IMPORT
 import { PhaseSystem } from "./systems/phase.system"; // <-- IMPORT
 import { SetupSystem } from "./systems/setup.system"; // <-- IMPORT
+import { DiscardSystem } from "./systems/discard.system"; // <-- IMPORT
 import { System } from "./ecs.types";
 import { GLOBAL_ENTITY } from "./game.factory";
 import { ActionRequestComponent } from "./components/card.components";
@@ -33,6 +34,7 @@ class GameManager {
     this.actionSystems["GROW"] = new GrowSystem(); // <-- THÊM VÀO ĐÂY
     this.actionSystems["PLACE_SIGNI"] = new PlaceSigniSystem(); // <-- THÊM VÀO ĐÂY
     this.actionSystems["PHASE"] = new PhaseSystem();
+    this.actionSystems["DISCARD"] = new DiscardSystem(); // <-- THÊM VÀO ĐÂY
     // ... các system hành động khác
 
     this.loopSystems.push(new UpSystem());
@@ -124,6 +126,9 @@ class GameManager {
         break;
       case "CONFIRM_MULLIGAN":
         systemKey = "SETUP";
+        break;
+      case "DISCARD_CARD":
+        systemKey = "DISCARD"; // <-- THÊM VÀO ĐÂY
         break;
       default:
         console.warn(`Unknown action type: ${requestType}`);

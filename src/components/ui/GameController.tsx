@@ -8,6 +8,7 @@ import gameManager from "@/logic/ecs/game.manager";
 import { GamePhase } from "@/types/game";
 import { GlobalStateComponent } from "@/logic/ecs/components/card.components";
 import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
+import { ZoneComponent } from "@/logic/ecs/components/card.components"; // <-- IMPORT
 import {
   dispatchAdvancePhaseAction,
   dispatchConfirmMulliganAction,
@@ -23,6 +24,7 @@ export default function GameController() {
     useGameStore,
     (state) => state.actionTakenInPhase
   );
+  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
   const initializeGame = useGameStore((state) => state.initializeGame);
   const openZoneViewer = useGameStore((state) => state.openZoneViewer);
   // const setPhase = useGameStore((state) => state.setPhase); // Không còn cần thiết
@@ -122,6 +124,32 @@ export default function GameController() {
         );
 
       // Tạm thời các phase khác chỉ có nút Next
+      case "end":
+        const handSize =
+          world
+            ?.query([ZoneComponent])
+            .filter(
+              (e) => world.getComponent(e, ZoneComponent)!.zone === "hand"
+            ).length ?? 0;
+        return (
+          <>
+            <h3 className="font-bold">Turn {turn} - End Phase</h3>
+            {mustDiscard && (
+              <p className="text-destructive text-sm my-2">
+                Tay bạn có {handSize} lá.
+                <br />
+                Hãy bỏ {handSize - 6} lá.
+              </p>
+            )}
+            <Button
+              onClick={dispatchAdvancePhaseAction}
+              className="w-full mt-2"
+              disabled={mustDiscard}
+            >
+              Kết thúc Lượt
+            </Button>
+          </>
+        );
       default:
         const phaseText = phase.charAt(0).toUpperCase() + phase.slice(1);
         return (

@@ -4,6 +4,7 @@ import { World } from "../world";
 import {
   ActionRequestComponent,
   GlobalStateComponent,
+  ZoneComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import { TURN_PHASES, GamePhase } from "@/types/game";
@@ -38,7 +39,7 @@ export class PhaseSystem implements System {
       globalState.actionTakenInPhase
     ) {
       console.log(`--- Auto-advancing from ${globalState.phase} ---`);
-      this.advancePhase(globalState);
+      this.advancePhase(globalState, world);
       return; // Dừng lại sau khi đã chuyển phase
     }
 
@@ -46,7 +47,7 @@ export class PhaseSystem implements System {
     if (actionRequest.request?.type === "ADVANCE_PHASE") {
       // Bỏ "anh gác cổng"
       console.log(`--- Advancing from ${globalState.phase} by request ---`);
-      this.advancePhase(globalState);
+      this.advancePhase(globalState, world);
       actionRequest.request = null; // Dọn dẹp yêu cầu
     }
   }
@@ -54,8 +55,8 @@ export class PhaseSystem implements System {
   /**
    * Helper function chứa logic chuyển phase
    */
-  private advancePhase(globalState: GlobalStateComponent): void {
-    const { addLog } = useGameStore.getState();
+  private advancePhase(globalState: GlobalStateComponent, world: World): void {
+    const { addLog, setMustDiscard } = useGameStore.getState();
     const currentPhaseIndex = TURN_PHASES.indexOf(globalState.phase);
     let nextPhaseIndex = currentPhaseIndex + 1;
 
@@ -68,8 +69,26 @@ export class PhaseSystem implements System {
       globalState.turn += 1;
     }
 
-    globalState.phase = TURN_PHASES[nextPhaseIndex];
+    const nextPhase = TURN_PHASES[nextPhaseIndex];
+    globalState.phase = nextPhase;
     globalState.actionTakenInPhase = false; // Luôn reset cho phase mới
+
+    // === DI CHUYỂN LOGIC KIỂM TRA END PHASE VÀO ĐÂY ===
+    if (nextPhase === "end") {
+      const handEntities = world
+        .query([ZoneComponent])
+        .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "hand");
+
+      if (handEntities.length > 6) {
+        const amountToDiscard = handEntities.length - 6;
+        addLog(
+          `Tay bài có ${handEntities.length} lá. Phải bỏ ${amountToDiscard} lá.`,
+          "system"
+        );
+        setMustDiscard(true); // Cập nhật state UI ngay lập tức
+      }
+    }
+    // =================================================
 
     // === LOGIC ĐIỀU KHIỂN VÒNG LẶP MỚI ===
     // Nếu phase tiếp theo là một phase tương tác, hãy dừng vòng lặp

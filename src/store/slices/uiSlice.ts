@@ -12,6 +12,8 @@ export interface UiSlice {
   closeZoneViewer: GameStore["closeZoneViewer"];
   closeLrigDeckViewer: GameStore["closeLrigDeckViewer"];
   openLrigDeckViewerForAssist: GameStore["openLrigDeckViewerForAssist"];
+  mustDiscard: GameStore["mustDiscard"];
+  setMustDiscard: GameStore["setMustDiscard"];
 }
 
 export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
@@ -20,6 +22,7 @@ export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
   playerAction: null,
   isZoneViewerOpen: false,
   viewingLrigDeckForGrow: null,
+  mustDiscard: false,
 
   initiatePlaceSigni: (cardUuid) => {
     console.log(
@@ -51,4 +54,5 @@ export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
       viewingLrigDeckForGrow: { forAssistIndex: zoneIndex },
     });
   },
+  setMustDiscard: (mustDiscard) => set({ mustDiscard }),
 });

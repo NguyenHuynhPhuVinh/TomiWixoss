@@ -33,6 +33,7 @@ export interface GameState {
   isZoneViewerOpen: boolean;
   viewingLrigDeckForGrow: { forAssistIndex: number | null } | null;
   boardState: any; // Sẽ được định nghĩa chi tiết hơn
+  mustDiscard: boolean;
 }
 
 // Interface cho ACTIONS của toàn bộ store
@@ -51,6 +52,7 @@ export interface GameActions {
   closeZoneViewer: () => void;
   closeLrigDeckViewer: () => void;
   openLrigDeckViewerForAssist: (zoneIndex: number) => void;
+  setMustDiscard: (mustDiscard: boolean) => void;
 }
 
 // Interface tổng hợp

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"; // Import cn utility
 import ContextMenu from "./ContextMenu"; // Thêm import ContextMenu
 import { dispatchChargeEnerAction } from "@/logic/ecs/actions"; // <-- IMPORT
 import { dispatchUpdateMulliganSelection } from "@/logic/ecs/actions";
+import { dispatchDiscardCardAction } from "@/logic/ecs/actions"; // <-- IMPORT
 import {
   CardInfoComponent,
   ZoneComponent,
@@ -58,7 +59,7 @@ export default function Hand({ onCardSelect }: HandProps) {
 
   const phase = useStore(useGameStore, (state) => state.phase);
   // Tạm thời comment out các state/action chưa dùng
-  // const mustDiscard = ...
+  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
   const initiatePlaceSigni = useStore(
     useGameStore,
     (state) => state.initiatePlaceSigni
@@ -290,9 +291,11 @@ export default function Hand({ onCardSelect }: HandProps) {
                       onCardSelect(null);
                     }}
                     // Logic cũ cho End Phase
-                    showDiscard={false /* phase === "end" && mustDiscard */}
+                    showDiscard={phase === "end" && mustDiscard}
                     onDiscard={() => {
-                      /* handleDiscard(card.uuid) */
+                      dispatchDiscardCardAction(parseInt(card.uuid));
+                      setSelectedCardUuid(null);
+                      onCardSelect(null);
                     }}
                     showPlaySigni={
                       phase === "main" &&
