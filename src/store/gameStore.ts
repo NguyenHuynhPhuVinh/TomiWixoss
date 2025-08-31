@@ -1,6 +1,6 @@
 // src/store/gameStore.ts
 import { create } from "zustand";
-import { CardInstance, CardData } from "@/types/game";
+import { CardInstance, CardData, PlayerAction, ZoneKey } from "@/types/game";
 import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array"; // Cài đặt: npm install shuffle-array
@@ -8,6 +8,7 @@ import shuffle from "shuffle-array"; // Cài đặt: npm install shuffle-array
 // Thêm các phase mới cho giai đoạn Setup
 type GamePhase =
   | "pre_game"
+  | "setup"
   | "selecting_lrigs"
   | "mulligan"
   | "up"
@@ -49,16 +50,25 @@ interface GameState {
   playerEner: number;
   player: PlayerState;
   ai: PlayerState;
+  playerAction: PlayerAction | null; // <-- STATE MỚI QUAN TRỌNG
+  setPlayerAction: (action: PlayerAction | null) => void; // Action để quản lý state trên
+  moveCard: (
+    cardUuid: string,
+    fromZone: ZoneKey,
+    toZone: ZoneKey,
+    toIndex?: number
+  ) => void;
+  setCardState: (
+    cardUuid: string,
+    inZone: ZoneKey,
+    updates: Partial<Pick<CardInstance, "isFaceUp" | "isDowned">>
+  ) => void;
   increaseTurn: () => void;
   setPlayerEner: (amount: number) => void;
   // --- CÁC ACTION MỚI CHO GAME SETUP ---
   startGame: () => void; // Bắt đầu quá trình setup
-  confirmLrigSelection: (
-    centerId: string,
-    assist1Id: string,
-    assist2Id: string
-  ) => void; // Xác nhận 3 LRIG đã chọn
-  mulligan: (cardsToReturnUuids: string[]) => void;
+  // confirmLrigSelection: (centerId: string, assist1Id: string, assist2Id: string) => void; // Xác nhận 3 LRIG đã chọn
+  // mulligan: (cardsToReturnUuids: string[]) => void;
   upPhase: () => void;
   growPhase: (lrigToGrowUuid: string) => void;
   endTurn: () => void;
@@ -93,6 +103,7 @@ const useGameStore = create<GameState>((set, get) => ({
   turn: 0,
   phase: "pre_game", // Phase ban đầu là 'pre_game'
   playerEner: 0,
+  playerAction: null, // Ban đầu không có hành động nào
   player: {
     mainDeck: [],
     lrigDeck: [],
@@ -123,6 +134,50 @@ const useGameStore = create<GameState>((set, get) => ({
   increaseTurn: () => set((state) => ({ turn: state.turn + 1 })),
 
   setPlayerEner: (amount) => set({ playerEner: amount }),
+
+  // === CÁC ACTION NGUYÊN THỦY MỚI ===
+
+  setPlayerAction: (action) => set({ playerAction: action }),
+
+  moveCard: (cardUuid, fromZone, toZone, toIndex) => {
+    set((state) => {
+      const playerState = { ...state.player };
+      let cardToMove: CardInstance | undefined;
+
+      // 1. Tìm và xóa lá bài khỏi vùng nguồn
+      const sourceZone = playerState[fromZone] as CardInstance[];
+      const cardIndex = sourceZone.findIndex((c) => c.uuid === cardUuid);
+      if (cardIndex > -1) {
+        [cardToMove] = sourceZone.splice(cardIndex, 1);
+      } else {
+        return state;
+      } // Không tìm thấy bài
+
+      // 2. Thêm lá bài vào vùng đích
+      const destZone = playerState[toZone] as (CardInstance | null)[];
+      if (toIndex !== undefined && destZone[toIndex] === null) {
+        destZone[toIndex] = cardToMove;
+      } else {
+        (destZone as CardInstance[]).push(cardToMove);
+      }
+
+      return { player: playerState };
+    });
+  },
+
+  setCardState: (cardUuid, inZone, updates) => {
+    set((state) => {
+      const playerState = { ...state.player };
+      const zone = playerState[inZone] as (CardInstance | null)[];
+      const card = zone.find((c) => c?.uuid === cardUuid);
+
+      if (card) {
+        Object.assign(card, updates);
+      }
+
+      return { player: playerState };
+    });
+  },
 
   // --- ACTIONS MỚI ---
 
@@ -158,99 +213,13 @@ const useGameStore = create<GameState>((set, get) => ({
         checkZone: [null],
       },
       turn: 0,
-      phase: "selecting_lrigs", // Chuyển sang phase chọn LRIG
+      phase: "setup",
     });
   },
 
-  // BƯỚC 2: Người chơi xác nhận 3 LRIG, sau đó chia bài và lật LRIG
-  confirmLrigSelection: (centerId, assist1Id, assist2Id) => {
-    set((state) => {
-      const playerLrigDeck = [...state.player.lrigDeck];
-      const playerMainDeck = [...state.player.mainDeck];
-
-      // a. Chọn 3 LRIG từ LRIG Deck và đặt ÚP vào lrigZone
-      const initialLrigs: (CardInstance | null)[] = [null, null, null];
-      const assist1 = playerLrigDeck.find((c) => c.id === assist1Id);
-      const center = playerLrigDeck.find((c) => c.id === centerId);
-      const assist2 = playerLrigDeck.find((c) => c.id === assist2Id);
-
-      // Quan trọng: isFaceUp vẫn là false ở bước này
-      initialLrigs[0] = assist1 || null;
-      initialLrigs[1] = center || null;
-      initialLrigs[2] = assist2 || null;
-
-      // b. Loại bỏ LRIG đã chọn ra khỏi LRIG Deck
-      const remainingLrigDeck = playerLrigDeck.filter(
-        (c) =>
-          c.uuid !== assist1?.uuid &&
-          c.uuid !== center?.uuid &&
-          c.uuid !== assist2?.uuid
-      );
-
-      // c. Rút 5 lá bài lên tay
-      const initialHand = playerMainDeck.splice(0, 5);
-      initialHand.forEach((c) => (c.isFaceUp = true));
-
-      // d. Đặt 7 lá Life Cloth
-      const lifeClothStack = playerMainDeck.splice(0, 7);
-
-      // e. "OPEN!": Lật ngửa 3 LRIG
-      initialLrigs.forEach((lrig) => {
-        if (lrig) lrig.isFaceUp = true;
-      });
-
-      return {
-        player: {
-          ...state.player,
-          mainDeck: playerMainDeck,
-          lrigDeck: remainingLrigDeck,
-          hand: initialHand,
-          lifeCloth: lifeClothStack,
-          lrigZone: initialLrigs,
-        },
-        phase: "mulligan", // Chuyển sang phase Mulligan
-      };
-    });
-  },
-
-  // 3. Xử lý Mulligan
-  mulligan: (cardsToReturnUuids: string[]) => {
-    set((state) => {
-      const amountToRedraw = cardsToReturnUuids.length;
-      if (amountToRedraw === 0) {
-        // Nếu không mulligan, chuyển sang lượt đầu tiên
-        return { phase: "up", turn: 1 };
-      }
-
-      const hand = [...state.player.hand];
-      const deck = [...state.player.mainDeck];
-
-      const cardsToKeep = hand.filter(
-        (c) => !cardsToReturnUuids.includes(c.uuid)
-      );
-      const cardsToReturn = hand.filter((c) =>
-        cardsToReturnUuids.includes(c.uuid)
-      );
-
-      // Trả bài về deck và xáo trộn
-      deck.push(...cardsToReturn);
-      shuffle(deck);
-
-      // Rút lại số bài tương ứng
-      const newCards = deck.splice(0, amountToRedraw);
-      newCards.forEach((c) => (c.isFaceUp = true));
-
-      return {
-        player: {
-          ...state.player,
-          mainDeck: deck,
-          hand: [...cardsToKeep, ...newCards],
-        },
-        phase: "up", // Bắt đầu lượt với Up Phase
-        turn: 1,
-      };
-    });
-  },
+  // Xóa confirmLrigSelection và mulligan vì người chơi sẽ tự làm
+  // confirmLrigSelection: (centerId, assist1Id, assist2Id) => { ... },
+  // mulligan: (cardsToReturnUuids) => { ... },
 
   // 4. Các action cho các phase (ví dụ `drawCard`, `chargeEner` đã có)
   // ...

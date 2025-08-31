@@ -39,7 +39,7 @@ export default function DevPanel() {
   };
 
   return (
-    <div className="absolute top-4 left-4 bg-card p-4 rounded-lg shadow-lg z-10 border">
+    <div className="absolute top-4 left-4 bg-card p-4 rounded-lg shadow-lg z-10 border pointer-events-auto">
       <h2 className="text-lg font-bold mb-2 text-card-foreground">Dev Panel</h2>
       <p className="text-muted-foreground">Current Turn: {turn}</p>
       <Button

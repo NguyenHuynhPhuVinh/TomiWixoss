@@ -7,10 +7,6 @@ export default function GameController() {
   const phase = useGameStore((state) => state.phase);
   const turn = useGameStore((state) => state.turn);
   const startGame = useGameStore((state) => state.startGame);
-  const confirmLrigSelection = useGameStore(
-    (state) => state.confirmLrigSelection
-  );
-  const mulligan = useGameStore((state) => state.mulligan);
   const goToNextPhase = useGameStore((state) => state.goToNextPhase);
   const drawCard = useGameStore((state) => state.drawCard);
 
@@ -20,48 +16,24 @@ export default function GameController() {
         return (
           <>
             <p className="text-muted-foreground mb-4">
-              Chào mừng đến với TomiWixoss.
+              Chào mừng đến với TomiWixoss - Chế độ Sandbox.
             </p>
             <Button onClick={startGame} className="w-full">
               Bắt đầu Game
             </Button>
           </>
         );
-      case "selecting_lrigs":
-        return (
-          <>
-            <p className="text-muted-foreground mb-4">Chọn 3 LRIG Level 0.</p>
-            {/* Tạm thời hard-code lựa chọn, sau này sẽ làm UI chọn */}
-            <Button
-              onClick={() => {
-                confirmLrigSelection(
-                  "WXDi-D01-001", // Center: At
-                  "WXDi-D01-005", // Assist 1: Tawil
-                  "WXDi-D01-008" // Assist 2: Umr
-                );
-              }}
-              className="w-full"
-            >
-              Xác nhận LRIG
-            </Button>
-          </>
-        );
-      case "mulligan":
-        // ... giữ nguyên logic mulligan ...
+      case "setup":
         return (
           <>
             <p className="text-muted-foreground mb-4">
-              Chọn bài muốn đổi trên tay.
+              Click vào Main Deck hoặc LRIG Deck để xem và chọn bài đặt.
             </p>
-            <Button
-              onClick={() => mulligan([])} // Bỏ qua mulligan
-              className="w-full"
-            >
-              Xác nhận (Bỏ qua)
-            </Button>
+            <p className="text-sm text-muted-foreground">
+              Sau đó click vào vùng trống trên sân để đặt bài.
+            </p>
           </>
         );
-      // ... các case khác (draw, ener, main...) giữ nguyên ...
       case "draw":
         const amountToDraw = turn === 1 ? 1 : 2;
         return (
@@ -90,10 +62,7 @@ export default function GameController() {
           <>
             <h3 className="text-lg font-bold">Turn {turn}</h3>
             <p className="text-muted-foreground mb-4">{phaseText} Phase</p>
-            <Button
-              onClick={goToNextPhase} // <-- KẾT NỐI ACTION VÀO ĐÂY
-              className="w-full"
-            >
+            <Button onClick={goToNextPhase} className="w-full">
               Kết thúc Phase
             </Button>
           </>
@@ -102,7 +71,7 @@ export default function GameController() {
   };
 
   return (
-    <div className="absolute top-4 right-4 bg-card p-4 rounded-lg shadow-lg z-10 border w-52 text-center">
+    <div className="absolute top-4 right-4 bg-card p-4 rounded-lg shadow-lg z-10 border w-52 text-center pointer-events-auto">
       {renderContent()}
     </div>
   );

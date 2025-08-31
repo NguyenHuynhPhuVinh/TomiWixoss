@@ -12,16 +12,21 @@ import {
 import GameBoard from "./GameBoard";
 import Card from "./Card";
 // import ZoneHelper from "./ZoneHelper"; // <-- IMPORT HELPER - COMMENTED OUT
+import InteractiveZone from "./InteractiveZone";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 // --- IMPORT TỌA ĐỘ ---
 import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
 
 interface SceneProps {
-  onDeckClick: () => void;
+  onMainDeckClick: () => void;
+  onLrigDeckClick: () => void;
 }
 
-export default function Scene({ onDeckClick }: SceneProps) {
+export default function Scene({
+  onMainDeckClick,
+  onLrigDeckClick,
+}: SceneProps) {
   // Lấy từng phần state một cách riêng biệt để tránh vòng lặp render
   const player = useStore(useGameStore, (state) => state.player);
 
@@ -53,15 +58,31 @@ export default function Scene({ onDeckClick }: SceneProps) {
 
       {/* MAIN DECK */}
       <mesh
-        position={[coords.MAIN_DECK.x, coords.MAIN_DECK.y, coords.MAIN_DECK.z]}
+        // Tạm thời nâng cao vùng click lên để chắc chắn nó không bị chìm
+        position={[
+          coords.MAIN_DECK.x,
+          coords.MAIN_DECK.y + 0.1,
+          coords.MAIN_DECK.z,
+        ]}
         rotation={[-Math.PI / 2, 0, 0]}
-        visible={player.mainDeck.length > 0}
-        onClick={onDeckClick}
+        // Bỏ điều kiện visible đi, luôn hiển thị để debug
+        // visible={player.mainDeck.length > 0}
+        onClick={() => {
+          console.log("3D Main Deck mesh clicked!");
+          onMainDeckClick();
+        }}
       >
         <planeGeometry
-          args={[CARD_DIMENSIONS.width + 0.1, CARD_DIMENSIONS.height + 0.1]}
+          // Tạm thời tăng kích thước để dễ click hơn
+          args={[CARD_DIMENSIONS.width + 0.5, CARD_DIMENSIONS.height + 0.5]}
         />
-        <meshBasicMaterial transparent opacity={0} />
+        {/* 
+          THAY ĐỔI QUAN TRỌNG:
+          Dùng một vật liệu màu đỏ, bán trong suốt để debug.
+          Nếu bạn thấy một hình chữ nhật màu đỏ ở vị trí Main Deck,
+          có nghĩa là vùng click đang được render đúng.
+        */}
+        <meshBasicMaterial color="red" transparent opacity={0.5} />
       </mesh>
       {player.mainDeck.map((card, index) => (
         <Card
@@ -77,6 +98,22 @@ export default function Scene({ onDeckClick }: SceneProps) {
       ))}
 
       {/* LRIG DECK */}
+      <mesh
+        position={[
+          coords.LRIG_DECK.x,
+          coords.LRIG_DECK.y +
+            CARD_DIMENSIONS.thickness * player.lrigDeck.length,
+          coords.LRIG_DECK.z,
+        ]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        visible={player.lrigDeck.length > 0}
+        onClick={onLrigDeckClick}
+      >
+        <planeGeometry
+          args={[CARD_DIMENSIONS.width + 0.1, CARD_DIMENSIONS.height + 0.1]}
+        />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
       {player.lrigDeck.map((card, index) => (
         <Card
           key={card.uuid}
@@ -115,6 +152,26 @@ export default function Scene({ onDeckClick }: SceneProps) {
           />
         );
       })}
+
+      {/* Interactive Zones for LRIG */}
+      <InteractiveZone
+        position={[coords.ASSIST_LRIG_1.x, 0.1, coords.ASSIST_LRIG_1.z]}
+        size={[CARD_DIMENSIONS.width, CARD_DIMENSIONS.height]}
+        zoneKey="lrigZone"
+        zoneIndex={0}
+      />
+      <InteractiveZone
+        position={[coords.CENTER_LRIG.x, 0.1, coords.CENTER_LRIG.z]}
+        size={[CARD_DIMENSIONS.width, CARD_DIMENSIONS.height]}
+        zoneKey="lrigZone"
+        zoneIndex={1}
+      />
+      <InteractiveZone
+        position={[coords.ASSIST_LRIG_2.x, 0.1, coords.ASSIST_LRIG_2.z]}
+        size={[CARD_DIMENSIONS.width, CARD_DIMENSIONS.height]}
+        zoneKey="lrigZone"
+        zoneIndex={2}
+      />
 
       {/* === CẬP NHẬT LOGIC RENDER LIFE CLOTH === */}
       {player.lifeCloth.map((card, index) => {
@@ -161,6 +218,27 @@ export default function Scene({ onDeckClick }: SceneProps) {
           />
         );
       })}
+
+      {/* Interactive Zones */}
+      <InteractiveZone
+        position={[coords.SIGNI_1.x, 0.1, coords.SIGNI_1.z]}
+        size={[CARD_DIMENSIONS.width, CARD_DIMENSIONS.height]}
+        zoneKey="signiZone"
+        zoneIndex={0}
+      />
+      <InteractiveZone
+        position={[coords.SIGNI_2.x, 0.1, coords.SIGNI_2.z]}
+        size={[CARD_DIMENSIONS.width, CARD_DIMENSIONS.height]}
+        zoneKey="signiZone"
+        zoneIndex={1}
+      />
+      <InteractiveZone
+        position={[coords.SIGNI_3.x, 0.1, coords.SIGNI_3.z]}
+        size={[CARD_DIMENSIONS.width, CARD_DIMENSIONS.height]}
+        zoneKey="signiZone"
+        zoneIndex={2}
+      />
+      {/* Thêm cho LRIG Zone nếu cần */}
 
       {/* ENER ZONE */}
       {/* Các lá bài trong Ener Zone sẽ được xếp chồng lệch sang phải */}

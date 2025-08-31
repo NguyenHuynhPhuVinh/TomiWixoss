@@ -32,3 +32,22 @@ export interface CardInstance extends CardData {
   isDowned: boolean; // Đang tapped/downed hay không
   owner: "player" | "ai"; // Thuộc về người chơi nào
 }
+
+// Định nghĩa các hành động mà người chơi có thể đang thực hiện
+export type PlayerAction =
+  | { type: "place_signi"; card: CardInstance }
+  | { type: "place_lrig"; card: CardInstance }
+  | { type: "charge_ener"; card: CardInstance }
+  | { type: "attack"; card: CardInstance };
+
+// Key cho các vùng có thể chứa bài
+export type ZoneKey =
+  | "mainDeck"
+  | "lrigDeck"
+  | "hand"
+  | "signiZone"
+  | "lrigZone"
+  | "lifeCloth"
+  | "enerZone"
+  | "trash"
+  | "lrigTrash";
