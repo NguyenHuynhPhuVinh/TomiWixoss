@@ -23,6 +23,7 @@ interface GameState {
   initializeGame: () => void;
   drawCard: (amount: number) => void; // <-- THÊM ACTION RÚT BÀI
   returnAllCardsFromHand: () => void; // <-- THÊM ACTION TRẢ BÀI
+  returnSingleCardFromHand: (cardUuid: string) => void; // <-- THÊM ACTION MỚI
 }
 
 // Hàm helper để tạo một instance từ card data
@@ -132,6 +133,32 @@ const useGameStore = create<GameState>((set, get) => ({
           ...state.player,
           mainDeck: newMainDeck,
           hand: [], // Dọn sạch tay
+        },
+      };
+    });
+  },
+
+  returnSingleCardFromHand: (cardUuid: string) => {
+    set((state) => {
+      const cardToReturn = state.player.hand.find((c) => c.uuid === cardUuid);
+      if (!cardToReturn) return state; // Không tìm thấy bài, không làm gì cả
+
+      // Tạo một bản sao và reset trạng thái của nó
+      const returnedCard = { ...cardToReturn, isFaceUp: false };
+
+      // Lọc lá bài đó ra khỏi tay
+      const newHand = state.player.hand.filter((c) => c.uuid !== cardUuid);
+
+      // Thêm lá bài đó vào bộ bài
+      const newMainDeck = [...state.player.mainDeck, returnedCard];
+
+      // TODO: Xáo trộn bộ bài sau này
+
+      return {
+        player: {
+          ...state.player,
+          hand: newHand,
+          mainDeck: newMainDeck,
         },
       };
     });

@@ -1,82 +1,108 @@
 // src/components/ui/Hand.tsx
 "use client";
 
+import { useState, useRef } from "react";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import Image from "next/image";
 import { CardInstance } from "@/types/game";
-import { Button } from "./button";
 import { AnimatePresence, motion } from "framer-motion";
+import ContextMenu from "./ContextMenu";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
 interface HandProps {
-  onCardClick: (card: CardInstance) => void;
-  onReturnCards: () => void;
+  onCardSelect: (card: CardInstance | null) => void;
+  onReturnSingleCard: (cardUuid: string) => void;
 }
 
-// --- CÁC THAM SỐ MỚI ĐỂ TÙY CHỈNH ---
-const CARD_BASE_WIDTH = 120; // Kích thước lá bài lớn hơn
+const CARD_BASE_WIDTH = 120;
 const CARD_BASE_HEIGHT = 168;
-const FAN_ANGLE_PER_CARD = 4; // Góc nghiêng cho mỗi lá bài
-const OVERLAP_DISTANCE = 60; // Khoảng cách chồng lên nhau giữa các lá bài (pixel)
-const HOVER_Y_OFFSET = -40; // Độ nhô lên khi hover
 
-export default function Hand({ onCardClick, onReturnCards }: HandProps) {
+export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
   const hand = useStore(useGameStore, (state) => state.player.hand);
   const numCards = hand.length;
 
-  if (numCards === 0) {
-    return null;
-  }
+  const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
+  const handRef = useRef<HTMLDivElement>(null);
+
+  useOnClickOutside(handRef, () => {
+    setSelectedCardUuid(null);
+    onCardSelect(null);
+  });
+
+  const handleCardClick = (card: CardInstance) => {
+    if (selectedCardUuid === card.uuid) {
+      setSelectedCardUuid(null);
+      onCardSelect(null);
+    } else {
+      setSelectedCardUuid(card.uuid);
+      onCardSelect(card);
+    }
+  };
+
+  const handleDiscard = () => {
+    if (selectedCardUuid) {
+      onReturnSingleCard(selectedCardUuid);
+      setSelectedCardUuid(null);
+      onCardSelect(null);
+    }
+  };
+
+  if (numCards === 0) return null;
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-[250px] flex justify-center items-end pb-4 pointer-events-none z-20">
+    <div
+      className="absolute bottom-0 left-0 right-0 h-[250px] flex justify-center items-end pb-4 pointer-events-none z-20"
+      ref={handRef}
+    >
       <div className="relative pointer-events-auto">
         <AnimatePresence>
           {hand.map((card, index) => {
-            // Tính toán vị trí tâm của dải bài
+            const isSelected = selectedCardUuid === card.uuid;
             const centerIndex = (numCards - 1) / 2;
             const distanceFromCenter = index - centerIndex;
-
-            // Tính toán transform cho từng lá bài
-            const transform = `
-              translateX(${distanceFromCenter * OVERLAP_DISTANCE}px)
-              rotate(${distanceFromCenter * FAN_ANGLE_PER_CARD}deg)
-            `;
+            const transform = `translateX(${
+              distanceFromCenter * 60
+            }px) rotate(${distanceFromCenter * 4}deg)`;
 
             return (
               <motion.div
                 key={card.uuid}
                 className="absolute bottom-0 left-1/2 cursor-pointer origin-bottom"
-                // Áp dụng style trực tiếp ở đây
                 style={{
-                  // Dịch chuyển về tâm trước khi áp dụng transform
                   marginLeft: `-${CARD_BASE_WIDTH / 2}px`,
+                  // zIndex cơ bản dựa trên vị trí
                   zIndex: numCards - Math.abs(distanceFromCenter),
                 }}
-                // Animation và transform
-                initial={{ opacity: 0, y: 100, scale: 0.5 }}
                 animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                  transform: transform, // Áp dụng transform động
+                  y: isSelected ? -40 : 0,
+                  scale: isSelected ? 1.2 : 1, // Lá được chọn sẽ to hơn một chút
+                  transform: transform,
+                  filter: isSelected
+                    ? "drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))"
+                    : "drop-shadow(0 0 0 rgba(255, 255, 255, 0))", // Thay màu shadow cho đẹp hơn
                   transition: { type: "spring", stiffness: 400, damping: 30 },
                 }}
-                exit={{
-                  opacity: 0,
-                  y: 50,
-                  scale: 0.5,
-                  transition: { duration: 0.3 },
-                }}
+                // === THÊM LẠI WHILEHOVER ===
                 whileHover={{
-                  y: HOVER_Y_OFFSET,
-                  scale: 1.15,
+                  // Chỉ áp dụng hiệu ứng hover nếu lá bài không đang được chọn
+                  ...(!isSelected && {
+                    y: -40,
+                    scale: 1.15,
+                    filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.7))",
+                  }),
+                  // Luôn đưa lá bài đang hover lên trên cùng
                   zIndex: numCards + 1,
                 }}
-                onClick={() => onCardClick(card)}
+                // === KẾT THÚC THÊM LẠI WHILEHOVER ===
+
+                onClick={() => handleCardClick(card)}
               >
+                {/* Hiển thị ContextMenu nếu lá bài này đang được chọn */}
+                {isSelected && <ContextMenu onDiscard={handleDiscard} />}
+
                 <div
-                  className="relative drop-shadow-xl"
+                  className="relative"
                   style={{
                     width: `${CARD_BASE_WIDTH}px`,
                     height: `${CARD_BASE_HEIGHT}px`,
@@ -95,12 +121,6 @@ export default function Hand({ onCardClick, onReturnCards }: HandProps) {
             );
           })}
         </AnimatePresence>
-      </div>
-
-      <div className="absolute bottom-4 right-4 pointer-events-auto">
-        <Button onClick={onReturnCards} variant="outline" size="sm">
-          Bỏ bài
-        </Button>
       </div>
     </div>
   );

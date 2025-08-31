@@ -4,12 +4,11 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import { CardInstance } from "@/types/game";
 import Hand from "./Hand";
-import CardPreview from "./CardPreview";
+// Bỏ CardPreview cũ, dùng SideCardPreview mới
+import SideCardPreview from "./SideCardPreview";
 import useGameStore from "@/store/gameStore";
-// IMPORT LOADER MỚI
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 
-// Dynamic import cho các component nặng
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
 });
@@ -18,12 +17,13 @@ const DevPanel = dynamic(() => import("@/components/ui/DevPanel"), {
 });
 
 export default function ClientOnlyLoader() {
-  const [previewCard, setPreviewCard] = useState<CardInstance | null>(null);
+  // State này bây giờ sẽ điều khiển SideCardPreview
+  const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
 
   // Lấy các action từ store
   const drawCardAction = useGameStore((state) => state.drawCard);
-  const returnCardsAction = useGameStore(
-    (state) => state.returnAllCardsFromHand
+  const returnSingleCardAction = useGameStore(
+    (state) => state.returnSingleCardFromHand
   );
 
   const handleDeckClick = () => {
@@ -33,23 +33,18 @@ export default function ClientOnlyLoader() {
 
   return (
     <>
-      {/* DevPanel có thể nằm ngoài vì nó không phụ thuộc vào tài nguyên 3D */}
       <DevPanel />
 
-      {/* BỌC TOÀN BỘ SCENE VÀO TRONG LOADER MỚI */}
       <TomiwixossSceneLoader>
         <Scene onDeckClick={handleDeckClick} />
       </TomiwixossSceneLoader>
 
       {/* Giao diện 2D */}
       <Hand
-        onCardClick={(card) => setPreviewCard(card)}
-        onReturnCards={returnCardsAction}
+        onCardSelect={(card) => setSelectedCard(card)} // Cập nhật state khi bài được chọn
+        onReturnSingleCard={returnSingleCardAction} // Truyền action bỏ bài vào
       />
-      <CardPreview
-        card={previewCard}
-        onOpenChange={(isOpen) => !isOpen && setPreviewCard(null)}
-      />
+      <SideCardPreview card={selectedCard} />
     </>
   );
 }
