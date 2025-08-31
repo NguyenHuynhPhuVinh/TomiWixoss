@@ -23,7 +23,7 @@ interface SceneProps {
 const SIGNI_ZONE_SIZE: [number, number, number] = [2.2, 0.02, 2.2];
 const LRIG_ZONE_SIZE: [number, number, number] = [2.2, 0.02, 2.2];
 const DECK_ZONE_SIZE: [number, number, number] = [0.8, 0.5, 1.1]; // Cao hơn để chứa chồng bài
-const ENER_ZONE_SIZE: [number, number, number] = [1.5, 0.02, 6];
+const ENER_ZONE_SIZE: [number, number, number] = [1.5, 0.02, 5];
 const LIFE_CLOTH_ZONE_SIZE: [number, number, number] = [6.25, 0.02, 1.75];
 const CHECK_ZONE_SIZE: [number, number, number] = [2, 0.02, 2];
 
@@ -83,25 +83,25 @@ function PlayerZones({
 
       {/* Deck & Trash */}
       <ZoneHelper
-        position={[5.2 * m, 0.25, 2.5 * m]}
+        position={[5.2 * m, 0.25, 1.5 * m]}
         size={DECK_ZONE_SIZE}
         label={`${labelPrefix} MAIN DECK`}
         color={color}
       />
       <ZoneHelper
-        position={[5.2 * m, 0.01, 1.5 * m]}
+        position={[6.6 * m, 0.01, 4.25 * m]}
         size={SIGNI_ZONE_SIZE}
         label={`${labelPrefix} TRASH`}
         color={color}
       />
       <ZoneHelper
-        position={[5.2 * m, 0.25, -2.5 * m]}
+        position={[3.75 * m, 0.25, 7.75 * m]}
         size={DECK_ZONE_SIZE}
         label={`${labelPrefix} LRIG DECK`}
         color={color}
       />
       <ZoneHelper
-        position={[5.2 * m, 0.01, -1.5 * m]}
+        position={[6.6 * m, 0.01, 7 * m]}
         size={LRIG_ZONE_SIZE}
         label={`${labelPrefix} LRIG TRASH`}
         color={color}
@@ -109,7 +109,7 @@ function PlayerZones({
 
       {/* Other Zones */}
       <ZoneHelper
-        position={[-5.2 * m, 0.01, 0 * m]}
+        position={[-5.2 * m, 0.01, 3.3 * m]}
         size={ENER_ZONE_SIZE}
         label={`${labelPrefix} ENER ZONE`}
         color={color}
@@ -121,7 +121,7 @@ function PlayerZones({
         color={color}
       />
       <ZoneHelper
-        position={[-5.2 * m, 0.01, 3.0 * m]}
+        position={[-5 * m, 0.01, 7.25 * m]}
         size={CHECK_ZONE_SIZE}
         label={`${labelPrefix} CHECK ZONE`}
         color={color}
