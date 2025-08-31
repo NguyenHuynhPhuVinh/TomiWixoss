@@ -1,47 +1,56 @@
 // src/logic/ecs/systems/up.system.ts
 import { System } from "../ecs.types";
 import { World } from "../world";
-import { StatusComponent, ZoneComponent } from "../components/card.components";
-import useGameStore from "@/store/gameStore"; // Chúng ta vẫn cần store để biết khi nào cần chạy
+import {
+  StatusComponent,
+  ZoneComponent,
+  GlobalStateComponent,
+} from "../components/card.components";
+import { GLOBAL_ENTITY } from "../game.factory";
+import useGameStore from "@/store/gameStore";
 
 export class UpSystem implements System {
-  private hasRunThisPhase = false;
+  // Bỏ `hasRunThisPhase` vì chúng ta sẽ dùng cờ toàn cục
+  // private hasRunThisPhase = false;
 
   public update(world: World): void {
-    // Lấy phase từ một component toàn cục trong world (cách làm đúng chuẩn ECS)
-    // Tạm thời, chúng ta sẽ giả định có một GlobalStateComponent
-    // const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
-    // if (globalState.phase !== 'up' || this.hasRunThisPhase) return;
+    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+    if (!globalState) return;
 
-    // Cách đơn giản hơn cho bây giờ:
-    const phase = useGameStore.getState().phase;
-    if (phase !== "up" || this.hasRunThisPhase) {
-      if (phase !== "up") this.hasRunThisPhase = false; // Reset khi qua phase mới
+    // Guard Clause: Chỉ chạy trong Up Phase và khi chưa có hành động
+    if (globalState.phase !== "up" || globalState.actionTakenInPhase) {
       return;
     }
 
     console.log("--- Running UpSystem ---");
-    // ... logic truy vấn và thay đổi StatusComponent như cũ ...
+    const { addLog } = useGameStore.getState();
 
-    // 1. Truy vấn: Tìm tất cả các Entity có cả StatusComponent và ZoneComponent
+    let uppedCardCount = 0;
     const entitiesToUp = world.query([StatusComponent, ZoneComponent]);
 
     for (const entity of entitiesToUp) {
       const zone = world.getComponent(entity, ZoneComponent)!;
 
-      // 2. Lọc: Chỉ "up" các lá bài trên sân
       if (zone.zone === "signiZone" || zone.zone === "lrigZone") {
         const status = world.getComponent(entity, StatusComponent)!;
 
-        // 3. Hành động: Thay đổi dữ liệu trong Component
+        // TODO: Thêm logic kiểm tra "Frozen" ở đây
+        // if (status.isFrozen) continue;
+
         if (status.isDowned) {
           status.isDowned = false;
-          console.log(`Entity ${entity} has been upped.`);
+          uppedCardCount++;
         }
       }
     }
 
-    this.hasRunThisPhase = true; // System tự quản lý trạng thái của nó
-    console.log("UpSystem has finished for this phase.");
+    if (uppedCardCount > 0) {
+      addLog(`Up ${uppedCardCount} lá bài trên sân.`, "action");
+    } else {
+      addLog("Không có lá bài nào cần Up.", "info");
+    }
+
+    // Quan trọng: Báo cho toàn bộ game biết hành động của phase này đã hoàn thành
+    globalState.actionTakenInPhase = true;
   }
 }

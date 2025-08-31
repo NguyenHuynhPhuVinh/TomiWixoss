@@ -37,45 +37,16 @@ export default function GameController() {
         return <Button onClick={initializeGame}>Chuẩn bị</Button>;
 
       case "up":
-        return (
-          <>
-            <h3 className="font-bold">Turn {turn} - Up Phase</h3>
-            <Button
-              onClick={() => gameManager.forceUpdate()}
-              className="w-full mt-2"
-            >
-              Up All Cards
-            </Button>
-            {/* Sử dụng action dispatcher mới */}
-            <Button
-              onClick={dispatchAdvancePhaseAction}
-              variant="outline"
-              className="w-full mt-2"
-            >
-              Next Phase
-            </Button>
-          </>
-        );
-
       case "draw":
-        const amountToDraw = turn === 1 ? 1 : 2;
+        const phaseTextAuto = phase.charAt(0).toUpperCase() + phase.slice(1);
         return (
           <>
-            <h3 className="font-bold">Turn {turn} - Draw Phase</h3>
-            <Button
-              onClick={() => gameManager.forceUpdate()}
-              className="w-full mt-2"
-              disabled={actionTakenInPhase}
-            >
-              {actionTakenInPhase ? "Đã rút bài" : `Rút ${amountToDraw} lá`}
-            </Button>
-            <Button
-              onClick={dispatchAdvancePhaseAction}
-              variant="outline"
-              className="w-full mt-2"
-            >
-              Next Phase
-            </Button>
+            <h3 className="font-bold">
+              Turn {turn} - {phaseTextAuto} Phase
+            </h3>
+            <p className="text-muted-foreground animate-pulse mt-4">
+              Đang tự động thực hiện...
+            </p>
           </>
         );
 

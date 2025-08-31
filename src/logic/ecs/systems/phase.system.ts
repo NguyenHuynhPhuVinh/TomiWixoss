@@ -6,7 +6,11 @@ import {
   GlobalStateComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import { TURN_PHASES } from "@/store/types"; // Import mảng TURN_PHASES
+import { TURN_PHASES, GamePhase } from "@/store/types";
+import useGameStore from "@/store/gameStore";
+
+// Các phase sẽ tự động chuyển tiếp nếu hành động đã xong
+const AUTO_ADVANCE_PHASES: GamePhase[] = ["up", "draw"];
 
 export class PhaseSystem implements System {
   public update(world: World): void {
@@ -15,36 +19,49 @@ export class PhaseSystem implements System {
       GLOBAL_ENTITY,
       ActionRequestComponent
     );
+    if (!globalState || !actionRequest) return;
 
+    // --- LOGIC TỰ ĐỘNG CHUYỂN PHASE ---
     if (
-      !globalState ||
-      !actionRequest ||
-      actionRequest.request?.type !== "ADVANCE_PHASE"
+      AUTO_ADVANCE_PHASES.includes(globalState.phase) &&
+      globalState.actionTakenInPhase
     ) {
-      return;
+      console.log(`--- Auto-advancing from ${globalState.phase} ---`);
+      this.advancePhase(globalState);
+      return; // Dừng lại sau khi đã chuyển phase
     }
 
-    console.log("--- Running PhaseSystem ---");
+    // --- LOGIC CHUYỂN PHASE THEO YÊU CẦU (TỪ NÚT BẤM) ---
+    if (actionRequest.request?.type === "ADVANCE_PHASE") {
+      // Bỏ "anh gác cổng"
+      console.log(`--- Advancing from ${globalState.phase} by request ---`);
+      this.advancePhase(globalState);
+      actionRequest.request = null; // Dọn dẹp yêu cầu
+    }
+  }
 
+  /**
+   * Helper function chứa logic chuyển phase
+   */
+  private advancePhase(globalState: GlobalStateComponent): void {
+    const { addLog } = useGameStore.getState();
     const currentPhaseIndex = TURN_PHASES.indexOf(globalState.phase);
     let nextPhaseIndex = currentPhaseIndex + 1;
 
-    // Xử lý logic bỏ qua Attack Phase ở Lượt 1
     if (globalState.turn === 1 && globalState.phase === "main") {
       nextPhaseIndex = TURN_PHASES.indexOf("end");
     }
 
-    // Xử lý logic chuyển lượt
     if (nextPhaseIndex >= TURN_PHASES.length) {
       nextPhaseIndex = 0;
-      globalState.turn += 1; // <-- TĂNG TURN Ở ĐÂY
+      globalState.turn += 1;
     }
 
-    // Cập nhật phase mới và reset cờ hành động
     globalState.phase = TURN_PHASES[nextPhaseIndex];
-    globalState.actionTakenInPhase = false;
+    globalState.actionTakenInPhase = false; // Luôn reset cho phase mới
 
-    // Dọn dẹp yêu cầu
-    actionRequest.request = null;
+    const phaseText =
+      globalState.phase.charAt(0).toUpperCase() + globalState.phase.slice(1);
+    addLog(`Turn ${globalState.turn} - ${phaseText} Phase`, "system");
   }
 }
