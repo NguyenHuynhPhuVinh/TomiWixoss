@@ -1,5 +1,5 @@
 // src/logic/ecs/systems/ener.system.ts
-import { System } from "../ecs.types";
+import { System, SystemDependencies } from "../ecs.types";
 import { World } from "../world";
 import {
   ActionRequestComponent,
@@ -11,9 +11,17 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 // import useGameStore from "@/store/gameStore";
-import eventBus, { GameEvent } from "@/logic/core/event.bus";
+// import eventBus, { GameEvent } from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
+import { GameEvent } from "@/logic/core/event.bus";
 
 export class EnerSystem implements System {
+  private eventBus!: SystemDependencies["eventBus"];
+
+  // Nhận dependency
+  public setup(dependencies: SystemDependencies): void {
+    this.eventBus = dependencies.eventBus;
+  }
+
   public update(world: World): void {
     const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
     const actionRequest = world.getComponent(
@@ -59,7 +67,7 @@ export class EnerSystem implements System {
     });
 
     // PHÁT SỰ KIỆN
-    eventBus.dispatch(GameEvent.CARD_CHARGED, {
+    this.eventBus.dispatch(GameEvent.CARD_CHARGED, {
       entityId,
       source,
       cardId: cardInfo.data.id,

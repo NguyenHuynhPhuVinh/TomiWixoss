@@ -1,5 +1,5 @@
 // src/logic/ecs/systems/setup.system.ts
-import { System } from "../ecs.types";
+import { System, SystemDependencies } from "../ecs.types";
 import { World } from "../world";
 import {
   ActionRequestComponent,
@@ -13,9 +13,16 @@ import { GLOBAL_ENTITY } from "../game.factory";
 // import useGameStore from "@/store/gameStore";
 import shuffle from "shuffle-array";
 import { Entity } from "../ecs.types"; // Import Entity
-import gameManager from "../game.manager"; // <-- IMPORT GameManager
+// import gameManager from "../game.manager"; // <-- XÓA, sẽ nhận qua dependency
 
 export class SetupSystem implements System {
+  private gameManager!: SystemDependencies["gameManager"];
+
+  // Nhận dependency
+  public setup(dependencies: SystemDependencies): void {
+    this.gameManager = dependencies.gameManager;
+  }
+
   public update(world: World): void {
     const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
     const actionRequest = world.getComponent(
@@ -144,7 +151,7 @@ export class SetupSystem implements System {
         });
 
         // Khởi động vòng lặp tự động cho các phase đầu tiên
-        gameManager.startLoop();
+        this.gameManager.startLoop();
         break;
       }
     }

@@ -1,5 +1,5 @@
 // src/logic/ecs/systems/phase.system.ts
-import { System } from "../ecs.types";
+import { System, SystemDependencies } from "../ecs.types";
 import { World } from "../world";
 import {
   ActionRequestComponent,
@@ -9,9 +9,10 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import { TURN_PHASES, GamePhase } from "@/types/game";
+import { GameEvent } from "@/logic/core/event.bus";
 // import useGameStore from "@/store/gameStore"; // <-- XÓA
-import gameManager from "../game.manager"; // <-- IMPORT GameManager
-import eventBus, { GameEvent } from "@/logic/core/event.bus";
+// import gameManager from "../game.manager"; // <-- XÓA
+// import eventBus from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
 
 // Các phase sẽ tự động chuyển tiếp nếu hành động đã xong
 const AUTO_ADVANCE_PHASES: GamePhase[] = ["up", "draw", "ener"];
@@ -27,6 +28,13 @@ const INTERACTIVE_PHASES: GamePhase[] = [
 ];
 
 export class PhaseSystem implements System {
+  private eventBus!: SystemDependencies["eventBus"];
+
+  // Nhận dependency
+  public setup(dependencies: SystemDependencies): void {
+    this.eventBus = dependencies.eventBus;
+  }
+
   public update(world: World): void {
     const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
     const actionRequest = world.getComponent(
@@ -103,7 +111,8 @@ export class PhaseSystem implements System {
         `%cGame loop stopped. Waiting for player input in ${globalState.phase} phase.`,
         "color: #E67E22"
       );
-      gameManager.stopLoop();
+      // Để dừng vòng lặp, chúng ta sẽ phát ra một sự kiện đặc biệt
+      this.eventBus.dispatch(GameEvent.STOP_GAME_LOOP);
     }
     // =====================================
 
@@ -116,7 +125,7 @@ export class PhaseSystem implements System {
     });
 
     // PHÁT SỰ KIỆN THÔNG BÁO THAY ĐỔI PHASE
-    eventBus.dispatch(GameEvent.PHASE_CHANGED, {
+    this.eventBus.dispatch(GameEvent.PHASE_CHANGED, {
       from: TURN_PHASES[currentPhaseIndex],
       to: nextPhase,
       turn: globalState.turn,

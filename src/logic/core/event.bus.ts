@@ -6,6 +6,7 @@ export enum GameEvent {
   // Sự kiện về vòng lặp và phase
   GAME_STARTED = "GAME_STARTED",
   PHASE_CHANGED = "PHASE_CHANGED",
+  STOP_GAME_LOOP = "STOP_GAME_LOOP",
 
   // Sự kiện về các lá bài
   CARD_PLAYED = "CARD_PLAYED", // Một lá bài được đặt ra sân

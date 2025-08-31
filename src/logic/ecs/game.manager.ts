@@ -1,13 +1,15 @@
 // src/logic/ecs/game.manager.ts
 import { World } from "./world";
 import { GameFactory } from "./game.factory";
-import { System } from "./ecs.types";
+import { System, SystemDependencies } from "./ecs.types";
 import { GLOBAL_ENTITY } from "./game.factory";
 import {
   ActionRequestComponent,
   SideEffectComponent,
 } from "./components/card.components";
 import useGameStore from "@/store/gameStore";
+import eventBus from "../core/event.bus";
+import { GameEvent } from "../core/event.bus";
 
 // Import tất cả các system
 import { SetupSystem } from "./systems/setup.system";
@@ -47,6 +49,17 @@ class GameManager {
     this.systems.push(new UpSystem());
     this.systems.push(new DrawSystem());
     this.systems.push(new PhaseSystem());
+
+    // Tiêm dependency cho tất cả các system có hàm setup
+    const dependencies: SystemDependencies = { eventBus, gameManager };
+    for (const system of this.systems) {
+      system.setup?.(dependencies);
+    }
+
+    // Đăng ký listener cho các event hệ thống
+    eventBus.on(GameEvent.STOP_GAME_LOOP, () => {
+      this.stopLoop();
+    });
 
     return this.world;
   }

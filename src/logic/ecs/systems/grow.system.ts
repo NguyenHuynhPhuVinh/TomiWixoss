@@ -1,5 +1,5 @@
 // src/logic/ecs/systems/grow.system.ts
-import { System } from "../ecs.types";
+import { System, SystemDependencies } from "../ecs.types";
 import { World } from "../world";
 import { Entity } from "../ecs.types";
 import {
@@ -16,9 +16,16 @@ import { GLOBAL_ENTITY } from "../game.factory";
 import { checkCost } from "@/logic/payment";
 import { CardInstance } from "@/types/game";
 import { GamePhase } from "@/types/game";
-import eventBus, { GameEvent } from "@/logic/core/event.bus";
+// import eventBus, { GameEvent } from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
+import { GameEvent } from "@/logic/core/event.bus";
 
 export class GrowSystem implements System {
+  private eventBus!: SystemDependencies["eventBus"];
+
+  // Nhận dependency
+  public setup(dependencies: SystemDependencies): void {
+    this.eventBus = dependencies.eventBus;
+  }
   public update(world: World): void {
     const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
     const actionRequest = world.getComponent(
@@ -232,7 +239,7 @@ export class GrowSystem implements System {
     });
 
     // PHÁT SỰ KIỆN CHO GROW
-    eventBus.dispatch(GameEvent.CARD_GROWN, {
+    this.eventBus.dispatch(GameEvent.CARD_GROWN, {
       targetEntityId,
       newCardId: targetLrigInfo.data.id,
     });

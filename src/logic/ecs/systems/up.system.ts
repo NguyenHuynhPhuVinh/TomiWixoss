@@ -1,5 +1,5 @@
 // src/logic/ecs/systems/up.system.ts
-import { System } from "../ecs.types";
+import { System, SystemDependencies } from "../ecs.types";
 import { World } from "../world";
 import {
   StatusComponent,
@@ -9,9 +9,17 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 // import useGameStore from "@/store/gameStore";
-import eventBus, { GameEvent } from "@/logic/core/event.bus";
+// import eventBus, { GameEvent } from "@/logic/core/event.bus"; // <-- XÓA, sẽ nhận qua dependency
+import { GameEvent } from "@/logic/core/event.bus";
 
 export class UpSystem implements System {
+  private eventBus!: SystemDependencies["eventBus"];
+
+  // Nhận dependency
+  public setup(dependencies: SystemDependencies): void {
+    this.eventBus = dependencies.eventBus;
+  }
+
   // Bỏ `hasRunThisPhase` vì chúng ta sẽ dùng cờ toàn cục
   // private hasRunThisPhase = false;
 
@@ -52,7 +60,7 @@ export class UpSystem implements System {
         message: `Up ${uppedCardCount} lá bài trên sân.`,
         logType: "action",
       });
-      eventBus.dispatch(GameEvent.CARDS_UPPED, {
+      this.eventBus.dispatch(GameEvent.CARDS_UPPED, {
         count: uppedCardCount,
       });
     } else {
