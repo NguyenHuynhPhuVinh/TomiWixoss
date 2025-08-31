@@ -33,7 +33,6 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
   initializeGame: () => {
     const newWorld = gameManager.createNewGame();
     get()._syncStateFromWorld(newWorld);
-    gameManager.startLoop();
   },
 
   _syncStateFromWorld: (world) => {

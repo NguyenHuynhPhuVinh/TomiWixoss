@@ -104,6 +104,9 @@ class GameManager {
     // Chúng ta có thể tạo một map để nối 'CHARGE_ENER' với 'ENER' system
     let systemKey: string;
     switch (requestType) {
+      case "START_SETUP": // <-- THÊM VÀO ĐÂY
+        systemKey = "SETUP";
+        break;
       case "CHARGE_ENER":
         systemKey = "ENER";
         break;

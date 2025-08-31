@@ -29,6 +29,22 @@ export function dispatchChargeEnerAction(
 }
 
 // === ACTION MỚI ===
+export function dispatchStartSetupAction() {
+  const world = gameManager.world;
+  if (!world) return;
+
+  const actionRequest = world.getComponent(
+    GLOBAL_ENTITY,
+    ActionRequestComponent
+  );
+  if (actionRequest) {
+    actionRequest.request = {
+      type: "START_SETUP",
+      payload: null,
+    };
+    gameManager.handlePlayerAction();
+  }
+}
 export function dispatchAdvancePhaseAction() {
   const world = gameManager.world;
   if (!world) return;

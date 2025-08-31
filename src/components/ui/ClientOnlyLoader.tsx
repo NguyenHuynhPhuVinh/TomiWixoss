@@ -13,6 +13,7 @@ import {
 } from "@/logic/ecs/components/card.components";
 import { dispatchConfirmLrigSelectionAction } from "@/logic/ecs/actions";
 import { dispatchGrowLrigAction } from "@/logic/ecs/actions";
+import { useEffect } from "react";
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -55,6 +56,15 @@ export default function ClientOnlyLoader() {
     useGameStore,
     (state) => state.viewingLrigDeckForGrow
   );
+  const initializeGame = useStore(
+    useGameStore,
+    (state) => state.initializeGame
+  );
+
+  // Khởi tạo game một lần khi component được mount
+  useEffect(() => {
+    initializeGame();
+  }, [initializeGame]);
 
   // === TRUY VẤN DỮ LIỆU CHO LRIG SELECTOR ===
   const lrigDeckForSelector: CardInstance[] = useMemo(() => {

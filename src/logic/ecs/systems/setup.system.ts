@@ -28,6 +28,20 @@ export class SetupSystem implements System {
 
     // Xử lý các yêu cầu liên quan đến setup
     switch (type) {
+      // === THÊM CASE MỚI Ở ĐẦU ===
+      case "START_SETUP": {
+        if (globalState.phase !== "pre_game") break;
+
+        // Logic validate deck nên được thực hiện ở đây
+        // (Tạm thời bỏ qua để đơn giản hóa)
+        addLog("Bắt đầu chuẩn bị trận đấu...", "system");
+
+        globalState.phase = "selecting_lrigs";
+        addLog("Chọn LRIG để bắt đầu trận đấu.", "system");
+        break;
+      }
+      // ===========================
+
       // --- YÊU CẦU XÁC NHẬN CHỌN LRIG ---
       case "CONFIRM_LRIG_SELECTION": {
         if (globalState.phase !== "selecting_lrigs") break;

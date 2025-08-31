@@ -12,6 +12,7 @@ import {
   dispatchAdvancePhaseAction,
   dispatchConfirmMulliganAction,
 } from "@/logic/ecs/actions"; // <-- IMPORT ACTION MỚI
+import { dispatchStartSetupAction } from "@/logic/ecs/actions";
 
 export default function GameController() {
   const phase = useStore(useGameStore, (state) => state.phase);
@@ -35,7 +36,16 @@ export default function GameController() {
   const renderContent = () => {
     switch (phase) {
       case "pre_game":
-        return <Button onClick={initializeGame}>Chuẩn bị</Button>;
+        // Nút này bây giờ sẽ dispatch action
+        return <Button onClick={dispatchStartSetupAction}>Chuẩn bị</Button>;
+
+      case "selecting_lrigs":
+        // Giao diện này bây giờ sẽ được hiển thị đúng
+        return (
+          <p className="text-muted-foreground animate-pulse">
+            Vui lòng chọn LRIG...
+          </p>
+        );
 
       case "up":
       case "draw":
@@ -140,7 +150,7 @@ export default function GameController() {
         <p className="text-muted-foreground mb-6">
           Sẵn sàng để bắt đầu một trận đấu.
         </p>
-        <Button onClick={initializeGame} className="w-full" size="lg">
+        <Button onClick={dispatchStartSetupAction} className="w-full" size="lg">
           Chuẩn bị
         </Button>
       </div>
