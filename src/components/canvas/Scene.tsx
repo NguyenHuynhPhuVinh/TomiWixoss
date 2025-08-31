@@ -1,88 +1,205 @@
 // src/components/canvas/Scene.tsx
 "use client";
 
+import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
   PerspectiveCamera,
   Environment,
+  Preload,
 } from "@react-three/drei";
 import GameBoard from "./GameBoard";
 import Card from "./Card";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
-import { P1_ZONE_COORDINATES } from "@/data/zoneCoordinates";
+import { shallow } from "zustand/shallow";
+import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
 import {
   CardInfoComponent,
   ZoneComponent,
   StatusComponent,
 } from "@/logic/ecs/components/card.components";
 import { Entity } from "@/logic/ecs/ecs.types";
+import { CardInstance } from "@/types/game";
+// Tạm thời comment out InteractiveZone để tập trung vào render
+// import InteractiveZone from "./InteractiveZone";
 
 export default function Scene() {
   const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
+
   const coords = P1_ZONE_COORDINATES;
 
-  if (!world) return null; // Không render gì nếu chưa có world
-
-  // Tạo một hàm helper để render một zone
-  const renderZone = (zoneName: string) => {
-    const entitiesInZone = world
-      .query([ZoneComponent])
-      .filter(
-        (e: Entity) => world.getComponent(e, ZoneComponent)!.zone === zoneName
-      );
-
-    return entitiesInZone.map((entity: Entity) => {
-      const cardInfo = world.getComponent(entity, CardInfoComponent)!;
-      const status = world.getComponent(entity, StatusComponent)!;
-      const zoneInfo = world.getComponent(entity, ZoneComponent)!;
-
-      // Logic để tính toán position, rotation dựa trên zoneInfo
-      // Tạm thời hard-code cho mainDeck
-      const position: [number, number, number] = [
-        coords.MAIN_DECK.x,
-        coords.MAIN_DECK.y,
-        coords.MAIN_DECK.z,
-      ];
-      const rotation: [number, number, number] = [-Math.PI / 2, 0, 0];
-
-      const cardInstance = {
-        ...cardInfo.data,
-        ...status,
-        uuid: entity.toString(),
-        owner: zoneInfo.owner, // <-- Lấy owner từ ZoneComponent
-      };
-
-      return (
-        <Card
-          key={entity}
-          card={cardInstance}
-          position={position}
-          rotation={rotation}
+  if (!world) {
+    // Render một GameBoard trống nếu world chưa được tạo
+    const boardWidth = 12;
+    const boardHeight = boardWidth / (4962 / 3509);
+    return (
+      <Canvas>
+        <PerspectiveCamera makeDefault position={[0, 18, 0.1]} fov={60} />
+        <OrbitControls minDistance={5} maxDistance={25} />
+        <Environment preset="city" />
+        <ambientLight intensity={1} />
+        <GameBoard
+          position={[0, 0, boardHeight / 2]}
+          rotation={[-Math.PI / 2, 0, 0]}
         />
-      );
-    });
-  };
+        <GameBoard
+          position={[0, 0, -(boardHeight / 2)]}
+          rotation={[-Math.PI / 2, 0, Math.PI]}
+        />
+      </Canvas>
+    );
+  }
+
+  // Lấy ra tất cả các entity có thể render được
+  const renderableEntities = world.query([
+    CardInfoComponent,
+    ZoneComponent,
+    StatusComponent,
+  ]);
+
+  // Nhóm các entity theo zone để dễ dàng tính toán logic xếp chồng
+  const entitiesByZone = new Map<string, Entity[]>();
+  for (const entity of renderableEntities) {
+    const zone = world.getComponent(entity, ZoneComponent)!.zone;
+    if (!entitiesByZone.has(zone)) {
+      entitiesByZone.set(zone, []);
+    }
+    entitiesByZone.get(zone)!.push(entity);
+  }
 
   return (
     <Canvas>
       <PerspectiveCamera makeDefault position={[0, 18, 0.1]} fov={60} />
       <OrbitControls minDistance={5} maxDistance={25} />
-
       <Environment preset="city" />
       <ambientLight intensity={1} />
-      <directionalLight position={[0, 20, 10]} intensity={1.5} castShadow />
 
-      <GameBoard position={[0, 0, 0.5]} rotation={[-Math.PI / 2, 0, 0]} />
+      {/* --- BÀN ĐẤU --- */}
       <GameBoard
-        position={[0, 0, -0.5]}
+        position={[0, 0, 12 / (4962 / 3509) / 2]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      />
+      <GameBoard
+        position={[0, 0, -(12 / (4962 / 3509) / 2)]}
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
 
-      {renderZone("mainDeck")}
-      {/* Tạm thời chỉ render mainDeck */}
+      {/* --- RENDER CÁC LÁ BÀI TỪ ECS WORLD --- */}
+      {renderableEntities.map((entity) => {
+        const cardInfo = world.getComponent(entity, CardInfoComponent)!;
+        const status = world.getComponent(entity, StatusComponent)!;
+        const zoneInfo = world.getComponent(entity, ZoneComponent)!;
+
+        // Chuyển đổi dữ liệu ECS thành CardInstance mà component Card có thể hiểu
+        const cardInstance: CardInstance = {
+          ...cardInfo.data,
+          ...status,
+          uuid: entity.toString(),
+          owner: zoneInfo.owner,
+        };
+
+        // --- LOGIC TÍNH TOÁN VỊ TRÍ VÀ XOAY BÀI ---
+        let position: [number, number, number] = [0, 0, 0];
+        let rotation: [number, number, number] = [-Math.PI / 2, 0, 0];
+
+        const zoneName = zoneInfo.zone;
+        const index = zoneInfo.index;
+        const totalCardsInZone = entitiesByZone.get(zoneName)?.length ?? 1;
+
+        switch (zoneName) {
+          case "mainDeck":
+          case "trash":
+            position = [
+              coords.MAIN_DECK.x,
+              coords.MAIN_DECK.y + index * CARD_DIMENSIONS.thickness,
+              coords.MAIN_DECK.z,
+            ];
+            if (zoneName === "trash") {
+              position[0] = coords.TRASH.x;
+              position[2] = coords.TRASH.z;
+            }
+            break;
+
+          case "lrigDeck":
+          case "lrigTrash":
+            position = [
+              coords.LRIG_DECK.x,
+              coords.LRIG_DECK.y + index * CARD_DIMENSIONS.thickness,
+              coords.LRIG_DECK.z,
+            ];
+            rotation = [
+              -Math.PI / 2,
+              0,
+              cardInfo.data.type === "PIECE" ? 0 : Math.PI / 2,
+            ];
+            if (zoneName === "lrigTrash") {
+              position[0] = coords.LRIG_TRASH.x;
+              position[2] = coords.LRIG_TRASH.z;
+            }
+            break;
+
+          case "lrigZone":
+            const lrigCoords = [
+              coords.ASSIST_LRIG_1,
+              coords.CENTER_LRIG,
+              coords.ASSIST_LRIG_2,
+            ][index];
+            position = [lrigCoords.x, lrigCoords.y, lrigCoords.z];
+            break;
+
+          case "signiZone":
+            const signiCoords = [
+              coords.SIGNI_1,
+              coords.SIGNI_2,
+              coords.SIGNI_3,
+            ][index];
+            position = [signiCoords.x, signiCoords.y, signiCoords.z];
+            break;
+
+          case "lifeCloth":
+            position = [
+              coords.LIFE_CLOTH.x + index * 0.67,
+              coords.LIFE_CLOTH.y + index * CARD_DIMENSIONS.thickness,
+              coords.LIFE_CLOTH.z,
+            ];
+            rotation = [-Math.PI / 2, 0, Math.PI / 2];
+            break;
+
+          case "enerZone":
+            // Sử dụng lại logic xếp chồng đẹp của bạn
+            position = [
+              coords.ENER_ZONE.x,
+              coords.ENER_ZONE.y +
+                (totalCardsInZone - 1 - index) * CARD_DIMENSIONS.thickness,
+              coords.ENER_ZONE.z + index * 0.7,
+            ];
+            rotation = [-Math.PI / 2, 0, Math.PI];
+            break;
+
+          // Bỏ qua 'hand' vì nó được render bởi UI 2D
+          case "hand":
+            return null;
+
+          default:
+            return null;
+        }
+
+        return (
+          <Card
+            key={entity}
+            card={cardInstance}
+            position={position}
+            rotation={rotation}
+          />
+        );
+      })}
+
+      <Suspense fallback={null}>
+        <Preload all />
+      </Suspense>
     </Canvas>
   );
 }
