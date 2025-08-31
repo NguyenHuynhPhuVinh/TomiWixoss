@@ -50,7 +50,6 @@ export interface GameActions {
   openZoneViewer: () => void;
   closeZoneViewer: () => void;
   openLrigDeckViewerForAssist: (zoneIndex: number) => void;
-  closeLrigDeckViewer: () => void;
 }
 
 // Interface tổng hợp

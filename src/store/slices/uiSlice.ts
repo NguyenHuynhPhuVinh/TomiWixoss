@@ -11,7 +11,6 @@ export interface UiSlice {
   openZoneViewer: GameStore["openZoneViewer"];
   closeZoneViewer: GameStore["closeZoneViewer"];
   openLrigDeckViewerForAssist: GameStore["openLrigDeckViewerForAssist"];
-  closeLrigDeckViewer: GameStore["closeLrigDeckViewer"];
 }
 
 export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
@@ -34,16 +33,16 @@ export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
   },
 
   openZoneViewer: () => set({ isZoneViewerOpen: true }),
-  closeZoneViewer: () => set({ isZoneViewerOpen: false }),
+  closeZoneViewer: () =>
+    set({
+      isZoneViewerOpen: false,
+      viewingLrigDeckForGrow: null, // <-- QUAN TRỌNG: Reset state này khi đóng
+    }),
 
   openLrigDeckViewerForAssist: (zoneIndex) => {
     set({
       isZoneViewerOpen: true,
       viewingLrigDeckForGrow: { forAssistIndex: zoneIndex },
     });
-  },
-
-  closeLrigDeckViewer: () => {
-    set({ isZoneViewerOpen: false, viewingLrigDeckForGrow: null });
   },
 });
