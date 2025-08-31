@@ -23,8 +23,8 @@ export function dispatchChargeEnerAction(
       type: "CHARGE_ENER",
       payload: { source, entityId },
     };
-    // Sau khi đặt yêu cầu, gọi forceUpdate để System chạy ngay lập-tức
-    gameManager.forceUpdate();
+    // Gọi phương thức xử lý hành động mới
+    gameManager.handlePlayerAction();
   }
 }
 
@@ -42,7 +42,8 @@ export function dispatchAdvancePhaseAction() {
       type: "ADVANCE_PHASE",
       payload: null, // Không cần payload
     };
-    gameManager.forceUpdate();
+    // Chuyển phase cũng là một hành động của người chơi
+    gameManager.handlePlayerAction(); // Cần tạo system cho nó
   }
 }
 
@@ -61,7 +62,7 @@ export function dispatchConfirmLrigSelectionAction(
       type: "CONFIRM_LRIG_SELECTION",
       payload: { center, assists },
     };
-    gameManager.forceUpdate();
+    gameManager.handlePlayerAction();
   }
 }
 
@@ -101,6 +102,6 @@ export function dispatchConfirmMulliganAction() {
       // payload sẽ lấy từ chính globalState.mulliganSelection
       payload: { entities: globalState.mulliganSelection },
     };
-    gameManager.forceUpdate();
+    gameManager.handlePlayerAction();
   }
 }

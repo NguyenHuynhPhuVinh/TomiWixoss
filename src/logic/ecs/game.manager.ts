@@ -6,6 +6,9 @@ import { DrawSystem } from "./systems/draw.system";
 import { EnerSystem } from "./systems/ener.system"; // <-- IMPORT
 import { PhaseSystem } from "./systems/phase.system"; // <-- IMPORT
 import { SetupSystem } from "./systems/setup.system"; // <-- IMPORT
+import { System } from "./ecs.types";
+import { GLOBAL_ENTITY } from "./game.factory";
+import { ActionRequestComponent } from "./components/card.components";
 
 type UpdateListener = (world: World) => void;
 
@@ -15,15 +18,23 @@ class GameManager {
   private updateListeners: UpdateListener[] = [];
   private isLooping = false;
   private animationFrameId: number = 0;
+  // Tách các system ra
+  private loopSystems: System[] = [];
+  private actionSystems: { [key: string]: System } = {};
 
   public createNewGame(): World {
     this.world = this.factory.createNewGame();
-    this.world.addSystem(new SetupSystem()); // Setup chạy trước
-    this.world.addSystem(new UpSystem());
-    this.world.addSystem(new DrawSystem());
-    this.world.addSystem(new EnerSystem()); // <-- THÊM VÀO ĐÂY
-    this.world.addSystem(new PhaseSystem()); // <-- THÊM VÀO ĐÂY
-    // ... thêm các system khác
+
+    // Phân loại các system
+    this.actionSystems["SETUP"] = new SetupSystem();
+    this.actionSystems["ENER"] = new EnerSystem();
+    this.actionSystems["PHASE"] = new PhaseSystem();
+    // ... các system hành động khác
+
+    this.loopSystems.push(new UpSystem());
+    this.loopSystems.push(new DrawSystem());
+    this.loopSystems.push(new PhaseSystem());
+
     return this.world;
   }
 
@@ -34,12 +45,12 @@ class GameManager {
   private loop() {
     if (!this.isLooping || !this.world) return;
 
-    // Chạy các system
-    this.world.update();
+    // Vòng lặp chỉ chạy các system "tự động"
+    for (const system of this.loopSystems) {
+      system.update(this.world);
+    }
 
-    // Thông báo cho listener (Zustand)
     this.updateListeners.forEach((listener) => listener(this.world!));
-
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
 
@@ -67,6 +78,54 @@ class GameManager {
     this.updateListeners.forEach((listener) => listener(this.world!));
 
     this.startLoop(); // Khởi động lại vòng lặp
+  }
+
+  /**
+   * Xử lý một hành động cụ thể được yêu cầu bởi người chơi.
+   * @param actionType - Loại hành động (ví dụ: 'ENER', 'PLACE_SIGNI').
+   */
+  public handlePlayerAction() {
+    if (!this.world) return;
+
+    // Lấy ra ActionRequestComponent để xem người chơi muốn làm gì
+    const actionRequest = this.world.getComponent(
+      GLOBAL_ENTITY,
+      ActionRequestComponent
+    );
+    if (!actionRequest || !actionRequest.request) return;
+
+    const requestType = actionRequest.request.type; // Ví dụ: 'CHARGE_ENER'
+
+    // Tìm system tương ứng để xử lý
+    // Chúng ta có thể tạo một map để nối 'CHARGE_ENER' với 'ENER' system
+    let systemKey: string;
+    switch (requestType) {
+      case "CHARGE_ENER":
+        systemKey = "ENER";
+        break;
+      case "ADVANCE_PHASE":
+        systemKey = "PHASE";
+        break;
+      case "CONFIRM_LRIG_SELECTION":
+        systemKey = "SETUP";
+        break;
+      case "CONFIRM_MULLIGAN":
+        systemKey = "SETUP";
+        break;
+      default:
+        console.warn(`Unknown action type: ${requestType}`);
+        return;
+    }
+
+    const systemToRun = this.actionSystems[systemKey];
+
+    if (systemToRun) {
+      console.log(`--- Handling player action via ${requestType} ---`);
+      systemToRun.update(this.world);
+
+      // Sau khi action được xử lý, thông báo cho UI cập nhật
+      this.notifyUpdate();
+    }
   }
 
   /**
