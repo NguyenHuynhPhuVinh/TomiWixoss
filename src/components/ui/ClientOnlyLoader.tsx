@@ -1,9 +1,17 @@
 // src/components/ui/ClientOnlyLoader.tsx
 "use client";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useMemo } from "react"; // Thêm useMemo
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 import { CardInstance } from "@/types/game";
+import useGameStore from "@/store/gameStore";
+import { useStore } from "zustand";
+import {
+  CardInfoComponent,
+  ZoneComponent,
+  StatusComponent,
+} from "@/logic/ecs/components/card.components";
+import { dispatchConfirmLrigSelectionAction } from "@/logic/ecs/actions";
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -23,9 +31,9 @@ const SideCardPreview = dynamic(
 const GameLog = dynamic(() => import("@/components/ui/GameLog"), {
   ssr: false,
 });
-// const LrigSelector = dynamic(() => import("@/components/ui/LrigSelector"), {
-//   ssr: false,
-// });
+const LrigSelector = dynamic(() => import("@/components/ui/LrigSelector"), {
+  ssr: false,
+});
 // const DeckViewer = dynamic(() => import("@/components/ui/DeckViewer"), {
 //   ssr: false,
 // });
@@ -33,6 +41,38 @@ const GameLog = dynamic(() => import("@/components/ui/GameLog"), {
 export default function ClientOnlyLoader() {
   const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
   const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
+
+  // Lấy các state cần thiết từ store
+  const world = useStore(useGameStore, (state) => state.world);
+  const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
+  const phase = useStore(useGameStore, (state) => state.phase);
+
+  // === TRUY VẤN DỮ LIỆU CHO LRIG SELECTOR ===
+  const lrigDeckForSelector: CardInstance[] = useMemo(() => {
+    if (!world) return [];
+
+    // Tìm tất cả các entity trong lrigDeck
+    const lrigEntities = world
+      .query([CardInfoComponent, ZoneComponent])
+      .filter((entity: number) => {
+        const zone = world.getComponent(entity, ZoneComponent)!;
+        return zone.zone === "lrigDeck";
+      });
+
+    // Chuyển đổi entity thành CardInstance mà LrigSelector có thể hiểu
+    return lrigEntities.map((entity: number) => {
+      const cardInfo = world.getComponent(entity, CardInfoComponent)!;
+      const status = world.getComponent(entity, StatusComponent)!;
+      const zone = world.getComponent(entity, ZoneComponent)!;
+      return {
+        ...cardInfo.data,
+        ...status,
+        uuid: entity.toString(), // LrigSelector dùng uuid (string)
+        owner: zone.owner,
+      };
+    });
+  }, [world, worldVersion]);
+  // ===========================================
 
   return (
     <>
@@ -57,7 +97,18 @@ export default function ClientOnlyLoader() {
       </TomiwixossSceneLoader>
 
       {/* Các component Modal nằm ở đây - tạm thời comment out vì cần props phức tạp */}
-      {/* <LrigSelector /> */}
+      {/* === BỎ COMMENT VÀ CẬP NHẬT LRIG SELECTOR === */}
+      <LrigSelector
+        isOpen={phase === "selecting_lrigs"}
+        fullLrigDeck={lrigDeckForSelector}
+        onConfirm={(centerUuid, assist1Uuid, assist2Uuid) => {
+          // Chuyển đổi uuid (string) lại thành entityId (number) để dispatch
+          const centerId = parseInt(centerUuid);
+          const assistIds = [parseInt(assist1Uuid), parseInt(assist2Uuid)];
+          dispatchConfirmLrigSelectionAction(centerId, assistIds);
+        }}
+      />
+      {/* =========================================== */}
       {/* <DeckViewer /> */}
     </>
   );

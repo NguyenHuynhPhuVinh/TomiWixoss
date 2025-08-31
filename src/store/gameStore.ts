@@ -65,8 +65,21 @@ const useGameStore = create<GameStore>((set, get) => {
 
     initializeGame: () => {
       const newWorld = gameManager.createNewGame();
-      // Gọi hàm đồng bộ hóa để cập nhật store lần đầu
-      get()._syncStateFromWorld(newWorld);
+      const globalState = newWorld.getComponent(
+        GLOBAL_ENTITY,
+        GlobalStateComponent
+      )!;
+
+      // Logic khởi tạo deck đã nằm trong GameFactory, giờ chỉ cần chuyển phase
+      globalState.phase = "selecting_lrigs";
+
+      set({
+        world: newWorld,
+        worldVersion: 1,
+        phase: globalState.phase,
+        turn: globalState.turn,
+        actionTakenInPhase: globalState.actionTakenInPhase,
+      });
       gameManager.startLoop(); // Bắt đầu vòng lặp game
     },
 

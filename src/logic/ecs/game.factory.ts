@@ -23,7 +23,10 @@ export class GameFactory {
 
     // === 2. TẠO ENTITY TOÀN CỤC VÀ GẮN COMPONENT ===
     const globalEntity = world.createEntity(); // Sẽ là entity 0
-    world.addComponent(globalEntity, new GlobalStateComponent("up", 1, false));
+    world.addComponent(
+      globalEntity,
+      new GlobalStateComponent("pre_game", 0, false)
+    );
     world.addComponent(globalEntity, new ActionRequestComponent()); // <-- THÊM VÀO ĐÂY
     // ===============================================
 

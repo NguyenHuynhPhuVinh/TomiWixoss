@@ -41,3 +41,38 @@ export function dispatchAdvancePhaseAction() {
     gameManager.forceUpdate();
   }
 }
+
+export function dispatchConfirmLrigSelectionAction(
+  center: number,
+  assists: number[]
+) {
+  const world = gameManager.world;
+  if (!world) return;
+  const actionRequest = world.getComponent(
+    GLOBAL_ENTITY,
+    ActionRequestComponent
+  );
+  if (actionRequest) {
+    actionRequest.request = {
+      type: "CONFIRM_LRIG_SELECTION",
+      payload: { center, assists },
+    };
+    gameManager.forceUpdate();
+  }
+}
+
+export function dispatchConfirmMulliganAction(entities: number[]) {
+  const world = gameManager.world;
+  if (!world) return;
+  const actionRequest = world.getComponent(
+    GLOBAL_ENTITY,
+    ActionRequestComponent
+  );
+  if (actionRequest) {
+    actionRequest.request = {
+      type: "CONFIRM_MULLIGAN",
+      payload: { entities },
+    };
+    gameManager.forceUpdate();
+  }
+}

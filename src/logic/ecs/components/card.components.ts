@@ -1,6 +1,7 @@
 // src/logic/ecs/components/card.components.ts
 import { Component } from "../ecs.types";
 import { CardData, ZoneKey, GamePhase } from "@/types/game"; // Import GamePhase
+import { Entity } from "../ecs.types"; // Import Entity
 
 /**
  * Chứa dữ liệu tĩnh của lá bài, không bao giờ thay đổi.
@@ -51,7 +52,16 @@ export class GlobalStateComponent implements Component {
   constructor(
     public phase: GamePhase = "pre_game",
     public turn: number = 0,
-    public actionTakenInPhase: boolean = false
+    public actionTakenInPhase: boolean = false,
+
+    // === THÊM CÁC STATE MỚI CHO SETUP ===
+    // Mảng UUID của các lá bài người chơi chọn để mulligan
+    public mulliganSelection: string[] = [],
+    // Trạng thái chọn LRIG
+    public lrigSelection: {
+      center: Entity | null;
+      assists: Entity[];
+    } = { center: null, assists: [] }
   ) {}
 }
 
