@@ -67,6 +67,7 @@ interface GameState {
   setPlayerEner: (amount: number) => void;
   // --- CÁC ACTION MỚI CHO GAME SETUP ---
   startGame: () => void; // Bắt đầu quá trình setup
+  initializeGame: () => void; // Initialize game state
   // confirmLrigSelection: (centerId: string, assist1Id: string, assist2Id: string) => void; // Xác nhận 3 LRIG đã chọn
   // mulligan: (cardsToReturnUuids: string[]) => void;
   upPhase: () => void;
@@ -214,6 +215,61 @@ const useGameStore = create<GameState>((set, get) => ({
       },
       turn: 0,
       phase: "setup",
+    });
+  },
+
+  initializeGame: () => {
+    if (get().isInitialized) return;
+
+    // --- MAIN DECK SETUP --- (giữ nguyên)
+    let fullMainDeck = divaDebutDeckEn
+      .filter((c) => c.backType === "MAIN")
+      .flatMap((card) =>
+        Array(4)
+          .fill(card)
+          .map(() => createCardInstance(card, "player"))
+      )
+      .slice(0, 40);
+    shuffle(fullMainDeck);
+
+    // --- LIFE CLOTH SETUP --- (giữ nguyên)
+    const lifeClothStack = fullMainDeck.splice(0, 7);
+
+    // --- LRIG DECK & INITIAL LRIGS SETUP --- (giữ nguyên)
+    let fullLrigDeck = divaDebutDeckEn
+      .filter((c) => c.backType === "LRIG" || c.backType === "PIECE")
+      .map((c) => createCardInstance(c, "player"));
+
+    const initialLrigs: (CardInstance | null)[] = [null, null, null];
+    // ... (assuming some logic for initial lrigs, but since not provided, keep as null)
+    const remainingLrigDeck = fullLrigDeck; // Simplified
+
+    set({
+      isInitialized: true,
+      player: {
+        mainDeck: fullMainDeck,
+        lrigDeck: remainingLrigDeck,
+        hand: [], // Tay bắt đầu trống
+        signiZone: [null, null, null], // <-- QUAN TRỌNG: Sân bắt đầu trống
+        lrigZone: initialLrigs,
+        lifeCloth: lifeClothStack,
+        enerZone: [], // <-- Ener bắt đầu trống
+        trash: [], // <-- Trash bắt đầu trống
+        lrigTrash: [], // <-- LRIG Trash bắt đầu trống
+        checkZone: [null],
+      },
+      ai: {
+        mainDeck: [],
+        lrigDeck: [],
+        hand: [],
+        signiZone: [null, null, null],
+        lrigZone: [null, null, null],
+        lifeCloth: [],
+        enerZone: [],
+        trash: [],
+        lrigTrash: [],
+        checkZone: [null],
+      },
     });
   },
 

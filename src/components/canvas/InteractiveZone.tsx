@@ -1,15 +1,18 @@
 // src/components/canvas/InteractiveZone.tsx
 "use client";
 import useGameStore from "@/store/gameStore";
+import { ZoneKey } from "@/types/game"; // Import type
 
 interface InteractiveZoneProps {
+  isOccupied: boolean; // <-- PROPS MỚI
   position: [number, number, number];
   size: [number, number]; // width, height
-  zoneKey: string;
+  zoneKey: ZoneKey;
   zoneIndex?: number;
 }
 
 export default function InteractiveZone({
+  isOccupied,
   position,
   size,
   zoneKey,
@@ -19,36 +22,24 @@ export default function InteractiveZone({
   const moveCard = useGameStore((state) => state.moveCard);
   const setPlayerAction = useGameStore((state) => state.setPlayerAction);
 
+  const canPlace = playerAction?.type.startsWith("place_") && !isOccupied;
+
   const handleClick = () => {
-    console.log(`InteractiveZone clicked: ${zoneKey} ${zoneIndex}`);
-    console.log("Current playerAction:", playerAction);
+    console.log("--- Interactive Zone Clicked ---");
+    console.log("Zone:", zoneKey, "Index:", zoneIndex);
+    console.log("Is Occupied?", isOccupied);
+    console.log("Current Player Action:", playerAction);
+    console.log("Can Place?", canPlace);
 
-    if (playerAction?.type.startsWith("place_")) {
-      // Logic di chuyển bài sẽ được thêm vào đây
-      console.log(
-        `Clicked on ${zoneKey} ${zoneIndex} while trying to place a card.`
-      );
-
-      if (
-        playerAction.type === "place_signi" &&
-        zoneKey === "signiZone" &&
-        zoneIndex !== undefined
-      ) {
-        console.log("Moving SIGNI card to signiZone", zoneIndex);
-        moveCard(playerAction.card.uuid, "mainDeck", zoneKey, zoneIndex);
-      } else if (
-        playerAction.type === "place_lrig" &&
-        zoneKey === "lrigZone" &&
-        zoneIndex !== undefined
-      ) {
-        console.log("Moving LRIG card to lrigZone", zoneIndex);
-        moveCard(playerAction.card.uuid, "lrigDeck", zoneKey, zoneIndex);
-      }
-
-      setPlayerAction(null); // Hoàn thành hành động
-    } else {
-      console.log("No playerAction set, ignoring click");
+    if (!canPlace || !playerAction) {
+      console.log("Action prevented. Cannot place card here.");
+      return;
     }
+
+    console.log("Action allowed. Moving card:", playerAction.card.name);
+    moveCard(playerAction.card.uuid, "hand", zoneKey, zoneIndex);
+
+    setPlayerAction(null); // Hoàn thành hành động
   };
 
   return (
@@ -60,9 +51,9 @@ export default function InteractiveZone({
       <planeGeometry args={size} />
       <meshBasicMaterial
         transparent
-        opacity={0.2}
-        color="green"
-        visible={!!playerAction}
+        opacity={0.3}
+        color={isOccupied ? "red" : "green"}
+        visible={!!playerAction?.type.startsWith("place_")}
       />
     </mesh>
   );
