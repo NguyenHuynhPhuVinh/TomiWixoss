@@ -8,7 +8,7 @@ import gameManager from "@/logic/ecs/game.manager";
 
 const useGameStore = create<GameStore>((set, get) => {
   gameManager.onUpdate((updatedWorld) => {
-    get()._syncStateFromWorld(updatedWorld);
+    get().syncStateFromWorld(updatedWorld);
   });
 
   return {

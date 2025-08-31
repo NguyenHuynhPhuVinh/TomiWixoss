@@ -1,6 +1,7 @@
 // src/store/types.ts
 import { GamePhase } from "@/types/game";
 import { World } from "@/logic/ecs/world";
+import { PlayerAction } from "./slices/uiSlice"; // Import từ uiSlice
 
 // Định nghĩa kiểu cho một entry trong log
 export type LogType = "info" | "action" | "system" | "cost";
@@ -12,10 +13,10 @@ export interface LogEntry {
 }
 
 // Định nghĩa một kiểu cho các hành động của người chơi trên UI
-export type PlayerAction = {
-  type: "place_signi";
-  cardUuid: string; // Thực ra đây là Entity ID dạng string
-};
+// export type PlayerAction = {
+//   type: "place_signi";
+//   cardUuid: string; // Thực ra đây là Entity ID dạng string
+// };
 
 // Interface cho STATE của toàn bộ store
 export interface GameState {
@@ -43,7 +44,7 @@ export interface GameActions {
 
   // Game/World Actions
   initializeGame: () => void;
-  _syncStateFromWorld: (world: World) => void;
+  syncStateFromWorld: (world: World) => void;
 
   // UI Actions
   initiatePlaceSigni: (cardUuid: string) => void;

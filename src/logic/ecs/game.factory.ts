@@ -2,7 +2,7 @@
 import { World } from "./world";
 import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import shuffle from "shuffle-array";
-import { CardData } from "@/types/game";
+import { CardData, ZoneKey } from "@/types/game";
 import {
   CardInfoComponent,
   ZoneComponent,
@@ -65,7 +65,7 @@ export class GameFactory {
     world: World,
     cardData: CardData,
     owner: "player" | "ai",
-    zone: any, // Tạm dùng any, sẽ sửa sau
+    zone: ZoneKey, // Sửa thành ZoneKey
     index: number
   ): void {
     const cardEntity = world.createEntity();

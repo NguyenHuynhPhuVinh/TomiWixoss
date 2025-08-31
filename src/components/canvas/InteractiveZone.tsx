@@ -8,7 +8,7 @@ import * as THREE from "three";
 // import { PlaceSigniCommand } from "@/logic/commands/placeSigni.command";
 // import { ZoneComponent } from "@/logic/ecs/components/card.components";
 import { dispatchPlaceSigniAction } from "@/logic/ecs/actions";
-import { PlayerAction } from "@/store/types"; // Import type nếu cần
+import { PlayerAction } from "@/store/slices/uiSlice"; // Import type từ uiSlice
 
 interface InteractiveZoneProps {
   position: [number, number, number];

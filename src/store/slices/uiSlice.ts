@@ -2,6 +2,11 @@
 import { StateCreator } from "zustand";
 import { GameStore } from "../types";
 
+export type PlayerAction = {
+  type: "place_signi";
+  cardUuid: string; // Thực ra đây là Entity ID dạng string
+};
+
 export interface UiSlice {
   playerAction: GameStore["playerAction"];
   isZoneViewerOpen: GameStore["isZoneViewerOpen"];

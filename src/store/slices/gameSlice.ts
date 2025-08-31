@@ -23,7 +23,7 @@ export interface BoardState {
 
 export interface GameSlice {
   initializeGame: () => void;
-  _syncStateFromWorld: (world: World) => void;
+  syncStateFromWorld: (world: World) => void;
 }
 
 export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
@@ -32,10 +32,10 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
 ) => ({
   initializeGame: () => {
     const newWorld = gameManager.createNewGame();
-    get()._syncStateFromWorld(newWorld);
+    get().syncStateFromWorld(newWorld);
   },
 
-  _syncStateFromWorld: (world) => {
+  syncStateFromWorld: (world) => {
     const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
 
     // === TẠO VÀ CẬP NHẬT boardState ===
