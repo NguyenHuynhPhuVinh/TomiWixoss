@@ -11,6 +11,7 @@ import {
 } from "@react-three/drei";
 import GameBoard from "./GameBoard";
 import Card from "./Card";
+import InteractiveZone from "./InteractiveZone"; // Import component mới
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
@@ -208,6 +209,23 @@ export default function Scene() {
           />
         );
       })}
+
+      {/* THÊM VÙNG TƯƠNG TÁC CHO SIGNI ZONE */}
+      {[coords.SIGNI_1, coords.SIGNI_2, coords.SIGNI_3].map(
+        (signiCoords, index) => (
+          <InteractiveZone
+            key={`interactive-signi-${index}`}
+            position={[
+              signiCoords.x,
+              signiCoords.y + 0.02, // Nâng nhẹ lên để không bị Z-fighting
+              signiCoords.z,
+            ]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            size={[CARD_DIMENSIONS.width, CARD_DIMENSIONS.height]}
+            zoneIndex={index}
+          />
+        )
+      )}
 
       {/* LRIG TRASH */}
       {player.lrigTrash.map((card, index) => (

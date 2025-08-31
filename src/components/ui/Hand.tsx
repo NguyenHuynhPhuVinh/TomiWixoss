@@ -1,7 +1,7 @@
 // src/components/ui/Hand.tsx
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import Image from "next/image";
@@ -37,6 +37,15 @@ export default function Hand({
     useGameStore,
     (state) => state.chargeEnerFromHand
   );
+  const initiatePlaceSigni = useStore(
+    useGameStore,
+    (state) => state.initiatePlaceSigni
+  );
+  const currentCenterLrig = useStore(
+    useGameStore,
+    (state) => state.player.lrigZone[1]
+  );
+  const signiZone = useStore(useGameStore, (state) => state.player.signiZone);
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
@@ -103,6 +112,38 @@ export default function Hand({
     onCardSelect(null);
   };
 
+  // --- LOGIC MỚI: XÁC ĐỊNH SIGNI HỢP LỆ ---
+  // Memoize lại hàm này để tránh tính toán lại không cần thiết
+  const playableSigniUuids = useMemo(() => {
+    if (phase !== "main" || !currentCenterLrig) return [];
+
+    const lrigLevel = currentCenterLrig.level ?? 0;
+    // Tạm thời xử lý limit là số, sẽ nâng cấp sau
+    const lrigLimit =
+      typeof currentCenterLrig.limit === "number"
+        ? currentCenterLrig.limit
+        : 99;
+    const signiOnField = signiZone.filter(
+      (card): card is CardInstance => card !== null
+    );
+    const currentTotalLevelOnField = signiOnField.reduce(
+      (sum: number, signi) => sum + (signi?.level ?? 0),
+      0
+    );
+
+    return hand
+      .filter((card) => {
+        if (card.type !== "SIGNI") return false;
+        const cardLevel = card.level ?? 0;
+        // Điều kiện 1: Level lá bài <= Level LRIG
+        const levelOk = cardLevel <= lrigLevel;
+        // Điều kiện 2: Tổng level trên sân + level lá bài <= Limit LRIG
+        const limitOk = currentTotalLevelOnField + cardLevel <= lrigLimit;
+        return levelOk && limitOk;
+      })
+      .map((card) => card.uuid);
+  }, [hand, phase, currentCenterLrig, signiZone]); // Thêm các dependency vào đây
+
   if (numCards === 0) return null;
 
   return (
@@ -138,6 +179,13 @@ export default function Hand({
                   y: isSelectedForMulligan || isSelectedForPreview ? -40 : 0,
                   scale:
                     isSelectedForMulligan || isSelectedForPreview ? 1.2 : 1,
+                  // Thêm hiệu ứng làm mờ
+                  opacity:
+                    phase === "main" &&
+                    card.type === "SIGNI" &&
+                    !playableSigniUuids.includes(card.uuid)
+                      ? 0.5
+                      : 1,
                   // ... transform và filter ...
                   transform: transform,
                   filter: isSelectedForPreview
@@ -169,6 +217,16 @@ export default function Hand({
                     // Logic cũ cho End Phase
                     showDiscard={phase === "end" && mustDiscard}
                     onDiscard={() => handleDiscard(card.uuid)}
+                    showPlaySigni={
+                      phase === "main" &&
+                      card.type === "SIGNI" &&
+                      playableSigniUuids.includes(card.uuid)
+                    }
+                    onPlaySigni={() => {
+                      initiatePlaceSigni(card.uuid);
+                      setSelectedCardUuid(null); // Tắt context menu sau khi click
+                      onCardSelect(null);
+                    }}
                   />
                 )}
 
@@ -177,7 +235,12 @@ export default function Hand({
                     "relative transition-all duration-300",
                     // Thêm viền xanh nếu được chọn cho mulligan
                     isSelectedForMulligan &&
-                      "ring-4 ring-blue-500 ring-offset-2 ring-offset-background rounded-lg"
+                      "ring-4 ring-blue-500 ring-offset-2 ring-offset-background rounded-lg",
+                    // Thêm hiệu ứng grayscale để rõ hơn
+                    phase === "main" &&
+                      card.type === "SIGNI" &&
+                      !playableSigniUuids.includes(card.uuid) &&
+                      "grayscale pointer-events-none"
                   )}
                   style={{
                     width: `${CARD_BASE_WIDTH}px`,

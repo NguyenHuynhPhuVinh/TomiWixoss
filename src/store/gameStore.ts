@@ -29,6 +29,12 @@ const TURN_PHASES: GamePhase[] = [
   "end",
 ];
 
+// Định nghĩa một kiểu cho các hành động của người chơi
+type PlayerAction = {
+  type: "place_signi";
+  cardUuid: string;
+};
+
 interface PlayerState {
   mainDeck: CardInstance[];
   lrigDeck: CardInstance[];
@@ -51,6 +57,7 @@ interface GameState {
   mulliganSelection: string[]; // Thêm để lưu các lá bài được chọn cho mulligan
   mustDiscard: boolean; // <-- STATE MỚI
   actionTakenInPhase: boolean; // <-- STATE MỚI
+  playerAction: PlayerAction | null; // <-- STATE MỚI
   // --- ACTIONS ĐÃ ĐƯỢC CẤU TRÚC LẠI ---
   prepareDecks: () => void; // Bước 1: Chỉ xáo bài
   drawInitialHand: () => void; // Bước 2: Chỉ rút 5 lá đầu
@@ -75,6 +82,10 @@ interface GameState {
   isZoneViewerOpen: boolean; // State mới để điều khiển modal
   openZoneViewer: () => void;
   closeZoneViewer: () => void;
+  // --- ACTIONS MỚI CHO MAIN PHASE ---
+  initiatePlaceSigni: (cardUuid: string) => void;
+  placeSigni: (toZoneIndex: number) => void;
+  cancelPlayerAction: () => void;
 }
 
 // Hàm helper giữ nguyên
@@ -96,6 +107,7 @@ const useGameStore = create<GameState>((set, get) => ({
   mulliganSelection: [],
   mustDiscard: false, // Ban đầu là false
   actionTakenInPhase: false, // Giá trị ban đầu
+  playerAction: null, // Ban đầu không có hành động nào
   isZoneViewerOpen: false, // Giá trị ban đầu
 
   player: {
@@ -571,6 +583,51 @@ const useGameStore = create<GameState>((set, get) => ({
 
   openZoneViewer: () => set({ isZoneViewerOpen: true }),
   closeZoneViewer: () => set({ isZoneViewerOpen: false }),
+
+  // --- ACTIONS MỚI ---
+  initiatePlaceSigni: (cardUuid) => {
+    // Kích hoạt chế độ đặt bài
+    set({ playerAction: { type: "place_signi", cardUuid } });
+  },
+
+  cancelPlayerAction: () => {
+    // Hủy bỏ hành động hiện tại
+    set({ playerAction: null });
+  },
+
+  placeSigni: (toZoneIndex) => {
+    const state = get();
+    if (state.playerAction?.type !== "place_signi") return;
+
+    const cardUuid = state.playerAction.cardUuid;
+    const cardToPlay = state.player.hand.find((c) => c.uuid === cardUuid);
+
+    // Kiểm tra lại lần cuối cho chắc
+    if (!cardToPlay || state.player.signiZone[toZoneIndex] !== null) {
+      console.error("Invalid placement action.");
+      set({ playerAction: null }); // Hủy hành động nếu không hợp lệ
+      return;
+    }
+
+    set((currentState) => {
+      const newHand = currentState.player.hand.filter(
+        (c) => c.uuid !== cardUuid
+      );
+      const newSigniZone = [...currentState.player.signiZone];
+
+      cardToPlay.isFaceUp = true; // Bài ra sân luôn ngửa
+      newSigniZone[toZoneIndex] = cardToPlay;
+
+      return {
+        player: {
+          ...currentState.player,
+          hand: newHand,
+          signiZone: newSigniZone,
+        },
+        playerAction: null, // Hoàn thành và thoát chế độ hành động
+      };
+    });
+  },
 }));
 
 export default useGameStore;

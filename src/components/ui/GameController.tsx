@@ -41,8 +41,27 @@ export default function GameController({
     useGameStore,
     (state) => state.openZoneViewer
   );
+  const playerAction = useStore(useGameStore, (state) => state.playerAction);
+  const cancelPlayerAction = useStore(
+    useGameStore,
+    (state) => state.cancelPlayerAction
+  );
 
   const renderContent = () => {
+    // Xử lý trạng thái hành động đặc biệt trước
+    if (playerAction?.type === "place_signi") {
+      return (
+        <>
+          <p className="text-sm text-blue-400 mb-2">
+            Chọn một ô SIGNI trống trên sân...
+          </p>
+          <Button onClick={cancelPlayerAction} variant="destructive" size="sm">
+            Hủy
+          </Button>
+        </>
+      );
+    }
+
     switch (phase) {
       case "pre_game":
         return <Button onClick={prepareDecks}>Chuẩn bị</Button>;
