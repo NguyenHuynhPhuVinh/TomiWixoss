@@ -34,7 +34,7 @@ export default function GameLog() {
             chúng ta đã unshift log mới vào đầu mảng trong store.
             flex-col-reverse sẽ tự động đặt phần tử đầu tiên (log mới nhất) ở dưới cùng.
           */}
-          {logs.map((log) => (
+          {logs.map((log: LogEntry) => (
             <motion.p
               key={log.id}
               layout

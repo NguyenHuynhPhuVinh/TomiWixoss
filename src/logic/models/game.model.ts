@@ -1,7 +1,7 @@
 // src/logic/models/game.model.ts
 import { GamePhase, GameState, TURN_PHASES } from "@/store/types";
 import { Player } from "./player.model";
-import eventService, { GameEvent } from "../core/event.service";
+// import eventService, { GameEvent } from "../core/event.service";
 
 export class Game {
   public turn: number;
@@ -48,10 +48,10 @@ export class Game {
     this.turn = newTurn;
     this.actionTakenInPhase = false; // Reset cờ khi chuyển phase
 
-    eventService.dispatch(GameEvent.PHASE_CHANGED, {
-      from: oldPhase,
-      to: this.phase,
-      turn: this.turn,
-    });
+    // eventService.dispatch(GameEvent.PHASE_CHANGED, {
+    //   from: oldPhase,
+    //   to: this.phase,
+    //   turn: this.turn,
+    // });
   }
 }

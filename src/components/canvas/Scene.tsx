@@ -51,6 +51,7 @@ export default function Scene() {
         ...cardInfo.data,
         ...status,
         uuid: entity.toString(),
+        owner: zoneInfo.owner, // <-- Lấy owner từ ZoneComponent
       };
 
       return (

@@ -4,8 +4,9 @@ import { useStore } from "zustand";
 import useGameStore from "@/store/gameStore";
 import { Plane } from "@react-three/drei";
 import * as THREE from "three";
-import commandService from "@/logic/core/command.service";
-import { PlaceSigniCommand } from "@/logic/commands/placeSigni.command";
+// import commandService from "@/logic/core/command.service";
+// import { PlaceSigniCommand } from "@/logic/commands/placeSigni.command";
+import { ZoneComponent } from "@/logic/ecs/components/card.components";
 
 interface InteractiveZoneProps {
   position: [number, number, number];
@@ -21,12 +22,18 @@ export default function InteractiveZone({
   zoneIndex,
 }: InteractiveZoneProps) {
   const playerAction = useStore(useGameStore, (state) => state.playerAction);
-  const signiZone = useStore(useGameStore, (state) => state.player.signiZone);
-  const isMySlotEmpty = signiZone[zoneIndex] === null;
+  const world = useStore(useGameStore, (state) => state.world);
+
+  const signiInSlot = world?.query([ZoneComponent]).find((e) => {
+    const zone = world.getComponent(e, ZoneComponent)!;
+    return zone.zone === "signiZone" && zone.index === zoneIndex;
+  });
+
+  const isMySlotEmpty = !signiInSlot;
   const isPlacingSigni = playerAction?.type === "place_signi";
   const shouldHighlight = isMySlotEmpty && isPlacingSigni;
 
-  if (!shouldHighlight) return null; // Chỉ render khi cần
+  if (!shouldHighlight) return null;
 
   return (
     <Plane
@@ -36,14 +43,10 @@ export default function InteractiveZone({
       onClick={(e) => {
         e.stopPropagation();
         if (playerAction) {
-          // Tạo một command mới và dispatch nó
-          const command = new PlaceSigniCommand(
-            playerAction.cardUuid,
-            zoneIndex
+          // Tạm thời log ra, sẽ thay bằng System sau
+          console.log(
+            `TODO: Place card ${playerAction.cardUuid} in zone ${zoneIndex}`
           );
-          commandService.dispatch(command);
-
-          // Tắt chế độ hành động
           useGameStore.getState().cancelPlayerAction();
         }
       }}

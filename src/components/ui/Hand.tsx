@@ -10,9 +10,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { cn } from "@/lib/utils"; // Import cn utility
 import ContextMenu from "./ContextMenu"; // Thêm import ContextMenu
-import { ChargeEnerCommand } from "@/logic/commands/chargeEner.command";
-import commandService from "@/logic/core/command.service";
-import { DiscardCardCommand } from "@/logic/commands/discardCard.command";
+// import { ChargeEnerCommand } from "@/logic/commands/chargeEner.command";
+// import commandService from "@/logic/core/command.service";
+// import { DiscardCardCommand } from "@/logic/commands/discardCard.command";
+import {
+  CardInfoComponent,
+  ZoneComponent,
+  StatusComponent,
+} from "@/logic/ecs/components/card.components";
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
@@ -27,20 +32,36 @@ export default function Hand({
   onCardSelect,
   onMulliganSelectionChange,
 }: HandProps) {
-  // Bỏ onReturnSingleCard
-  const hand = useStore(useGameStore, (state) => state.player.hand);
-  const phase = useStore(useGameStore, (state) => state.phase); // Lấy phase hiện tại
-  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
-  // LẤY ACTION MỚI
-  const initiatePlaceSigni = useStore(
-    useGameStore,
-    (state) => state.initiatePlaceSigni
-  );
-  const currentCenterLrig = useStore(
-    useGameStore,
-    (state) => state.player.lrigZone[1]
-  );
-  const signiZone = useStore(useGameStore, (state) => state.player.signiZone);
+  const world = useStore(useGameStore, (state) => state.world);
+
+  // === TRUY VẤN DỮ LIỆU TAY BÀI TỪ WORLD ===
+  const handEntities = useMemo(() => {
+    if (!world) return [];
+    return world
+      .query([CardInfoComponent, ZoneComponent])
+      .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "hand");
+  }, [world]);
+
+  const hand: CardInstance[] = useMemo(() => {
+    if (!world) return [];
+    return handEntities.map((entity) => {
+      const cardInfo = world.getComponent(entity, CardInfoComponent)!;
+      const status = world.getComponent(entity, StatusComponent)!;
+      const zone = world.getComponent(entity, ZoneComponent)!;
+      return {
+        ...cardInfo.data,
+        ...status,
+        uuid: entity.toString(),
+        owner: zone.owner,
+      };
+    });
+  }, [world, handEntities]);
+  // ==========================================
+
+  const phase = useStore(useGameStore, (state) => state.phase);
+  // Tạm thời comment out các state/action chưa dùng
+  // const mustDiscard = ...
+  // const initiatePlaceSigni = ...
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
@@ -95,50 +116,56 @@ export default function Hand({
     }
   };
 
-  const handleDiscard = (cardUuid: string) => {
-    const command = new DiscardCardCommand(cardUuid);
-    commandService.dispatch(command);
-    // Không cần bỏ chọn vì người chơi có thể cần bỏ nhiều lá
-  };
+  // Tạm thời vô hiệu hóa logic playableSigniUuids
+  const playableSigniUuids: string[] = [];
 
-  const handleChargeEner = (cardUuid: string) => {
-    const command = new ChargeEnerCommand({ from: "hand", cardUuid });
-    commandService.dispatch(command);
-    setSelectedCardUuid(null);
-    onCardSelect(null);
-  };
+  // ... logic state và ref của component giữ nguyên ...
+
+  // Tạm thời comment out các hàm handler
+  // const handleDiscard = (cardUuid: string) => {
+  //   const command = new DiscardCardCommand(cardUuid);
+  //   commandService.dispatch(command);
+  //   // Không cần bỏ chọn vì người chơi có thể cần bỏ nhiều lá
+  // };
+
+  // const handleChargeEner = (cardUuid: string) => {
+  //   const command = new ChargeEnerCommand({ from: "hand", cardUuid });
+  //   commandService.dispatch(command);
+  //   setSelectedCardUuid(null);
+  //   onCardSelect(null);
+  // };
 
   // --- LOGIC MỚI: XÁC ĐỊNH SIGNI HỢP LỆ ---
-  // Memoize lại hàm này để tránh tính toán lại không cần thiết
-  const playableSigniUuids = useMemo(() => {
-    if (phase !== "main" || !currentCenterLrig) return [];
+  // Tạm thời comment out vì chưa có dữ liệu từ world
+  // const playableSigniUuids = useMemo(() => {
+  //   if (phase !== "main" || !currentCenterLrig) return [];
 
-    const lrigLevel = currentCenterLrig.level ?? 0;
-    // Tạm thời xử lý limit là số, sẽ nâng cấp sau
-    const lrigLimit =
-      typeof currentCenterLrig.limit === "number"
-        ? currentCenterLrig.limit
-        : 99;
-    const signiOnField = signiZone.filter(
-      (card): card is CardInstance => card !== null
-    );
-    const currentTotalLevelOnField = signiOnField.reduce(
-      (sum: number, signi) => sum + (signi?.level ?? 0),
-      0
-    );
+  //   const lrigLevel = currentCenterLrig.level ?? 0;
+  //   // Tạm thời xử lý limit là số, sẽ nâng cấp sau
+  //   const lrigLimit =
+  //     typeof currentCenterLrig.limit === "number"
+  //       ? currentCenterLrig.limit
+  //       : 99;
+  //   const signiOnField = signiZone.filter(
+  //     (card): card is CardInstance => card !== null
+  //   );
+  //   const currentTotalLevelOnField = signiOnField.reduce(
+  //     (sum: number, signi) => sum + (signi?.level ?? 0),
+  //     0
+  //   );
 
-    return hand
-      .filter((card) => {
-        if (card.type !== "SIGNI") return false;
-        const cardLevel = card.level ?? 0;
-        // Điều kiện 1: Level lá bài <= Level LRIG
-        const levelOk = cardLevel <= lrigLevel;
-        // Điều kiện 2: Tổng level trên sân + level lá bài <= Limit LRIG
-        const limitOk = currentTotalLevelOnField + cardLevel <= lrigLimit;
-        return levelOk && limitOk;
-      })
-      .map((card) => card.uuid);
-  }, [hand, phase, currentCenterLrig, signiZone]); // Thêm các dependency vào đây
+  //   return hand
+  //     .filter((card) => {
+  //       if (card.type !== "SIGNI") return false;
+  //       const cardLevel = card.level ?? 0;
+  //       // Điều kiện 1: Level lá bài <= Level LRIG
+  //       const levelOk = cardLevel <= lrigLevel;
+  //       // Điều kiện 2: Tổng level trên sân + level lá bài <= Limit LRIG
+  //       const limitOk = currentTotalLevelOnField + cardLevel <= lrigLimit;
+  //       return levelOk && limitOk;
+  //     })
+  //     .map((card) => card.uuid);
+  // }, [hand, phase, currentCenterLrig, signiZone]); // Thêm các dependency vào đây
 
   if (numCards === 0) return null;
 
@@ -209,17 +236,21 @@ export default function Hand({
                 {isSelectedForPreview && (
                   <ContextMenu
                     showChargeEner={phase === "ener"}
-                    onChargeEner={() => handleChargeEner(card.uuid)}
+                    onChargeEner={() => {
+                      /* handleChargeEner(card.uuid) */
+                    }}
                     // Logic cũ cho End Phase
-                    showDiscard={phase === "end" && mustDiscard}
-                    onDiscard={() => handleDiscard(card.uuid)}
+                    showDiscard={false /* phase === "end" && mustDiscard */}
+                    onDiscard={() => {
+                      /* handleDiscard(card.uuid) */
+                    }}
                     showPlaySigni={
                       phase === "main" &&
                       card.type === "SIGNI" &&
                       playableSigniUuids.includes(card.uuid)
                     }
                     onPlaySigni={() => {
-                      initiatePlaceSigni(card.uuid);
+                      // initiatePlaceSigni(card.uuid);
                       setSelectedCardUuid(null); // Tắt context menu sau khi click
                       onCardSelect(null);
                     }}
