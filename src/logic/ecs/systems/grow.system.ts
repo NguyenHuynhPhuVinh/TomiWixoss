@@ -32,6 +32,9 @@ export class GrowSystem implements System {
     const { addLog, closeZoneViewer } = useGameStore.getState();
     const { targetEntityId, zoneIndex } = actionRequest.request.payload;
 
+    // Đóng modal ngay lập tức để đảm bảo phản hồi UI
+    closeZoneViewer();
+
     // --- 1. KIỂM TRA ĐIỀU KIỆN ---
     // A. Kiểm tra Phase và cờ actionTaken
     const isGrowPhaseAction =
@@ -132,8 +135,7 @@ export class GrowSystem implements System {
     addLog(`Trả ${paymentResult.paidEner.length} Ener.`, "cost");
     addLog(`Grow LRIG thành ${targetLrigInfo.data.name}!`, "action");
 
-    // Đóng modal và dọn dẹp yêu cầu
-    closeZoneViewer();
+    // Dọn dẹp yêu cầu
     actionRequest.request = null;
   }
 }
