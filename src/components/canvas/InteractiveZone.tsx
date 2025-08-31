@@ -37,7 +37,7 @@ export default function InteractiveZone({
     }
 
     console.log("Action allowed. Moving card:", playerAction.card.name);
-    moveCard(playerAction.card.uuid, "hand", zoneKey, zoneIndex);
+    moveCard(playerAction.card.uuid, playerAction.fromZone, zoneKey, zoneIndex);
 
     setPlayerAction(null); // Hoàn thành hành động
   };

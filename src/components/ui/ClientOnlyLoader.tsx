@@ -50,11 +50,14 @@ export default function ClientOnlyLoader() {
   };
 
   const handleSelectCardFromDeck = (card: CardInstance) => {
-    // Tùy thuộc vào loại bài, set hành động tương ứng
+    // Xác định `fromZone` dựa trên `viewingDeck.title`
+    const fromZone =
+      viewingDeck?.title === "Main Deck" ? "mainDeck" : "lrigDeck";
+
     if (card.type === "SIGNI") {
-      setPlayerAction({ type: "place_signi", card });
-    } else if (card.type === "LRIG") {
-      setPlayerAction({ type: "place_lrig", card });
+      setPlayerAction({ type: "place_signi", card, fromZone });
+    } else if (card.type === "LRIG" || card.type === "ASSIST LRIG") {
+      setPlayerAction({ type: "place_lrig", card, fromZone });
     }
     setViewingDeck(null); // Đóng viewer
   };

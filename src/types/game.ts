@@ -35,10 +35,10 @@ export interface CardInstance extends CardData {
 
 // Định nghĩa các hành động mà người chơi có thể đang thực hiện
 export type PlayerAction =
-  | { type: "place_signi"; card: CardInstance }
-  | { type: "place_lrig"; card: CardInstance }
-  | { type: "charge_ener"; card: CardInstance }
-  | { type: "attack"; card: CardInstance };
+  | { type: "place_signi"; card: CardInstance; fromZone: ZoneKey }
+  | { type: "place_lrig"; card: CardInstance; fromZone: ZoneKey }
+  | { type: "charge_ener"; card: CardInstance; fromZone: ZoneKey }
+  | { type: "attack"; card: CardInstance; fromZone: ZoneKey };
 
 // Key cho các vùng có thể chứa bài
 export type ZoneKey =

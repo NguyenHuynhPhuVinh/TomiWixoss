@@ -29,6 +29,7 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
   const phase = useGameStore((state) => state.phase);
   const chargeEnerAction = useGameStore((state) => state.chargeEner);
   const playSigniAction = useGameStore((state) => state.playSigni);
+  const setPlayerAction = useGameStore((state) => state.setPlayerAction);
 
   useOnClickOutside(handRef, () => {
     setSelectedCardUuid(null);
@@ -59,9 +60,9 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
     onCardSelect(null);
   };
 
-  const handlePlaySigni = (cardUuid: string) => {
-    // Tạm thời đặt vào zone 0, sau này sẽ có logic chọn zone
-    playSigniAction(cardUuid, 0);
+  const handlePlaySigni = (card: CardInstance) => {
+    // Khi người dùng click "Play SIGNI" từ tay
+    setPlayerAction({ type: "place_signi", card, fromZone: "hand" });
     setSelectedCardUuid(null);
     onCardSelect(null);
   };
@@ -123,7 +124,7 @@ export default function Hand({ onCardSelect, onReturnSingleCard }: HandProps) {
                     showChargeEner={phase === "ener"}
                     onChargeEner={() => handleChargeEner(card.uuid)}
                     showPlaySigni={phase === "main"}
-                    onPlaySigni={() => handlePlaySigni(card.uuid)}
+                    onPlaySigni={() => handlePlaySigni(card)}
                   />
                 )}
 

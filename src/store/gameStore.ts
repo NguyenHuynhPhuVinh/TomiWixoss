@@ -142,27 +142,43 @@ const useGameStore = create<GameState>((set, get) => ({
 
   moveCard: (cardUuid, fromZone, toZone, toIndex) => {
     set((state) => {
-      const playerState = { ...state.player };
-      let cardToMove: CardInstance | undefined;
+      // 1. Tìm lá bài cần di chuyển từ vùng nguồn
+      const sourceZone = state.player[fromZone] as CardInstance[];
+      const cardToMove = sourceZone.find((c) => c.uuid === cardUuid);
 
-      // 1. Tìm và xóa lá bài khỏi vùng nguồn
-      const sourceZone = playerState[fromZone] as CardInstance[];
-      const cardIndex = sourceZone.findIndex((c) => c.uuid === cardUuid);
-      if (cardIndex > -1) {
-        [cardToMove] = sourceZone.splice(cardIndex, 1);
-      } else {
+      // Nếu không tìm thấy bài, không làm gì cả
+      if (!cardToMove) {
+        console.error(
+          `moveCard: Card with uuid ${cardUuid} not found in ${fromZone}`
+        );
         return state;
-      } // Không tìm thấy bài
-
-      // 2. Thêm lá bài vào vùng đích
-      const destZone = playerState[toZone] as (CardInstance | null)[];
-      if (toIndex !== undefined && destZone[toIndex] === null) {
-        destZone[toIndex] = cardToMove;
-      } else {
-        (destZone as CardInstance[]).push(cardToMove);
       }
 
-      return { player: playerState };
+      // 2. Tạo ra một mảng nguồn MỚI không chứa lá bài đó
+      const newSourceZone = sourceZone.filter((c) => c.uuid !== cardUuid);
+
+      // 3. Tạo ra một mảng đích MỚI chứa lá bài đó
+      let newDestZone;
+      const originalDestZone = state.player[toZone] as (CardInstance | null)[];
+
+      if (toIndex !== undefined) {
+        // Trường hợp đặt vào một vị trí cụ thể (như signiZone)
+        newDestZone = originalDestZone.map((slot, index) =>
+          index === toIndex ? cardToMove : slot
+        );
+      } else {
+        // Trường hợp thêm vào cuối một mảng (như trash, enerZone)
+        newDestZone = [...originalDestZone, cardToMove];
+      }
+
+      // 4. Trả về một object player state MỚI với các mảng đã được cập nhật
+      return {
+        player: {
+          ...state.player,
+          [fromZone]: newSourceZone,
+          [toZone]: newDestZone,
+        },
+      };
     });
   },
 
