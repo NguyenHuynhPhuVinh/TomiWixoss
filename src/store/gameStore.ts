@@ -50,6 +50,7 @@ interface GameState {
   ai: PlayerState;
   mulliganSelection: string[]; // Thêm để lưu các lá bài được chọn cho mulligan
   mustDiscard: boolean; // <-- STATE MỚI
+  actionTakenInPhase: boolean; // <-- STATE MỚI
   // --- ACTIONS ĐÃ ĐƯỢC CẤU TRÚC LẠI ---
   prepareDecks: () => void; // Bước 1: Chỉ xáo bài
   drawInitialHand: () => void; // Bước 2: Chỉ rút 5 lá đầu
@@ -87,6 +88,7 @@ const useGameStore = create<GameState>((set, get) => ({
   turn: 0,
   mulliganSelection: [],
   mustDiscard: false, // Ban đầu là false
+  actionTakenInPhase: false, // Giá trị ban đầu
   player: {
     mainDeck: [],
     lrigDeck: [],
@@ -298,7 +300,12 @@ const useGameStore = create<GameState>((set, get) => ({
       }
       // =============================
 
-      return { phase: nextPhase, turn: newTurn, mustDiscard: mustDiscardNow };
+      return {
+        phase: nextPhase,
+        turn: newTurn,
+        mustDiscard: mustDiscardNow,
+        actionTakenInPhase: false, // <-- RESET CỜ KHI CHUYỂN PHASE
+      };
     });
   },
 
@@ -317,17 +324,53 @@ const useGameStore = create<GameState>((set, get) => ({
   },
 
   drawCardForTurn: () => {
+    // Kiểm tra xem có đang ở đúng phase không (optional, nhưng là good practice)
+    if (get().phase !== "draw") {
+      console.warn("Attempted to draw card outside of Draw Phase.");
+      return;
+    }
+
+    // Ngăn rút bài nếu đã rút rồi
+    if (get().actionTakenInPhase) {
+      console.warn("Draw action has already been taken this turn.");
+      return;
+    }
+
     set((state) => {
+      // 1. Xác định số lá bài cần rút theo luật
       const amountToDraw = state.turn === 1 ? 1 : 2;
+
+      // 2. Kiểm tra xem deck có đủ bài không
+      if (state.player.mainDeck.length === 0) {
+        console.log("Main Deck is empty, cannot draw.");
+        // TODO: Xử lý logic "Refresh Deck" sau này
+        return state;
+      }
+
+      // 3. Chuẩn bị các mảng mới (nguyên tắc bất biến)
       const playerMainDeck = [...state.player.mainDeck];
-      const drawnCards = playerMainDeck.splice(0, amountToDraw);
-      drawnCards.forEach((c) => (c.isFaceUp = true));
+      const playerHand = [...state.player.hand];
+
+      // 4. Rút bài
+      const drawnCards: CardInstance[] = [];
+      for (let i = 0; i < amountToDraw && playerMainDeck.length > 0; i++) {
+        // Lấy lá bài trên cùng của bộ bài (phần tử cuối của mảng)
+        const drawnCard = playerMainDeck.pop()!;
+        // Lật ngửa lá bài khi lên tay
+        drawnCard.isFaceUp = true;
+        drawnCards.push(drawnCard);
+      }
+
+      console.log(`Player draws ${drawnCards.length} card(s).`);
+
+      // 5. Cập nhật state
       return {
         player: {
           ...state.player,
-          mainDeck: playerMainDeck,
-          hand: [...state.player.hand, ...drawnCards],
+          mainDeck: playerMainDeck, // Bộ bài đã bị rút bớt
+          hand: [...playerHand, ...drawnCards], // Tay bài được thêm bài mới
         },
+        actionTakenInPhase: true, // <-- SET CỜ SAU KHI THỰC HIỆN
       };
     });
   },

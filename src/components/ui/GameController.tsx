@@ -27,6 +27,15 @@ export default function GameController({
     useGameStore,
     (state) => state.drawCardForTurn
   );
+  const mainDeckCount = useStore(
+    useGameStore,
+    (state) => state.player.mainDeck.length
+  );
+  // --- LẤY STATE MỚI ---
+  const actionTakenInPhase = useStore(
+    useGameStore,
+    (state) => state.actionTakenInPhase
+  );
 
   const renderContent = () => {
     switch (phase) {
@@ -75,11 +84,21 @@ export default function GameController({
           </>
         );
       case "draw":
+        const amountToDraw = turn === 1 ? 1 : 2;
+        // Điều kiện mới: có bài trong deck VÀ chưa thực hiện hành động
+        const canDraw = mainDeckCount > 0 && !actionTakenInPhase;
         return (
           <>
             <h3 className="font-bold">Turn {turn} - Draw Phase</h3>
-            <Button onClick={drawCardForTurn} className="w-full mt-2">
-              Draw Card(s)
+            <p className="text-sm text-muted-foreground mb-2">
+              Deck: {mainDeckCount} lá
+            </p>
+            <Button
+              onClick={drawCardForTurn}
+              className="w-full mt-2"
+              disabled={!canDraw} // <-- Điều kiện vô hiệu hóa giờ đã thông minh hơn
+            >
+              {actionTakenInPhase ? "Đã rút bài" : `Rút ${amountToDraw} lá`}
             </Button>
             <Button
               onClick={goToNextPhase}
