@@ -15,6 +15,7 @@ import useGameStore from "@/store/gameStore";
 import { checkCost } from "@/logic/payment";
 import { CardInstance } from "@/types/game";
 import { GamePhase } from "@/types/game";
+import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class GrowSystem implements System {
   public update(world: World): void {
@@ -212,5 +213,11 @@ export class GrowSystem implements System {
 
     // Dọn dẹp yêu cầu
     actionRequest.request = null;
+
+    // PHÁT SỰ KIỆN CHO GROW
+    eventBus.dispatch(GameEvent.CARD_GROWN, {
+      targetEntityId,
+      newCardId: targetLrigInfo.data.id,
+    });
   }
 }

@@ -10,6 +10,7 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import useGameStore from "@/store/gameStore";
+import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class EnerSystem implements System {
   public update(world: World): void {
@@ -56,5 +57,12 @@ export class EnerSystem implements System {
 
     // Dọn dẹp yêu cầu sau khi đã xử lý xong
     actionRequest.request = null;
+
+    // PHÁT SỰ KIỆN
+    eventBus.dispatch(GameEvent.CARD_CHARGED, {
+      entityId,
+      source,
+      cardId: cardInfo.data.id,
+    });
   }
 }

@@ -10,6 +10,7 @@ import { GLOBAL_ENTITY } from "../game.factory";
 import { TURN_PHASES, GamePhase } from "@/types/game";
 import useGameStore from "@/store/gameStore";
 import gameManager from "../game.manager"; // <-- IMPORT GameManager
+import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 // Các phase sẽ tự động chuyển tiếp nếu hành động đã xong
 const AUTO_ADVANCE_PHASES: GamePhase[] = ["up", "draw"];
@@ -104,5 +105,12 @@ export class PhaseSystem implements System {
     const phaseText =
       globalState.phase.charAt(0).toUpperCase() + globalState.phase.slice(1);
     addLog(`Turn ${globalState.turn} - ${phaseText} Phase`, "system");
+
+    // PHÁT SỰ KIỆN THÔNG BÁO THAY ĐỔI PHASE
+    eventBus.dispatch(GameEvent.PHASE_CHANGED, {
+      from: TURN_PHASES[currentPhaseIndex],
+      to: nextPhase,
+      turn: globalState.turn,
+    });
   }
 }

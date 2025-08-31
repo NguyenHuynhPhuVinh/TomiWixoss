@@ -10,6 +10,7 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import useGameStore from "@/store/gameStore";
+import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class DiscardSystem implements System {
   public update(world: World): void {
@@ -47,6 +48,12 @@ export class DiscardSystem implements System {
     if (handSize <= 6) {
       setMustDiscard(false); // Tắt chế độ bỏ bài
     }
+
+    // PHÁT SỰ KIỆN BỎ BÀI
+    eventBus.dispatch(GameEvent.CARD_DISCARDED, {
+      entityId,
+      cardId: cardInfo.data.id,
+    });
 
     actionRequest.request = null;
   }

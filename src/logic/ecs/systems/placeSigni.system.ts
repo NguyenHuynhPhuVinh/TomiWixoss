@@ -10,6 +10,7 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import useGameStore from "@/store/gameStore";
+import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class PlaceSigniSystem implements System {
   public update(world: World): void {
@@ -109,7 +110,13 @@ export class PlaceSigniSystem implements System {
       "action"
     );
 
-    // TODO: Phát ra sự kiện CARD_PLAYED ở đây
+    // === PHÁT SỰ KIỆN ===
+    eventBus.dispatch(GameEvent.CARD_PLAYED, {
+      entityId,
+      cardId: cardToPlayInfo.data.id,
+      zone: "signiZone",
+      zoneIndex,
+    });
 
     // Dọn dẹp yêu cầu
     actionRequest.request = null;

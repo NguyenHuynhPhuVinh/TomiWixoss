@@ -10,6 +10,10 @@ export enum GameEvent {
   // Sự kiện về các lá bài
   CARD_PLAYED = "CARD_PLAYED", // Một lá bài được đặt ra sân
   CARD_DRAWN = "CARD_DRAWN", // Một hoặc nhiều lá bài được rút
+  CARD_DISCARDED = "CARD_DISCARDED",
+  CARD_CHARGED = "CARD_CHARGED",
+  CARD_GROWN = "CARD_GROWN",
+  CARDS_UPPED = "CARDS_UPPED",
 
   // Thêm các sự kiện khác sau này...
   // TURN_STARTED, ATTACK_DECLARED, DAMAGE_DEALT, ...

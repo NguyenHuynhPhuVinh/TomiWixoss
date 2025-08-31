@@ -51,15 +51,17 @@ class GameManager {
   private loop() {
     if (!this.isLooping || !this.world) return;
 
-    // 1) Process one action from the queue if present
+    // --- New loop behavior ---
+    // In each frame do exactly one of:
+    //  - process a single queued action (if any), OR
+    //  - run automatic systems when there is no pending action.
     if (this.actionQueue.length > 0) {
       const action = this.actionQueue.shift()!;
       this.processAction(action);
-    }
-
-    // 2) Run all systems (systems themselves check conditions)
-    for (const system of this.systems) {
-      system.update(this.world);
+    } else {
+      for (const system of this.systems) {
+        system.update(this.world);
+      }
     }
 
     this.updateListeners.forEach((listener) => listener(this.world!));
@@ -110,14 +112,16 @@ class GameManager {
   private processAction(action: { type: string; payload?: any }) {
     if (!this.world) return;
 
-    // Update ActionRequestComponent so systems can read it
+    // Write the action into the shared ActionRequestComponent so systems can read it.
     const actionRequest = this.world.getComponent(
       GLOBAL_ENTITY,
       ActionRequestComponent
     )!;
     actionRequest.request = action;
 
-    // Run all systems. Systems responsible for this action should handle it.
+    // When processing an explicit action we still run all systems.
+    // Systems that are automatic (Up/Draw/Phase) should guard themselves
+    // and not run if an action is actively being processed.
     for (const system of this.systems) {
       system.update(this.world);
     }

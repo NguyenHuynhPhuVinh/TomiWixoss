@@ -8,6 +8,7 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import useGameStore from "@/store/gameStore";
+import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class UpSystem implements System {
   // Bỏ `hasRunThisPhase` vì chúng ta sẽ dùng cờ toàn cục
@@ -46,6 +47,9 @@ export class UpSystem implements System {
 
     if (uppedCardCount > 0) {
       addLog(`Up ${uppedCardCount} lá bài trên sân.`, "action");
+      eventBus.dispatch(GameEvent.CARDS_UPPED, {
+        count: uppedCardCount,
+      });
     } else {
       addLog("Không có lá bài nào cần Up.", "info");
     }

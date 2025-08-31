@@ -8,6 +8,7 @@ import {
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import useGameStore from "@/store/gameStore";
+import eventBus, { GameEvent } from "@/logic/core/event.bus";
 
 export class DrawSystem implements System {
   public update(world: World): void {
@@ -67,5 +68,11 @@ export class DrawSystem implements System {
 
     addLog(`Rút ${cardsToDraw.length} lá bài.`, "action");
     globalState.actionTakenInPhase = true; // Đánh dấu đã thực hiện
+
+    // Dispatch event so other systems (scripting, audio, UI) can react
+    eventBus.dispatch(GameEvent.CARD_DRAWN, {
+      drawnEntities: cardsToDraw,
+      player: globalState.turn === 1 ? "player1" : "player2",
+    });
   }
 }
