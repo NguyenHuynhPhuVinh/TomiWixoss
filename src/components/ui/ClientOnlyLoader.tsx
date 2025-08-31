@@ -61,9 +61,9 @@ export default function ClientOnlyLoader() {
     useGameStore,
     (state) => state.initializeGame
   );
-  const closeLrigDeckViewer = useStore(
+  const closeZoneViewer = useStore(
     useGameStore,
-    (state) => state.closeLrigDeckViewer
+    (state) => state.closeZoneViewer
   );
   const playerAction = useStore(useGameStore, (state) => state.playerAction);
   const cancelPlayerAction = useStore(
@@ -231,7 +231,7 @@ export default function ClientOnlyLoader() {
         }
         cards={growOptions}
         isOpen={isZoneViewerOpen}
-        onOpenChange={closeLrigDeckViewer}
+        onOpenChange={closeZoneViewer}
         onCardClick={(card) => {
           const targetEntityId = parseInt(card.uuid);
           // Xác định zoneIndex dựa trên phase hoặc viewingLrigDeckForGrow

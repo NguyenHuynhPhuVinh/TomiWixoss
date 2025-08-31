@@ -51,7 +51,6 @@ export interface GameActions {
   cancelPlayerAction: () => void;
   openZoneViewer: () => void;
   closeZoneViewer: () => void;
-  closeLrigDeckViewer: () => void;
   openLrigDeckViewerForAssist: (zoneIndex: number) => void;
   setMustDiscard: (mustDiscard: boolean) => void;
 }

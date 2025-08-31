@@ -14,7 +14,6 @@ import { DiscardSystem } from "./systems/discard.system";
 import { UpSystem } from "./systems/up.system";
 import { DrawSystem } from "./systems/draw.system";
 import { PhaseSystem } from "./systems/phase.system";
-import { AdvancePhaseSystem } from "./systems/advancePhase.system";
 
 type UpdateListener = (world: World) => void;
 
@@ -40,7 +39,6 @@ class GameManager {
     this.systems.push(new GrowSystem());
     this.systems.push(new PlaceSigniSystem());
     this.systems.push(new DiscardSystem());
-    this.systems.push(new AdvancePhaseSystem());
     // Các system tự động ở dưới
     this.systems.push(new UpSystem());
     this.systems.push(new DrawSystem());
@@ -85,42 +83,27 @@ class GameManager {
   private loop() {
     if (!this.world) return;
     if (!this.isLooping) {
-      // Nếu vòng lặp bị dừng bởi một system (như PhaseSystem),
-      // chúng ta vẫn cần cập nhật UI lần cuối cùng.
       this.notifyUpdate();
       return;
     }
 
-    // --- LOGIC VÒNG LẶP MỚI, TUẦN TỰ HƠN ---
-
-    // 1. Ưu tiên xử lý MỘT action từ queue
-    if (this.actionQueue.length > 0) {
-      const action = this.actionQueue.shift()!;
-
-      // Ghi action vào World
-      const actionRequest = this.world.getComponent(
-        GLOBAL_ENTITY,
-        ActionRequestComponent
-      )!;
-      actionRequest.request = action;
-
-      // Chạy tất cả các system để xử lý action này
+    // 1. Lấy action (nếu có) và đặt vào request
+    const action = this.actionQueue.shift();
+    const actionRequest = this.world.getComponent(
+      GLOBAL_ENTITY,
+      ActionRequestComponent
+    )!;
+    actionRequest.request = action || null;
+    if (action) {
       console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
-      for (const system of this.systems) {
-        system.update(this.world);
-      }
-
-      // Xóa request ngay sau khi xử lý xong
-      actionRequest.request = null;
-    } else {
-      // 2. Nếu không có action, mới chạy các system tự động
-      for (const system of this.systems) {
-        system.update(this.world);
-      }
     }
-    // =====================================
 
-    this.notifyUpdate(); // Báo cho UI render lại sau khi TẤT CẢ system đã chạy xong
+    // 2. Chạy tất cả các system MỘT LẦN DUY NHẤT
+    for (const system of this.systems) {
+      system.update(this.world);
+    }
+
+    this.notifyUpdate();
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
 

@@ -36,20 +36,20 @@ export class PhaseSystem implements System {
 
     const isProcessingAction = !!actionRequest.request;
 
-    // --- LOGIC TỰ ĐỘNG CHUYỂN PHASE ---
+    // 1. Logic tự động (chỉ chạy khi game idle)
     if (
       !isProcessingAction &&
       AUTO_ADVANCE_PHASES.includes(globalState.phase) &&
       globalState.actionTakenInPhase
     ) {
-      console.log(`--- Auto-advancing from ${globalState.phase} ---`);
       this.advancePhase(globalState, world);
-      return; // Dừng lại sau khi đã chuyển phase
+      return;
     }
 
-    // NOTE: ADVANCE_PHASE is now handled by AdvancePhaseSystem which runs
-    // only during action processing. PhaseSystem here only performs automatic
-    // phase advancement when the game is idle.
+    // 2. Logic theo yêu cầu (chỉ chạy khi có action)
+    if (actionRequest.request?.type === "ADVANCE_PHASE") {
+      this.advancePhase(globalState, world);
+    }
   }
 
   /**
