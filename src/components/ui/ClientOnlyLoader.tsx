@@ -10,6 +10,7 @@ import LrigSelector from "./LrigSelector"; // Import component mới
 import { useStore } from "zustand";
 import useGameStore from "@/store/gameStore";
 import DeckViewer from "./DeckViewer"; // Đảm bảo đã import
+import GameLog from "./GameLog"; // <-- IMPORT COMPONENT MỚI
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -118,6 +119,10 @@ export default function ClientOnlyLoader() {
           onMulliganSelectionChange={setMulliganSelection}
         />
         <SideCardPreview card={selectedCard} />
+
+        {/* === THÊM GAMELOG VÀO ĐÂY === */}
+        <GameLog />
+        {/* ============================= */}
       </div>
 
       <TomiwixossSceneLoader>

@@ -7,6 +7,15 @@ import shuffle from "shuffle-array";
 import { findInitialLrigs } from "@/logic/setup"; // <-- IMPORT HÀM MỚI
 import { validateDeck } from "@/logic/deckValidation"; // <-- IMPORT HÀM MỚI
 
+// Định nghĩa kiểu cho một entry trong log
+export type LogType = "info" | "action" | "system" | "cost";
+export interface LogEntry {
+  id: string; // Dùng uuid để làm key trong React
+  message: string;
+  type: LogType;
+  timestamp: number; // Để sau này có thể thêm timestamp nếu muốn
+}
+
 // Thêm phase 'mulligan'
 type GamePhase =
   | "pre_game"
@@ -91,6 +100,9 @@ interface GameState {
   initiatePlaceSigni: (cardUuid: string) => void;
   placeSigni: (toZoneIndex: number) => void;
   cancelPlayerAction: () => void;
+  // --- LOG SYSTEM ---
+  logs: LogEntry[];
+  addLog: (message: string, type?: LogType) => void;
 }
 
 // Hàm helper giữ nguyên
@@ -115,6 +127,7 @@ const useGameStore = create<GameState>((set, get) => ({
   playerAction: null, // Ban đầu không có hành động nào
   isZoneViewerOpen: false, // Giá trị ban đầu
   viewingLrigDeckForGrow: null, // Giá trị ban đầu
+  logs: [], // Khởi tạo mảng log rỗng
 
   player: {
     mainDeck: [],
@@ -143,6 +156,7 @@ const useGameStore = create<GameState>((set, get) => ({
 
   // BƯỚC 1: Xác thực, sau đó chuẩn bị 2 bộ bài, rồi tự động gọi bước 2
   prepareDecks: () => {
+    get().addLog("Bắt đầu chuẩn bị trận đấu...", "system");
     // === BƯỚC XÁC THỰC MỚI ===
     // Tạo bộ bài đầy đủ từ dữ liệu gốc để xác thực
     const fullMainDeckData = divaDebutDeckEn
@@ -162,11 +176,13 @@ const useGameStore = create<GameState>((set, get) => ({
       const errorMessages =
         "Bộ bài không hợp lệ:\n- " + validation.errors.join("\n- ");
       console.error(errorMessages);
+      get().addLog(errorMessages, "system"); // Log lỗi ra luôn
       alert(errorMessages);
       return; // Rất quan trọng: Dừng action tại đây
     }
     // =============================
 
+    get().addLog("Bộ bài hợp lệ. Xáo bài...", "system");
     // Nếu bộ bài hợp lệ, tiếp tục logic tạo instance và xáo bài như cũ
     const playerMainDeck = fullMainDeckData.map((data) =>
       createCardInstance(data, "player")
@@ -186,11 +202,13 @@ const useGameStore = create<GameState>((set, get) => ({
       },
       phase: "selecting_lrigs", // <-- QUAN TRỌNG: Dừng lại ở đây
     });
+    get().addLog("Đang chờ người chơi chọn LRIG...", "system");
     // Xóa setTimeout và không gọi drawInitialHand nữa
   },
 
   // BƯỚC 2: Rút 5 lá bài lên tay và chuyển sang phase Mulligan
   drawInitialHand: () => {
+    get().addLog("Rút 5 lá bài khởi đầu.", "action");
     set((state) => {
       const playerMainDeck = [...state.player.mainDeck];
       const initialHand = playerMainDeck.splice(0, 5);
@@ -204,10 +222,17 @@ const useGameStore = create<GameState>((set, get) => ({
         phase: "mulligan",
       };
     });
+    get().addLog("Bắt đầu giai đoạn Mulligan.", "system");
   },
 
   // BƯỚC 3: Người chơi quyết định đổi bài, sau đó tự động gọi bước 4
   performMulligan: (cardsToReturnUuids) => {
+    const amountToRedraw = cardsToReturnUuids.length;
+    if (amountToRedraw > 0) {
+      get().addLog(`Đổi ${amountToRedraw} lá bài.`, "action");
+    } else {
+      get().addLog("Không đổi bài.", "info");
+    }
     set((state) => {
       const amountToRedraw = cardsToReturnUuids.length;
       if (amountToRedraw === 0) {
@@ -260,6 +285,12 @@ const useGameStore = create<GameState>((set, get) => ({
         return state;
       }
 
+      get().addLog(`Center LRIG được chọn: ${centerLrig.name}.`, "action");
+      get().addLog(
+        `Assist LRIG được chọn: ${assistLrig1.name} & ${assistLrig2.name}.`,
+        "action"
+      );
+
       // "OPEN!": Lật ngửa 3 LRIG
       centerLrig.isFaceUp = true;
       assistLrig1.isFaceUp = true;
@@ -285,6 +316,7 @@ const useGameStore = create<GameState>((set, get) => ({
 
   // Tách logic chia Life Cloth ra để gọi sau Mulligan
   dealRemainingSetupAfterMulligan: () => {
+    get().addLog("Chia 7 lá Life Cloth.", "system");
     set((state) => {
       const playerMainDeck = [...state.player.mainDeck];
       const lifeClothStack = playerMainDeck.splice(0, 7);
@@ -298,6 +330,14 @@ const useGameStore = create<GameState>((set, get) => ({
         turn: 1,
       };
     });
+    // Đây là điểm bắt đầu của lượt 1
+    const newState = get();
+    const phaseText =
+      newState.phase.charAt(0).toUpperCase() + newState.phase.slice(1);
+    get().addLog(
+      `Bắt đầu Turn ${newState.turn} - ${phaseText} Phase`,
+      "system"
+    );
   },
 
   setMulliganSelection: (selection: string[]) => {
@@ -334,6 +374,12 @@ const useGameStore = create<GameState>((set, get) => ({
         actionTakenInPhase: false, // <-- RESET CỜ KHI CHUYỂN PHASE
       };
     });
+
+    // Log ra phase mới sau khi state đã được cập nhật
+    const newState = get();
+    const phaseText =
+      newState.phase.charAt(0).toUpperCase() + newState.phase.slice(1);
+    get().addLog(`Turn ${newState.turn} - ${phaseText} Phase`, "system");
   },
 
   upAllCards: () => {
@@ -400,6 +446,9 @@ const useGameStore = create<GameState>((set, get) => ({
         actionTakenInPhase: true, // <-- SET CỜ SAU KHI THỰC HIỆN
       };
     });
+    // Thêm log sau khi rút bài
+    const amountToDraw = get().turn === 1 ? 1 : 2;
+    get().addLog(`Rút ${amountToDraw} lá bài.`, "action");
   },
 
   // --- ACTION MỚI ---
@@ -435,31 +484,31 @@ const useGameStore = create<GameState>((set, get) => ({
 
   // --- ACTION MỚI ---
   chargeEnerFromHand: (cardUuid: string) => {
-    // Ngăn hành động nếu đã làm rồi
+    // Các bước kiểm tra điều kiện giữ nguyên
     if (get().actionTakenInPhase) {
       console.warn("Ener Charge action has already been taken this turn.");
       return;
     }
-    // Ngăn hành động nếu không ở đúng phase
     if (get().phase !== "ener") {
       console.warn("Attempted to charge ener outside of Ener Phase.");
       return;
     }
 
+    // Tìm lá bài TRƯỚC khi set state để có thể log tên của nó
+    const cardToCharge = get().player.hand.find((c) => c.uuid === cardUuid);
+    if (!cardToCharge) {
+      console.error("Card not found in hand to charge ener.");
+      return;
+    }
+
+    // === THÊM DÒNG LOG CÒN THIẾU Ở ĐÂY ===
+    get().addLog(`Nạp Ener từ tay: ${cardToCharge.name}.`, "action");
+    // =====================================
+
     set((state) => {
-      const cardToCharge = state.player.hand.find((c) => c.uuid === cardUuid);
-      if (!cardToCharge) {
-        console.error("Card not found in hand to charge ener.");
-        return state;
-      }
-
-      // 1. Tạo mảng tay mới không chứa lá bài đó
+      // Logic di chuyển bài không cần thay đổi
       const newHand = state.player.hand.filter((c) => c.uuid !== cardUuid);
-
-      // 2. Lá bài vào Ener Zone luôn được lật ngửa
       cardToCharge.isFaceUp = true;
-
-      // 3. Tạo mảng Ener Zone mới chứa lá bài đó
       const newEnerZone = [...state.player.enerZone, cardToCharge];
 
       return {
@@ -468,14 +517,14 @@ const useGameStore = create<GameState>((set, get) => ({
           hand: newHand,
           enerZone: newEnerZone,
         },
-        actionTakenInPhase: true, // Đánh dấu đã thực hiện hành động
+        actionTakenInPhase: true,
       };
     });
   },
 
-  // --- ACTION MỚI CHO ENER TỪ SÂN ---
+  // --- SỬA LỖI TRONG chargeEnerFromSigni ---
   chargeEnerFromSigni: (cardUuid: string, fromZoneIndex: number) => {
-    // Các bước kiểm tra điều kiện tương tự
+    // Các bước kiểm tra điều kiện giữ nguyên
     if (get().actionTakenInPhase) {
       console.warn("Ener Charge action has already been taken this turn.");
       return;
@@ -485,23 +534,22 @@ const useGameStore = create<GameState>((set, get) => ({
       return;
     }
 
+    // Tìm lá bài TRƯỚC khi set state
+    const cardToCharge = get().player.signiZone[fromZoneIndex];
+    if (!cardToCharge || cardToCharge.uuid !== cardUuid) {
+      console.error("Card not found in SIGNI zone to charge ener.");
+      return;
+    }
+
+    // === THÊM DÒNG LOG CÒN THIẾU Ở ĐÂY ===
+    get().addLog(`Nạp Ener từ sân: ${cardToCharge.name}.`, "action");
+    // =====================================
+
     set((state) => {
-      const cardToCharge = state.player.signiZone[fromZoneIndex];
-
-      // Kiểm tra xem có đúng là lá bài đó không
-      if (!cardToCharge || cardToCharge.uuid !== cardUuid) {
-        console.error("Card not found in SIGNI zone to charge ener.");
-        return state;
-      }
-
-      // 1. Tạo mảng SIGNI Zone mới, đặt vị trí cũ thành null
+      // Logic di chuyển bài không cần thay đổi
       const newSigniZone = [...state.player.signiZone];
       newSigniZone[fromZoneIndex] = null;
-
-      // 2. Lá bài vào Ener Zone luôn được lật ngửa
       cardToCharge.isFaceUp = true;
-
-      // 3. Tạo mảng Ener Zone mới chứa lá bài đó
       const newEnerZone = [...state.player.enerZone, cardToCharge];
 
       return {
@@ -510,7 +558,7 @@ const useGameStore = create<GameState>((set, get) => ({
           signiZone: newSigniZone,
           enerZone: newEnerZone,
         },
-        actionTakenInPhase: true, // Đánh dấu đã thực hiện hành động
+        actionTakenInPhase: true,
       };
     });
   },
@@ -588,8 +636,13 @@ const useGameStore = create<GameState>((set, get) => ({
     if (!canPay) {
       console.error("Cannot pay Grow Cost.", growCost);
       alert("Không đủ Ener để thực hiện Grow!");
+      get().addLog(`Không thể Grow: Không đủ Ener.`, "info");
       return;
     }
+
+    // Thêm log trước khi grow
+    get().addLog(`Trả ${paidEner.length} Ener.`, "cost");
+    get().addLog(`Grow Center LRIG thành ${targetLrig.name}!`, "action");
 
     // --- 3. CẬP NHẬT STATE SAU KHI MỌI THỨ HỢP LỆ ---
     set((currentState) => {
@@ -715,8 +768,19 @@ const useGameStore = create<GameState>((set, get) => ({
     if (!canPay) {
       console.error("Cannot pay Grow Cost.", growCost);
       alert("Không đủ Ener để thực hiện Grow!");
+      get().addLog(`Không thể Grow Assist: Không đủ Ener.`, "info");
       return;
     }
+
+    // Log hành động thành công
+    if (paidEner.length > 0) {
+      get().addLog(`Trả ${paidEner.length} Ener.`, "cost");
+    }
+    const side = fromZoneIndex === 0 ? "trái" : "phải";
+    get().addLog(
+      `Grow Assist LRIG ${side} thành ${targetLrig.name}!`,
+      "action"
+    );
 
     // --- 3. CẬP NHẬT STATE ---
     set((currentState) => {
@@ -793,6 +857,25 @@ const useGameStore = create<GameState>((set, get) => ({
         playerAction: null, // Hoàn thành và thoát chế độ hành động
       };
     });
+    // Thêm log sau khi đặt SIGNI
+    if (cardToPlay) {
+      get().addLog(
+        `Đặt SIGNI: ${cardToPlay.name} vào vị trí ${toZoneIndex + 1}.`,
+        "action"
+      );
+    }
+  },
+
+  // --- LOG SYSTEM ---
+  addLog: (message, type = "info") => {
+    const newLog: LogEntry = {
+      id: uuidv4(),
+      message,
+      type,
+      timestamp: Date.now(),
+    };
+    // Thêm log mới vào đầu mảng để hiển thị từ trên xuống
+    set((state) => ({ logs: [newLog, ...state.logs] }));
   },
 }));
 
