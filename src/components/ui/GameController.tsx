@@ -17,17 +17,12 @@ interface GameControllerProps {
 export default function GameController({
   selectedCardsForMulligan,
 }: GameControllerProps) {
-  const phase = useStore(useGameStore, (state) => state.phase);
-  const turn = useStore(useGameStore, (state) => state.turn);
-  const handSize = useStore(useGameStore, (state) => state.player.hand.length);
-  const mainDeckCount = useStore(
-    useGameStore,
-    (state) => state.player.mainDeck.length
-  );
-  const actionTakenInPhase = useStore(
-    useGameStore,
-    (state) => state.actionTakenInPhase
-  );
+  // Lấy state từ game model để đảm bảo luôn mới nhất
+  const game = useStore(useGameStore, (state) => state.game);
+  const phase = game?.phase ?? "pre_game"; // Nếu game chưa có thì là pre_game
+  const turn = game?.turn ?? 0;
+  const mainDeckCount = game?.player.mainDeck.length ?? 0;
+  const actionTakenInPhase = game?.actionTakenInPhase ?? false;
 
   const renderContent = () => {
     // Xử lý trạng thái hành động đặc biệt trước
@@ -66,8 +61,8 @@ export default function GameController({
             </p>
             <Button
               onClick={() => {
-                // Gửi danh sách đã chọn vào action
-                // performMulligan(selectedCardsForMulligan);
+                // === KẾT NỐI HÀM VÀO ĐÂY ===
+                setupService.confirmMulligan(selectedCardsForMulligan);
               }}
               className="w-full"
             >
@@ -243,7 +238,11 @@ export default function GameController({
         <p className="text-muted-foreground mb-6">
           Sẵn sàng để bắt đầu một trận đấu.
         </p>
-        <Button onClick={() => {}} className="w-full" size="lg">
+        <Button
+          onClick={() => setupService.startSetup()}
+          className="w-full"
+          size="lg"
+        >
           Chuẩn bị
         </Button>
       </div>

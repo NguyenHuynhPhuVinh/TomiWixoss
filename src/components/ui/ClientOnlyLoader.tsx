@@ -31,8 +31,10 @@ export default function ClientOnlyLoader() {
   // State mới để lưu các lá bài được chọn cho mulligan
   const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
 
-  const phase = useStore(useGameStore, (state) => state.phase);
-  const fullLrigDeck = useStore(useGameStore, (state) => state.player.lrigDeck);
+  // Lấy ra game instance để có thể truy cập lrigDeck từ model
+  const game = useStore(useGameStore, (state) => state.game);
+  const phase = game?.phase ?? "pre_game";
+  const lrigDeckForSelector = game ? game.player.lrigDeck : [];
 
   const isZoneViewerOpen = useStore(
     useGameStore,
@@ -124,8 +126,10 @@ export default function ClientOnlyLoader() {
 
       <LrigSelector
         isOpen={phase === "selecting_lrigs"}
-        fullLrigDeck={fullLrigDeck}
-        onConfirm={() => {}} // Tạm thời
+        fullLrigDeck={lrigDeckForSelector}
+        onConfirm={(center, assist1, assist2) => {
+          setupService.confirmLrigSelection(center, assist1, assist2);
+        }}
       />
 
       <DeckViewer

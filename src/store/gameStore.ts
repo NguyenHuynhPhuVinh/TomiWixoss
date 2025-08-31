@@ -21,9 +21,10 @@ const initialPlayerState: PlayerState = {
 
 // Định nghĩa initialGameState
 const initialGameState = {
+  game: null, // Bắt đầu với game null
   gameStarted: false,
   phase: "pre_game" as GamePhase,
-  turn: 1,
+  turn: 0, // Bắt đầu với turn 0
   player: initialPlayerState,
   ai: initialPlayerState,
   actionTakenInPhase: false,

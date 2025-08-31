@@ -5,8 +5,10 @@ import { CardData, CardInstance } from "@/types/game";
 import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array";
 import useGameStore from "@/store/gameStore";
-import { PlayerState } from "@/store/types";
+import { PlayerState, GameState } from "@/store/types"; // Import GameState
+import { Game } from "../models/game.model"; // Import Game model
 
+// Helper này chỉ dùng nội bộ trong service này
 const createCardInstance = (
   data: CardData,
   owner: "player" | "ai"
@@ -20,24 +22,27 @@ const createCardInstance = (
 
 class SetupService {
   public startSetup() {
-    const { addLog, setPhase } = useGameStore.getState();
+    const { addLog, initializeGame } = useGameStore.getState();
     addLog("Bắt đầu chuẩn bị trận đấu...", "system");
 
-    // ... logic validateDeck như cũ ...
+    // 1. Validate Deck
     const fullMainDeckData = divaDebutDeckEn
       .filter((c) => c.backType === "MAIN")
-      .flatMap((c) => Array(4).fill(c))
+      .flatMap((card) => Array(4).fill(card))
       .slice(0, 40);
     const fullLrigDeckData = divaDebutDeckEn.filter(
       (c) => c.backType === "LRIG" || c.backType === "PIECE"
     );
+
     const validation = validateDeck(fullMainDeckData, fullLrigDeckData);
     if (!validation.isValid) {
       addLog("Bộ bài không hợp lệ: " + validation.errors.join(", "), "system");
+      alert("Bộ bài không hợp lệ:\n- " + validation.errors.join("\n- "));
       return;
     }
-
     addLog("Bộ bài hợp lệ. Xáo bài...", "system");
+
+    // 2. Tạo Card Instances và xáo bài
     const mainDeck = fullMainDeckData.map((d) =>
       createCardInstance(d, "player")
     );
@@ -46,6 +51,7 @@ class SetupService {
       createCardInstance(d, "player")
     );
 
+    // 3. Chuẩn bị state ban đầu cho Player
     const initialPlayerState: PlayerState = {
       mainDeck,
       lrigDeck,
@@ -59,88 +65,123 @@ class SetupService {
       checkZone: [null],
     };
 
-    // Cập nhật state với deck đã xáo
-    useGameStore.getState().setPlayer(initialPlayerState);
-    useGameStore.getState().setAi(initialPlayerState); // Giả sử AI cũng dùng deck giống
-
-    // Chuyển sang phase chọn LRIG
-    setPhase("selecting_lrigs");
-    addLog("Chọn LRIG để bắt đầu trận đấu.", "system");
-  }
-
-  public confirmLrigSelection(selectedUuids: string[]) {
-    const { addLog, setPhase, getPlayer, drawCards } = useGameStore.getState();
-    const player = getPlayer();
-    if (!player) return;
-
-    // Kiểm tra selectedUuids hợp lệ (tối đa 3 LRIG)
-    if (selectedUuids.length > 3) {
-      addLog("Chỉ được chọn tối đa 3 LRIG.", "system");
-      return;
-    }
-
-    // Đặt LRIG vào lrigZone
-    selectedUuids.forEach((uuid: string, index: number) => {
-      const lrig = player.lrigDeck.find((c: CardInstance) => c.uuid === uuid);
-      if (lrig) {
-        player.lrigZone[index] = { ...lrig, isFaceUp: true };
-        player.lrigDeck = player.lrigDeck.filter(
-          (c: CardInstance) => c.uuid !== uuid
-        );
-      }
-    });
-
-    // Xóa các LRIG không chọn khỏi deck
-    player.lrigDeck = player.lrigDeck.filter(
-      (c: CardInstance) => !selectedUuids.includes(c.uuid)
-    );
-
-    // Rút 5 lá bài đầu
-    drawCards(5);
-
-    // Chuyển sang phase mulligan
-    setPhase("mulligan");
-    addLog("Rút 5 lá bài. Chọn bài để Mulligan nếu muốn.", "system");
-  }
-
-  public confirmMulligan(discardUuids: string[]) {
-    const { addLog, setPhase, getPlayer, drawCards, initializeGame } =
-      useGameStore.getState();
-    const player = getPlayer();
-    if (!player) return;
-
-    // Loại bỏ các lá bài discard
-    player.hand = player.hand.filter(
-      (c: CardInstance) => !discardUuids.includes(c.uuid)
-    );
-    player.mainDeck.push(
-      ...discardUuids
-        .map(
-          (uuid: string) =>
-            player.hand.find((c: CardInstance) => c.uuid === uuid)!
-        )
-        .filter(Boolean)
-    );
-    shuffle(player.mainDeck);
-
-    // Rút lại số lá bài đã discard
-    drawCards(discardUuids.length);
-
-    // Khởi tạo game đầy đủ
-    initializeGame({
+    // 4. Tạo GameState ban đầu hoàn chỉnh
+    const initialGameState: GameState = {
       gameStarted: true,
-      turn: 1,
-      phase: "up",
-      player: player,
-      ai: useGameStore.getState().getAi() || player, // Giả sử AI
-      logs: [],
+      phase: "selecting_lrigs", // Chuyển sang phase chọn LRIG
+      turn: 0,
+      player: initialPlayerState,
+      ai: initialPlayerState, // Tạm thời AI dùng chung state
+      logs: useGameStore.getState().logs, // Giữ lại log cũ
       actionTakenInPhase: false,
       playerAction: null,
       isZoneViewerOpen: false,
       viewingLrigDeckForGrow: null,
       mustDiscard: false,
-    });
-    addLog("Setup hoàn tất. Bắt đầu Turn 1 - Up Phase", "system");
+    };
+
+    // 5. Khởi tạo game với state đã chuẩn bị
+    initializeGame(initialGameState);
+    addLog("Chọn LRIG để bắt đầu trận đấu.", "system");
+  }
+
+  // === PHƯƠNG THỨC MỚI: XÁC NHẬN CHỌN LRIG ===
+  public confirmLrigSelection(
+    centerUuid: string,
+    assist1Uuid: string,
+    assist2Uuid: string
+  ) {
+    const { addLog, updateGame, game } = useGameStore.getState();
+    if (!game) return;
+
+    const player = game.player;
+
+    const centerLrig = player.lrigDeck.find(
+      (c: CardInstance) => c.uuid === centerUuid
+    );
+    const assistLrig1 = player.lrigDeck.find(
+      (c: CardInstance) => c.uuid === assist1Uuid
+    );
+    const assistLrig2 = player.lrigDeck.find(
+      (c: CardInstance) => c.uuid === assist2Uuid
+    );
+
+    if (!centerLrig || !assistLrig1 || !assistLrig2) {
+      console.error("Invalid LRIG selection.");
+      addLog("Lựa chọn LRIG không hợp lệ.", "system");
+      return;
+    }
+
+    addLog(`Center LRIG được chọn: ${centerLrig.name}.`, "action");
+    addLog(
+      `Assist LRIG được chọn: ${assistLrig1.name} & ${assistLrig2.name}.`,
+      "action"
+    );
+
+    // 1. Thay đổi state bên trong Model
+    centerLrig.isFaceUp = true;
+    assistLrig1.isFaceUp = true;
+    assistLrig2.isFaceUp = true;
+
+    player.lrigZone = [assistLrig1, centerLrig, assistLrig2];
+    const initialUuids = [centerUuid, assist1Uuid, assist2Uuid];
+    player.lrigDeck = player.lrigDeck.filter(
+      (c: CardInstance) => !initialUuids.includes(c.uuid)
+    );
+
+    // 2. Rút 5 lá bài đầu tiên
+    player.drawCards(5);
+    addLog("Rút 5 lá bài khởi đầu.", "action");
+
+    // 3. Chuyển sang phase Mulligan
+    game.phase = "mulligan";
+    addLog("Bắt đầu giai đoạn Mulligan.", "system");
+
+    // 4. Báo cho Zustand cập nhật UI
+    updateGame(game);
+  }
+
+  // === PHƯƠNG THỨC MỚI: XÁC NHẬN MULLIGAN ===
+  public confirmMulligan(cardsToReturnUuids: string[]) {
+    const { addLog, updateGame, game } = useGameStore.getState();
+    if (!game) return;
+
+    const player = game.player;
+    const amountToRedraw = cardsToReturnUuids.length;
+
+    if (amountToRedraw > 0) {
+      addLog(`Đổi ${amountToRedraw} lá bài.`, "action");
+      // Logic trả bài về deck
+      const cardsToReturn = player.hand.filter((c: CardInstance) =>
+        cardsToReturnUuids.includes(c.uuid)
+      );
+      player.hand = player.hand.filter(
+        (c: CardInstance) => !cardsToReturnUuids.includes(c.uuid)
+      );
+      cardsToReturn.forEach((c: CardInstance) => (c.isFaceUp = false));
+      player.mainDeck.push(...cardsToReturn);
+      shuffle(player.mainDeck);
+
+      // Rút lại bài
+      player.drawCards(amountToRedraw);
+    } else {
+      addLog("Không đổi bài.", "info");
+    }
+
+    // Chia 7 lá Life Cloth
+    const lifeClothStack = player.mainDeck.splice(0, 7);
+    player.lifeCloth = lifeClothStack;
+    addLog("Chia 7 lá Life Cloth.", "system");
+
+    // Bắt đầu game
+    game.phase = "up";
+    game.turn = 1;
+
+    const phaseText = game.phase.charAt(0).toUpperCase() + game.phase.slice(1);
+    addLog(`Bắt đầu Turn ${game.turn} - ${phaseText} Phase`, "system");
+
+    // Cập nhật UI lần cuối cho setup
+    updateGame(game);
   }
 }
 
