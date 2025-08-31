@@ -17,7 +17,7 @@ type GamePhase =
   | "attack"
   | "end";
 
-const PHASES_IN_TURN: GamePhase[] = [
+const TURN_PHASES: GamePhase[] = [
   "up",
   "draw",
   "ener",
@@ -202,7 +202,7 @@ const useGameStore = create<GameState>((set, get) => ({
       const amountToRedraw = cardsToReturnUuids.length;
       if (amountToRedraw === 0) {
         // Nếu không mulligan, chuyển sang lượt đầu tiên
-        return { phase: "draw", turn: 1 };
+        return { phase: "up", turn: 1 };
       }
 
       const hand = [...state.player.hand];
@@ -229,7 +229,7 @@ const useGameStore = create<GameState>((set, get) => ({
           mainDeck: deck,
           hand: [...cardsToKeep, ...newCards],
         },
-        phase: "draw", // Chuyển sang lượt đầu tiên
+        phase: "up", // Bắt đầu lượt với Up Phase
         turn: 1,
       };
     });
@@ -337,23 +337,25 @@ const useGameStore = create<GameState>((set, get) => ({
 
   goToNextPhase: () => {
     set((state) => {
-      const currentPhaseIndex = PHASES_IN_TURN.indexOf(state.phase as any);
+      const currentPhaseIndex = TURN_PHASES.indexOf(state.phase as any);
       let nextPhaseIndex = currentPhaseIndex + 1;
       let newTurn = state.turn;
 
-      if (nextPhaseIndex >= PHASES_IN_TURN.length) {
+      if (nextPhaseIndex >= TURN_PHASES.length) {
         nextPhaseIndex = 0; // Quay về Up Phase
         newTurn += 1; // Bắt đầu lượt mới
         // TODO: Logic chuyển lượt cho AI sau này
       }
 
-      const nextPhase = PHASES_IN_TURN[nextPhaseIndex];
+      const nextPhase = TURN_PHASES[nextPhaseIndex];
 
-      // TỰ ĐỘNG THỰC THI LOGIC CỦA GIAI ĐOẠN
-      if (nextPhase === "draw") {
-        // Tạm thời rút 2 lá, luật chơi lượt đầu sẽ xử lý sau
-        get().drawCard(2);
-      }
+      // === LOGIC TỰ ĐỘNG CỦA PHASE ===
+      // Sau này, bạn có thể thêm các logic tự động ở đây.
+      // Ví dụ: khi vào Up Phase, tự động "up" tất cả các lá bài.
+
+      // if (nextPhase === 'up') {
+      //   // Tự động up bài
+      // }
 
       return { phase: nextPhase, turn: newTurn };
     });
