@@ -3,7 +3,6 @@ import { World } from "./world";
 import { GameFactory } from "./game.factory";
 import { UpSystem } from "./systems/up.system";
 
-// Một Event Emitter siêu đơn giản
 type UpdateListener = (world: World) => void;
 
 class GameManager {
@@ -11,7 +10,7 @@ class GameManager {
   private factory = new GameFactory();
   private updateListeners: UpdateListener[] = [];
   private isLooping = false;
-  private lastUpdateTime = 0;
+  private animationFrameId: number = 0;
 
   public createNewGame(): World {
     this.world = this.factory.createNewGame();
@@ -20,48 +19,46 @@ class GameManager {
     return this.world;
   }
 
-  // Phương thức để các hệ thống bên ngoài (như Zustand) đăng ký lắng nghe
   public onUpdate(listener: UpdateListener) {
     this.updateListeners.push(listener);
   }
 
-  // Vòng lặp game chính
-  private loop(currentTime: number) {
-    if (!this.isLooping) return;
+  private loop() {
+    if (!this.isLooping || !this.world) return;
+    
+    // Chạy các system
+    this.world.update();
+    
+    // Thông báo cho listener (Zustand)
+    this.updateListeners.forEach(listener => listener(this.world!));
 
-    const deltaTime = currentTime - this.lastUpdateTime;
-    this.lastUpdateTime = currentTime;
-
-    // Gọi update của world (chạy các system)
-    this.world?.update();
-
-    // Thông báo cho tất cả các listener rằng world đã được cập nhật
-    if (this.world) {
-      this.updateListeners.forEach((listener) => listener(this.world!));
-    }
-
-    requestAnimationFrame(this.loop.bind(this));
+    this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
-
+  
   public startLoop() {
     if (this.isLooping) return;
     this.isLooping = true;
-    this.lastUpdateTime = performance.now();
-    requestAnimationFrame(this.loop.bind(this));
+    this.loop();
   }
 
   public stopLoop() {
+    if (!this.isLooping) return;
     this.isLooping = false;
+    cancelAnimationFrame(this.animationFrameId);
   }
-
+  
   /**
-   * Thực hiện một lần cập nhật duy nhất, thường được gọi bởi hành động của người chơi.
+   * Tạm dừng vòng lặp, chạy các system một lần, và thông báo cập nhật.
+   * Dùng cho các hành động cần phản hồi ngay lập tức từ người chơi.
    */
   public forceUpdate() {
     if (!this.world) return;
+    this.stopLoop(); // Tạm dừng vòng lặp tự động
+    
     this.world.update();
-    // Thông báo cho listener
-    this.updateListeners.forEach((listener) => listener(this.world!));
+    this.updateListeners.forEach(listener => listener(this.world!));
+    
+    this.startLoop(); // Khởi động lại vòng lặp
   }
 }
 

@@ -2,42 +2,48 @@
 import { create } from "zustand";
 import { World } from "@/logic/ecs/world";
 import gameManager from "@/logic/ecs/game.manager";
+import { GamePhase } from "@/types/game"; // Lấy GamePhase từ types/game.ts
 
-// Định nghĩa lại state
+// Định nghĩa state mới
 export interface GameStore {
   world: World | null;
-  phase: string;
-  actionTakenInPhase: boolean;
+  phase: GamePhase;
+  turn: number;
+  // Các state UI khác có thể thêm ở đây sau
+  isZoneViewerOpen: boolean;
 
-  // Actions để UI tương tác
-  initializeGame: () => void;
-  // Các action khác sẽ là các Command
+  // Actions
+  _setWorld: (world: World) => void; // Action nội bộ để cập nhật world
+  startGame: () => void;
+  setPhase: (phase: GamePhase) => void; // Tạm thời cần action này
 }
 
 const useGameStore = create<GameStore>((set, get) => {
   // Kết nối store với GameManager
   gameManager.onUpdate((updatedWorld) => {
-    // Khi GameManager thông báo có cập nhật, chúng ta set lại state
-    // Chúng ta không tạo `new World` vì `gameManager` đã làm việc đó.
-    // Việc set lại state với cùng một object sẽ không re-render nếu không có thay đổi.
-    // Zustand đủ thông minh để so sánh và chỉ re-render khi cần.
-    // Tuy nhiên, để chắc chắn, chúng ta có thể tạo một bản sao nông.
+    // Tạo một bản sao nông để trigger re-render
     set({ world: { ...updatedWorld } as World });
   });
 
   return {
     world: null,
-    phase: "pre_game",
-    actionTakenInPhase: false,
+    phase: 'pre_game',
+    turn: 0,
+    isZoneViewerOpen: false,
 
-    initializeGame: () => {
+    _setWorld: (world) => set({ world }),
+
+    startGame: () => {
       const newWorld = gameManager.createNewGame();
-      // Khởi tạo và đồng bộ hóa state lần đầu
-      set({
+      set({ 
         world: newWorld,
-        phase: "selecting_lrigs", // Cập nhật phase ban đầu
+        phase: 'up', // Bắt đầu thẳng vào Up Phase của Lượt 1
+        turn: 1,
       });
+      gameManager.startLoop(); // Bắt đầu vòng lặp game
     },
+
+    setPhase: (phase) => set({ phase }),
   };
 });
 
