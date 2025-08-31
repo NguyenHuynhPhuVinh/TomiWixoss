@@ -1,7 +1,12 @@
 // src/logic/ecs/world.ts
 import { Entity, Component, ComponentClass, System } from "./ecs.types";
+import { immerable } from "immer"; // <-- IMPORT IMMERABLE
 
 export class World {
+  // === ĐÁNH DẤU CLASS LÀ IMMERABLE ===
+  static [immerable] = true;
+  // =====================================
+
   private nextEntityId = 0;
   private entities = new Set<Entity>();
 

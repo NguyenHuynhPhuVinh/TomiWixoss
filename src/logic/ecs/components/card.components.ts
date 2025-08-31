@@ -4,11 +4,13 @@ import { CardData, ZoneKey, GamePhase } from "@/types/game"; // Import GamePhase
 import { Entity } from "../ecs.types"; // Import Entity
 import { LogType } from "@/store/types"; // Import LogType
 import { GameAction } from "../../core/actions.types"; // <-- IMPORT
+import { immerable } from "immer"; // <-- IMPORT IMMERABLE
 
 /**
  * Chứa dữ liệu tĩnh của lá bài, không bao giờ thay đổi.
  */
 export class CardInfoComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   constructor(public data: CardData) {}
 }
 
@@ -16,6 +18,7 @@ export class CardInfoComponent implements Component {
  * Chứa trạng thái động của một thực thể trên bàn đấu.
  */
 export class StatusComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   constructor(
     public isFaceUp: boolean = false,
     public isDowned: boolean = false
@@ -26,6 +29,7 @@ export class StatusComponent implements Component {
  * Chứa thông tin về vị trí của một thực thể.
  */
 export class ZoneComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   constructor(
     public owner: "player" | "ai",
     public zone: ZoneKey,
@@ -37,12 +41,15 @@ export class ZoneComponent implements Component {
  * Component đánh dấu đây là một lá bài trên tay.
  * (Component trống dùng để đánh dấu/tagging là một kỹ thuật phổ biến trong ECS).
  */
-export class InHandComponent implements Component {}
+export class InHandComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
+}
 
 /**
  * Component chứa power hiện tại của một SIGNI.
  */
 export class PowerComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   constructor(public base: number, public modified: number) {}
 }
 
@@ -51,6 +58,7 @@ export class PowerComponent implements Component {
  * Sẽ chỉ có một entity duy nhất trong World có component này.
  */
 export class GlobalStateComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   constructor(
     public phase: GamePhase = "pre_game",
     public turn: number = 0,
@@ -72,6 +80,7 @@ export class GlobalStateComponent implements Component {
  * Các System sẽ đọc component này để biết cần phải làm gì.
  */
 export class ActionRequestComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   public request: GameAction | null = null;
 }
 
@@ -80,6 +89,7 @@ export class ActionRequestComponent implements Component {
  * Dùng cho cơ chế Grow và Rise.
  */
 export class UnderneathComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   constructor(public entities: Entity[] = []) {}
 }
 
@@ -103,5 +113,6 @@ export type SideEffect = LogSideEffect | UpdateUIFlagSideEffect;
  * mà engine muốn thông báo cho thế giới bên ngoài (UI).
  */
 export class SideEffectComponent implements Component {
+  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   public queue: SideEffect[] = [];
 }

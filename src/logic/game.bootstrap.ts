@@ -1,4 +1,5 @@
 // src/logic/game.bootstrap.ts
+import { enableMapSet } from "immer"; // <-- IMPORT ENABLE MAPSET
 import gameManager from "./ecs/game.manager";
 
 // Import tất cả các System của Wixoss
@@ -12,6 +13,10 @@ import { DrawSystem } from "./ecs/systems/draw.system";
 import { PhaseSystem } from "./ecs/systems/phase.system";
 
 export function initializeWixossEngine() {
+  // === KÍCH HOẠT IMMER PLUGIN CHO MAP/SET ===
+  enableMapSet(); // <-- BẮT BUỘC CHO IMMER XỬ LÝ Map VÀ Set
+  // ============================================
+
   // Đăng ký tất cả các System đặc thù của Wixoss theo thứ tự quan trọng
   // Các system xử lý action của người chơi nên ở trên
   gameManager.registerSystem(new SetupSystem());
