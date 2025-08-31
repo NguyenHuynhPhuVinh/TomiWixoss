@@ -16,6 +16,7 @@ interface PlayerState {
   enerZone: CardInstance[];
   trash: CardInstance[];
   lrigTrash: CardInstance[];
+  checkZone: (CardInstance | null)[]; // 1 vị trí cho check zone
 }
 
 interface GameState {
@@ -63,6 +64,7 @@ const useGameStore = create<GameState>((set, get) => ({
     enerZone: [],
     trash: [],
     lrigTrash: [],
+    checkZone: [null],
   },
   ai: {
     mainDeck: [],
@@ -74,6 +76,7 @@ const useGameStore = create<GameState>((set, get) => ({
     enerZone: [],
     trash: [],
     lrigTrash: [],
+    checkZone: [null],
   },
 
   // Actions (hàm để thay đổi state)
@@ -128,18 +131,66 @@ const useGameStore = create<GameState>((set, get) => ({
         c.uuid !== assist2?.uuid
     );
 
+    // === CẬP NHẬT DỮ LIỆU GIẢ LẬP ===
+    const mockSigniZone: (CardInstance | null)[] = [null, null, null];
+    const mockEnerZone: CardInstance[] = [];
+    const mockTrash: CardInstance[] = [];
+    const mockLrigTrash: CardInstance[] = []; // <-- Thêm Lrig Trash
+    const mockCheckZone: (CardInstance | null)[] = [null]; // Check zone thường chỉ có 1 lá
+
+    // Lấp đầy 3 ô SIGNI
+    if (fullMainDeck.length >= 3) {
+      for (let i = 0; i < 3; i++) {
+        const signiCard = fullMainDeck.pop()!;
+        signiCard.isFaceUp = true;
+        mockSigniZone[i] = signiCard; // Đặt vào ô 0, 1, 2
+      }
+    }
+
+    // Lấy 5 lá bài làm Ener (giữ nguyên)
+    if (fullMainDeck.length >= 5) {
+      for (let i = 0; i < 5; i++) {
+        const enerCard = fullMainDeck.pop()!;
+        enerCard.isFaceUp = true;
+        mockEnerZone.push(enerCard);
+      }
+    }
+
+    // Lấy 1 lá bài làm mộ Main Deck
+    if (fullMainDeck.length > 0) {
+      const trashCard = fullMainDeck.pop()!;
+      trashCard.isFaceUp = true;
+      mockTrash.push(trashCard);
+    }
+
+    // Lấy 1 lá LRIG làm Lrig Trash (giữ nguyên)
+    if (remainingLrigDeck.length > 0) {
+      const lrigTrashCard = remainingLrigDeck.pop()!;
+      lrigTrashCard.isFaceUp = true;
+      mockLrigTrash.push(lrigTrashCard);
+    }
+
+    // Lấy 1 lá làm Check Zone (giữ nguyên)
+    if (fullMainDeck.length > 0) {
+      const checkZoneCard = fullMainDeck.pop()!;
+      checkZoneCard.isFaceUp = true;
+      mockCheckZone[0] = checkZoneCard;
+    }
+    // === KẾT THÚC DỮ LIỆU GIẢ LẬP ===
+
     set({
       isInitialized: true,
       player: {
         mainDeck: fullMainDeck,
         lrigDeck: remainingLrigDeck,
         hand: [],
-        signiZone: [null, null, null],
-        lrigZone: initialLrigs, // Đặt 3 LRIG ban đầu vào zone
+        signiZone: mockSigniZone, // <-- Dùng dữ liệu giả
+        lrigZone: initialLrigs,
         lifeCloth: lifeClothStack,
-        enerZone: [],
-        trash: [],
-        lrigTrash: [],
+        enerZone: mockEnerZone, // <-- Dùng dữ liệu giả
+        trash: mockTrash, // <-- Dùng dữ liệu giả
+        lrigTrash: mockLrigTrash,
+        checkZone: mockCheckZone,
       },
       ai: {
         mainDeck: fullMainDeck.map((c) => createCardInstance(c, "ai")), // Tương tự nhưng cho AI
@@ -153,6 +204,7 @@ const useGameStore = create<GameState>((set, get) => ({
         enerZone: [],
         trash: [],
         lrigTrash: [],
+        checkZone: [null],
       },
     });
   },

@@ -23,7 +23,7 @@ export const P1_ZONE_COORDINATES = {
   LRIG_DECK: { x: 3.75, y: 0.01, z: 7.75 },
   LRIG_TRASH: { x: 6.6, y: 0.01, z: 7.0 },
 
-  ENER_ZONE: { x: -5.2, y: 0.01, z: 3.3 },
+  ENER_ZONE: { x: -5.2, y: 0.01, z: 2.0 },
   LIFE_CLOTH: { x: -2.7, y: 0.01, z: 7.6 },
   CHECK_ZONE: { x: -5.0, y: 0.01, z: 7.25 },
 };

@@ -217,12 +217,17 @@ export default function Scene({ onDeckClick }: SceneProps) {
           coords.CENTER_LRIG,
           coords.ASSIST_LRIG_2,
         ][index];
+
+        // Chỉ Piece là không xoay ngang
+        const isHorizontal = card.type !== "PIECE";
+        const rotationY = isHorizontal ? Math.PI / 2 : 0;
+
         return (
           <Card
             key={card.uuid}
             card={card}
             position={[lrigCoords.x, lrigCoords.y, lrigCoords.z]}
-            rotation={[-Math.PI / 2, 0, 0]}
+            rotation={[-Math.PI / 2, 0, rotationY]} // Áp dụng xoay ngang
           />
         );
       })}
@@ -255,7 +260,81 @@ export default function Scene({ onDeckClick }: SceneProps) {
       })}
       {/* === KẾT THÚC CẬP NHẬT === */}
 
-      {/* TODO: Render các lá bài trong SIGNI Zone, Ener Zone, Trash... tương tự */}
+      {/* === THÊM CÁC VÙNG CÒN LẠI === */}
+
+      {/* SIGNI ZONE */}
+      {player.signiZone.map((card, index) => {
+        if (!card) return null; // Bỏ qua các ô trống
+        const signiCoords = [coords.SIGNI_1, coords.SIGNI_2, coords.SIGNI_3][
+          index
+        ];
+        return (
+          <Card
+            key={card.uuid}
+            card={card}
+            position={[signiCoords.x, signiCoords.y, signiCoords.z]}
+            rotation={[-Math.PI / 2, 0, 0]}
+          />
+        );
+      })}
+
+      {/* ENER ZONE */}
+      {/* Các lá bài trong Ener Zone sẽ được xếp chồng lệch sang phải */}
+      {player.enerZone.map((card, index) => (
+        <Card
+          key={card.uuid}
+          card={card}
+          position={[
+            coords.ENER_ZONE.x,
+            coords.ENER_ZONE.y + index * CARD_DIMENSIONS.thickness,
+            // Xếp chồng từ trên xuống dưới (tăng giá trị Z)
+            coords.ENER_ZONE.z + index * 0.7,
+          ]}
+          rotation={[
+            -Math.PI / 2, // Nằm phẳng
+            0,
+            Math.PI, // Xoay 180 độ để hướng về đối thủ
+          ]}
+        />
+      ))}
+
+      {/* TRASH (Mộ bài chính) */}
+      {/* Hiển thị lá bài trên cùng của mộ */}
+      {player.trash.length > 0 && (
+        <Card
+          card={player.trash[player.trash.length - 1]} // Lấy lá trên cùng
+          position={[coords.TRASH.x, coords.TRASH.y, coords.TRASH.z]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        />
+      )}
+
+      {/* LRIG TRASH (Mộ bài LRIG) */}
+      {player.lrigTrash.length > 0 && (
+        <Card
+          card={player.lrigTrash[player.lrigTrash.length - 1]} // Lấy lá trên cùng
+          position={[
+            coords.LRIG_TRASH.x,
+            coords.LRIG_TRASH.y,
+            coords.LRIG_TRASH.z,
+          ]}
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]} // Nằm ngang giống Life Cloth
+        />
+      )}
+
+      {/* CHECK ZONE (dùng dữ liệu giả) */}
+      {player.checkZone[0] && (
+        <Card
+          card={player.checkZone[0]}
+          position={[
+            coords.CHECK_ZONE.x,
+            coords.CHECK_ZONE.y,
+            coords.CHECK_ZONE.z,
+          ]}
+          rotation={[-Math.PI / 2, 0, 0]} // Nằm dọc
+        />
+      )}
+
+      {/* === KẾT THÚC THÊM CÁC VÙNG CÒN LẠI === */}
 
       {/* === VÙNG DEBUG HELPER === */}
       {/* Đặt chúng bên trong một group để có thể dễ dàng bật/tắt */}
