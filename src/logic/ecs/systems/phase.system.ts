@@ -8,9 +8,20 @@ import {
 import { GLOBAL_ENTITY } from "../game.factory";
 import { TURN_PHASES, GamePhase } from "@/types/game";
 import useGameStore from "@/store/gameStore";
+import gameManager from "../game.manager"; // <-- IMPORT GameManager
 
 // Các phase sẽ tự động chuyển tiếp nếu hành động đã xong
 const AUTO_ADVANCE_PHASES: GamePhase[] = ["up", "draw"];
+// Các phase mà game sẽ dừng lại và chờ người chơi
+const INTERACTIVE_PHASES: GamePhase[] = [
+  "ener",
+  "grow",
+  "main",
+  "attack",
+  "end",
+  "selecting_lrigs",
+  "mulligan",
+];
 
 export class PhaseSystem implements System {
   public update(world: World): void {
@@ -59,6 +70,17 @@ export class PhaseSystem implements System {
 
     globalState.phase = TURN_PHASES[nextPhaseIndex];
     globalState.actionTakenInPhase = false; // Luôn reset cho phase mới
+
+    // === LOGIC ĐIỀU KHIỂN VÒNG LẶP MỚI ===
+    // Nếu phase tiếp theo là một phase tương tác, hãy dừng vòng lặp
+    if (INTERACTIVE_PHASES.includes(globalState.phase)) {
+      console.log(
+        `%cGame loop stopped. Waiting for player input in ${globalState.phase} phase.`,
+        "color: #E67E22"
+      );
+      gameManager.stopLoop();
+    }
+    // =====================================
 
     const phaseText =
       globalState.phase.charAt(0).toUpperCase() + globalState.phase.slice(1);

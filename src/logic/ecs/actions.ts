@@ -54,12 +54,19 @@ export function dispatchAdvancePhaseAction() {
     ActionRequestComponent
   );
   if (actionRequest) {
-    actionRequest.request = {
-      type: "ADVANCE_PHASE",
-      payload: null, // Không cần payload
-    };
-    // Chuyển phase cũng là một hành động của người chơi
-    gameManager.handlePlayerAction(); // Cần tạo system cho nó
+    actionRequest.request = { type: "ADVANCE_PHASE", payload: null };
+
+    // Xử lý hành động ngay lập tức
+    gameManager.handlePlayerAction();
+
+    // Nếu phase tiếp theo là một phase tự động, hãy khởi động lại vòng lặp
+    const newPhase = world.getComponent(
+      GLOBAL_ENTITY,
+      GlobalStateComponent
+    )!.phase;
+    if (["up", "draw"].includes(newPhase)) {
+      gameManager.startLoop();
+    }
   }
 }
 

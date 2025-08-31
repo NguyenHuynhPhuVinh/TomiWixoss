@@ -12,6 +12,7 @@ import { GLOBAL_ENTITY } from "../game.factory";
 import useGameStore from "@/store/gameStore";
 import shuffle from "shuffle-array";
 import { Entity } from "../ecs.types"; // Import Entity
+import gameManager from "../game.manager"; // <-- IMPORT GameManager
 
 export class SetupSystem implements System {
   public update(world: World): void {
@@ -108,6 +109,9 @@ export class SetupSystem implements System {
         globalState.phase = "up";
         globalState.turn = 1;
         addLog(`Bắt đầu Turn 1 - Up Phase`, "system");
+
+        // Khởi động vòng lặp tự động cho các phase đầu tiên
+        gameManager.startLoop();
         break;
       }
     }
