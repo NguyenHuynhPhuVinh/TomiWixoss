@@ -21,62 +21,54 @@ export class DiscardSystem implements System {
     this.eventBus = dependencies.eventBus;
   }
 
-  public update(world: World): World {
-    return produce(world, (draftWorld) => {
-      const globalState = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        GlobalStateComponent
-      );
-      const actionRequest = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        ActionRequestComponent
-      );
+  public update(world: World): void {
+    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+    const actionRequest = world.getComponent(
+      GLOBAL_ENTITY,
+      ActionRequestComponent
+    );
 
-      if (
-        !globalState ||
-        !actionRequest ||
-        actionRequest.request?.type !== "DISCARD_CARD"
-      ) {
-        return; // Immer sẽ tự động trả về world gốc nếu không có thay đổi
-      }
+    if (
+      !globalState ||
+      !actionRequest ||
+      actionRequest.request?.type !== "DISCARD_CARD"
+    ) {
+      return;
+    }
 
-      console.log("--- Running DiscardSystem ---");
-      const sideEffects = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        SideEffectComponent
-      )!;
-      const { entityId } = actionRequest.request.payload;
+    console.log("--- Running DiscardSystem ---");
+    const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
+    const { entityId } = actionRequest.request.payload;
 
-      // Di chuyển lá bài vào mộ
-      const zone = draftWorld.getComponent(entityId, ZoneComponent)!;
-      zone.zone = "trash";
+    // Di chuyển lá bài vào mộ
+    const zone = world.getComponent(entityId, ZoneComponent)!;
+    zone.zone = "trash";
 
-      const cardInfo = draftWorld.getComponent(entityId, CardInfoComponent)!;
+    const cardInfo = world.getComponent(entityId, CardInfoComponent)!;
+    sideEffects.queue.push({
+      type: "LOG",
+      message: `Bỏ bài: ${cardInfo.data.name}.`,
+      logType: "action",
+    });
+
+    // Kiểm tra lại sau khi bỏ
+    const handSize = world
+      .query([ZoneComponent])
+      .filter(
+        (e) => world.getComponent(e, ZoneComponent)!.zone === "hand"
+      ).length;
+    if (handSize <= 6) {
       sideEffects.queue.push({
-        type: "LOG",
-        message: `Bỏ bài: ${cardInfo.data.name}.`,
-        logType: "action",
+        type: "UPDATE_UI_FLAG",
+        flag: "mustDiscard",
+        value: false,
       });
+    }
 
-      // Kiểm tra lại sau khi bỏ
-      const handSize = draftWorld
-        .query([ZoneComponent])
-        .filter(
-          (e) => draftWorld.getComponent(e, ZoneComponent)!.zone === "hand"
-        ).length;
-      if (handSize <= 6) {
-        sideEffects.queue.push({
-          type: "UPDATE_UI_FLAG",
-          flag: "mustDiscard",
-          value: false,
-        });
-      }
-
-      // PHÁT SỰ KIỆN BỎ BÀI
-      this.eventBus.dispatch(GameEvent.CARD_DISCARDED, {
-        entityId,
-        cardId: cardInfo.data.id,
-      });
+    // PHÁT SỰ KIỆN BỎ BÀI
+    this.eventBus.dispatch(GameEvent.CARD_DISCARDED, {
+      entityId,
+      cardId: cardInfo.data.id,
     });
   }
 }

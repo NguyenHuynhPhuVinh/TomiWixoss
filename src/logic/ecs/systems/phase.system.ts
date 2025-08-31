@@ -33,35 +33,30 @@ export class PhaseSystem implements System {
     this.eventBus = dependencies.eventBus;
   }
 
-  public update(world: World): World {
-    return produce(world, (draftWorld) => {
-      const globalState = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        GlobalStateComponent
-      );
-      const actionRequest = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        ActionRequestComponent
-      );
-      if (!globalState || !actionRequest) return;
+  public update(world: World): void {
+    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
+    const actionRequest = world.getComponent(
+      GLOBAL_ENTITY,
+      ActionRequestComponent
+    );
+    if (!globalState || !actionRequest) return;
 
-      const isProcessingAction = !!actionRequest.request;
+    const isProcessingAction = !!actionRequest.request;
 
-      // 1. Logic tự động (chỉ chạy khi game idle)
-      if (
-        !isProcessingAction &&
-        AUTO_ADVANCE_PHASES.includes(globalState.phase) &&
-        globalState.actionTakenInPhase
-      ) {
-        this.advancePhase(globalState, draftWorld as World);
-        return;
-      }
+    // 1. Logic tự động (chỉ chạy khi game idle)
+    if (
+      !isProcessingAction &&
+      AUTO_ADVANCE_PHASES.includes(globalState.phase) &&
+      globalState.actionTakenInPhase
+    ) {
+      this.advancePhase(globalState, world);
+      return;
+    }
 
-      // 2. Logic theo yêu cầu (chỉ chạy khi có action)
-      if (actionRequest.request?.type === "ADVANCE_PHASE") {
-        this.advancePhase(globalState, draftWorld as World);
-      }
-    });
+    // 2. Logic theo yêu cầu (chỉ chạy khi có action)
+    if (actionRequest.request?.type === "ADVANCE_PHASE") {
+      this.advancePhase(globalState, world);
+    }
   }
 
   /**

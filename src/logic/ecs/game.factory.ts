@@ -10,6 +10,7 @@ import {
   GlobalStateComponent,
   ActionRequestComponent, // <-- IMPORT
   SideEffectComponent, // <-- THÊM IMPORT
+  EffectStackComponent, // <-- THÊM IMPORT
 } from "./components/card.components";
 
 // Định nghĩa một hằng số cho entity toàn cục để dễ nhận biết
@@ -30,6 +31,7 @@ export class GameFactory {
     );
     world.addComponent(globalEntity, new ActionRequestComponent()); // <-- THÊM VÀO ĐÂY
     world.addComponent(globalEntity, new SideEffectComponent()); // <-- THÊM VÀO ĐÂY
+    world.addComponent(globalEntity, new EffectStackComponent()); // <-- THÊM VÀO ĐÂY
     // ===============================================
 
     // 1. Lấy dữ liệu deck

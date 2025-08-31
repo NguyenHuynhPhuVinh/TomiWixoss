@@ -6,12 +6,15 @@ import { GLOBAL_ENTITY } from "./game.factory";
 import {
   ActionRequestComponent,
   SideEffectComponent,
+  EffectStackComponent,
+  GlobalStateComponent,
 } from "./components/card.components";
 import useGameStore from "@/store/gameStore";
 import eventBus from "../core/event.bus";
 import { GameEvent } from "../core/events.types";
 import { GameAction } from "../core/actions.types"; // <-- IMPORT
 import { produce } from "immer"; // <-- IMPORT IMMER
+import { effectResolverMap } from "./effects.map";
 
 // XÓA: Import tất cả các system - chúng sẽ được đăng ký từ bên ngoài
 // import { SetupSystem } from "./systems/setup.system";
@@ -95,54 +98,79 @@ class GameManager {
   }
 
   private loop() {
-    if (!this.world) return;
-    if (!this.isLooping) {
+    if (!this.world || !this.isLooping) {
       this.notifyUpdate();
       return;
     }
 
-    // Bắt đầu với state hiện tại
-    let nextWorldState = this.world;
-
-    // 1. Xử lý Action Queue
-    while (this.actionQueue.length > 0) {
-      const action = this.actionQueue.shift()!;
-
-      // Tạo state mới với action request
-      nextWorldState = produce(nextWorldState, (draftWorld) => {
-        const actionRequest = draftWorld.getComponent(
-          GLOBAL_ENTITY,
-          ActionRequestComponent
-        )!;
-        actionRequest.request = action;
-      });
-
-      console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
-
-      // Mỗi system sẽ nhận state cũ và trả về state mới
-      nextWorldState = this.systems.reduce(
-        (currentWorld, system) => system.update(currentWorld),
-        nextWorldState
-      );
-    }
-
-    // 2. Xử lý Game Loop tự động (không có action)
-    nextWorldState = produce(nextWorldState, (draftWorld) => {
+    // === TOÀN BỘ LOGIC LOOP BÂY GIỜ NẰM TRONG PRODUCE ===
+    const nextWorldState = produce(this.world, (draftWorld) => {
+      const globalState = draftWorld.getComponent(
+        GLOBAL_ENTITY,
+        GlobalStateComponent
+      )!;
+      const effectStack = draftWorld.getComponent(
+        GLOBAL_ENTITY,
+        EffectStackComponent
+      )!;
       const actionRequest = draftWorld.getComponent(
         GLOBAL_ENTITY,
         ActionRequestComponent
       )!;
-      actionRequest.request = null;
+
+      // 1. Ưu tiên xử lý Stack
+      if (effectStack.stack.length > 0) {
+        globalState.engineState = "RESOLVING_STACK";
+
+        // TODO: Logic hỏi người chơi có muốn phản ứng không
+
+        const effectToResolve = effectStack.stack.pop()!;
+        console.log(
+          `%cRESOLVING EFFECT: ${effectToResolve.type}`,
+          "color: #1ABC9C",
+          effectToResolve.payload
+        );
+
+        const resolver = effectResolverMap[effectToResolve.type];
+        if (resolver) {
+          // resolver bây giờ sẽ thay đổi trực tiếp trên `draftWorld`
+          resolver.resolve(draftWorld as World, effectToResolve.payload);
+        } else {
+          console.warn(
+            `No resolver found for effect type: ${effectToResolve.type}`
+          );
+        }
+      }
+      // 2. Nếu Stack rỗng, xử lý Action Queue
+      else if (this.actionQueue.length > 0) {
+        globalState.engineState = "IDLE";
+        const action = this.actionQueue.shift()!;
+        console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
+
+        actionRequest.request = action;
+
+        // Chạy các system để xử lý action.
+        // Các system này bây giờ thay đổi trực tiếp trên draftWorld
+        for (const system of this.systems) {
+          system.update(draftWorld as World);
+        }
+
+        actionRequest.request = null; // Dọn dẹp request sau khi xử lý
+      }
+      // 3. Nếu không có gì cả, chạy các system tự động
+      else {
+        globalState.engineState = "IDLE";
+
+        // Chạy các system tự động
+        for (const system of this.systems) {
+          system.update(draftWorld as World);
+        }
+      }
     });
+    // ===================================================
 
-    nextWorldState = this.systems.reduce(
-      (currentWorld, system) => system.update(currentWorld),
-      nextWorldState
-    );
-
-    // Cập nhật state chính bằng state cuối cùng đã được tính toán
     this.world = nextWorldState;
-
+    this.processSideEffects(); // Vẫn cần chạy sau khi world mới được tạo
     this.notifyUpdate();
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
@@ -151,6 +179,10 @@ class GameManager {
     if (this.world) {
       this.updateListeners.forEach((listener) => listener(this.world!));
     }
+  }
+
+  private processSideEffects(): void {
+    // TODO: Implement side effects processing
   }
 }
 

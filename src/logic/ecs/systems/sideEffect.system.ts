@@ -9,14 +9,14 @@ import useGameStore from "@/store/gameStore";
 export class SideEffectSystem implements System {
   // System này không cần dependency vì nó gọi trực tiếp ra ngoài
 
-  public update(world: World): World {
+  public update(world: World): void {
     // System này không nên chạy nếu không có gì để xử lý
     const sideEffectComponent = world.getComponent(
       GLOBAL_ENTITY,
       SideEffectComponent
     );
     if (!sideEffectComponent || sideEffectComponent.queue.length === 0) {
-      return world; // Trả về world gốc
+      return;
     }
 
     console.log(
@@ -46,14 +46,7 @@ export class SideEffectSystem implements System {
       }
     }
 
-    // 3. Tạo ra state mới với queue đã được dọn dẹp
-    return produce(world, (draftWorld) => {
-      const draftSideEffects = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        SideEffectComponent
-      )!;
-      // Thay vì .shift(), chúng ta chỉ đơn giản là thay thế nó bằng một mảng rỗng
-      draftSideEffects.queue = [];
-    });
+    // 3. Dọn dẹp queue
+    sideEffectComponent.queue = [];
   }
 }

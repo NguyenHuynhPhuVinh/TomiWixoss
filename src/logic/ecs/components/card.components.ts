@@ -5,6 +5,7 @@ import { Entity } from "../ecs.types"; // Import Entity
 import { LogType } from "@/store/types"; // Import LogType
 import { GameAction } from "../../core/actions.types"; // <-- IMPORT
 import { immerable } from "immer"; // <-- IMPORT IMMERABLE
+import { Effect } from "../effects.types";
 
 /**
  * Chứa dữ liệu tĩnh của lá bài, không bao giờ thay đổi.
@@ -71,7 +72,9 @@ export class GlobalStateComponent implements Component {
     public lrigSelection: {
       center: Entity | null;
       assists: Entity[];
-    } = { center: null, assists: [] }
+    } = { center: null, assists: [] },
+    // Thêm state mới cho engine
+    public engineState: "IDLE" | "RESOLVING_STACK" = "IDLE"
   ) {}
 }
 
@@ -115,4 +118,12 @@ export type SideEffect = LogSideEffect | UpdateUIFlagSideEffect;
 export class SideEffectComponent implements Component {
   static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
   public queue: SideEffect[] = [];
+}
+
+/**
+ * Component singleton chứa ngăn xếp hiệu ứng đang chờ được xử lý.
+ */
+export class EffectStackComponent implements Component {
+  static [immerable] = true;
+  public stack: Effect[] = [];
 }
