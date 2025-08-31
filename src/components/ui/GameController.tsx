@@ -164,7 +164,7 @@ export default function GameController({
                 </p>
                 {/* Nút này chỉ để mở viewer, hành động chính là click vào lá bài trong viewer */}
                 <Button
-                  onClick={() => {}}
+                  onClick={() => useGameStore.getState().openZoneViewer()} // Sửa lại để gọi action từ store
                   className="w-full mt-2"
                   variant="secondary"
                 >

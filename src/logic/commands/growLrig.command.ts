@@ -12,14 +12,25 @@ export class GrowLrigCommand implements ICommand {
 
   public canExecute(get: GameStoreGet): boolean {
     const game = get().game;
-    const state = get();
     if (!game) return false;
 
-    // TODO: Thêm logic kiểm tra điều kiện Grow (level, type, timing, cost)
-    // Tạm thời luôn cho là true nếu ở đúng phase
-    return (
-      game.phase === "grow" || game.phase === "main" || game.phase === "attack"
-    );
+    // === SỬA LỖI LOGIC Ở ĐÂY ===
+    // 1. Kiểm tra xem có đang ở phase cho phép Grow không
+    const isAllowedPhase =
+      game.phase === "grow" || game.phase === "main" || game.phase === "attack";
+    if (!isAllowedPhase) return false;
+
+    // 2. Nếu đang ở Grow Phase, phải kiểm tra actionTakenInPhase
+    if (game.phase === "grow" && game.actionTakenInPhase) {
+      console.warn("Grow action has already been taken in Grow Phase.");
+      return false;
+    }
+    // (Đối với Main/Attack phase, luật cho phép Grow Assist LRIG nhiều lần, nên chúng ta không kiểm tra cờ này)
+
+    // TODO: Thêm các logic kiểm tra điều kiện Grow chi tiết hơn (level, type, timing, cost)
+    // ...
+
+    return true;
   }
 
   public execute(get: GameStoreGet): void {
@@ -55,6 +66,13 @@ export class GrowLrigCommand implements ICommand {
     player.lrigDeck = player.lrigDeck.filter(
       (c: CardInstance) => c.uuid !== this.targetLrigUuid
     );
+
+    // === CẬP NHẬT CỜ `actionTakenInPhase` ===
+    // Chỉ set cờ này thành true nếu đang ở trong Grow Phase
+    if (game.phase === "grow") {
+      game.actionTakenInPhase = true;
+    }
+    // =====================================
 
     // Log và cập nhật UI
     get().addLog(`Trả ${paymentResult.paidEner.length} Ener.`, "cost");
