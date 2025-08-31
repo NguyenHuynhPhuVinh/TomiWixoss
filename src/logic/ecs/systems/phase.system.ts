@@ -6,15 +6,14 @@ import {
   GlobalStateComponent,
   ZoneComponent,
   SideEffectComponent,
+  EffectStackComponent, // Import EffectStackComponent
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
 import { TURN_PHASES, GamePhase } from "@/types/game";
-import { GameEvent } from "@/logic/core/events.types"; // Import từ file mới
-import { produce } from "immer"; // <-- IMPORT IMMER
+import { GameEvent } from "@/logic/core/events.types";
+import { produce } from "immer";
 
-// Các phase sẽ tự động chuyển tiếp nếu hành động đã xong
-const AUTO_ADVANCE_PHASES: GamePhase[] = ["up", "draw", "ener"];
-// Các phase mà game sẽ dừng lại và chờ người chơi
+const AUTO_ADVANCE_PHASES: GamePhase[] = ["up", "draw"]; // Remove 'ener' as it requires player action or timeout
 const INTERACTIVE_PHASES: GamePhase[] = [
   "ener",
   "grow",
@@ -28,7 +27,6 @@ const INTERACTIVE_PHASES: GamePhase[] = [
 export class PhaseSystem implements System {
   private eventBus!: SystemDependencies["eventBus"];
 
-  // Nhận dependency
   public setup(dependencies: SystemDependencies): void {
     this.eventBus = dependencies.eventBus;
   }
@@ -39,15 +37,19 @@ export class PhaseSystem implements System {
       GLOBAL_ENTITY,
       ActionRequestComponent
     );
-    if (!globalState || !actionRequest) return;
+    const effectStack = world.getComponent(GLOBAL_ENTITY, EffectStackComponent); // Get the effect stack
+
+    if (!globalState || !actionRequest || !effectStack) return; // Add guard for effectStack
 
     const isProcessingAction = !!actionRequest.request;
+    const isStackEmpty = effectStack.stack.length === 0; // Check if the stack is empty
 
     // 1. Logic tự động (chỉ chạy khi game idle)
     if (
       !isProcessingAction &&
       AUTO_ADVANCE_PHASES.includes(globalState.phase) &&
-      globalState.actionTakenInPhase
+      globalState.actionTakenInPhase &&
+      isStackEmpty // <-- ADD THIS CRITICAL CHECK
     ) {
       this.advancePhase(globalState, world);
       return;
@@ -55,19 +57,30 @@ export class PhaseSystem implements System {
 
     // 2. Logic theo yêu cầu (chỉ chạy khi có action)
     if (actionRequest.request?.type === "ADVANCE_PHASE") {
+      // Also prevent manual advance if stack is not empty
+      if (!isStackEmpty) {
+        const sideEffects = world.getComponent(
+          GLOBAL_ENTITY,
+          SideEffectComponent
+        )!;
+        sideEffects.queue.push({
+          type: "LOG",
+          message: "Không thể chuyển phase khi hiệu ứng đang chờ xử lý.",
+          logType: "system",
+        });
+        return;
+      }
       this.advancePhase(globalState, world);
     }
   }
 
-  /**
-   * Helper function chứa logic chuyển phase
-   */
   private advancePhase(globalState: GlobalStateComponent, world: World): void {
     const sideEffects = world.getComponent(GLOBAL_ENTITY, SideEffectComponent)!;
-    const currentPhaseIndex = TURN_PHASES.indexOf(globalState.phase);
+    const currentPhase = globalState.phase;
+    const currentPhaseIndex = TURN_PHASES.indexOf(currentPhase);
     let nextPhaseIndex = currentPhaseIndex + 1;
 
-    if (globalState.turn === 1 && globalState.phase === "main") {
+    if (globalState.turn === 1 && currentPhase === "main") {
       nextPhaseIndex = TURN_PHASES.indexOf("end");
     }
 
@@ -78,9 +91,8 @@ export class PhaseSystem implements System {
 
     const nextPhase = TURN_PHASES[nextPhaseIndex];
     globalState.phase = nextPhase;
-    globalState.actionTakenInPhase = false; // Luôn reset cho phase mới
+    globalState.actionTakenInPhase = false;
 
-    // === DI CHUYỂN LOGIC KIỂM TRA END PHASE VÀO ĐÂY ===
     if (nextPhase === "end") {
       const handEntities = world
         .query([ZoneComponent])
@@ -100,31 +112,24 @@ export class PhaseSystem implements System {
         });
       }
     }
-    // =================================================
 
-    // === LOGIC ĐIỀU KHIỂN VÒNG LẶP MỚI ===
-    // Nếu phase tiếp theo là một phase tương tác, hãy dừng vòng lặp
-    if (INTERACTIVE_PHASES.includes(globalState.phase)) {
+    if (INTERACTIVE_PHASES.includes(nextPhase)) {
       console.log(
-        `%cGame loop stopped. Waiting for player input in ${globalState.phase} phase.`,
+        `%cGame loop stopped. Waiting for player input in ${nextPhase} phase.`,
         "color: #E67E22"
       );
-      // Để dừng vòng lặp, chúng ta sẽ phát ra một sự kiện đặc biệt
       this.eventBus.dispatch(GameEvent.STOP_GAME_LOOP, {});
     }
-    // =====================================
 
-    const phaseText =
-      globalState.phase.charAt(0).toUpperCase() + globalState.phase.slice(1);
+    const phaseText = nextPhase.charAt(0).toUpperCase() + nextPhase.slice(1);
     sideEffects.queue.push({
       type: "LOG",
       message: `Turn ${globalState.turn} - ${phaseText} Phase`,
       logType: "system",
     });
 
-    // PHÁT SỰ KIỆN THÔNG BÁO THAY ĐỔI PHASE
     this.eventBus.dispatch(GameEvent.PHASE_CHANGED, {
-      from: TURN_PHASES[currentPhaseIndex],
+      from: currentPhase,
       to: nextPhase,
       turn: globalState.turn,
     });

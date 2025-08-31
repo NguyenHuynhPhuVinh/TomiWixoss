@@ -23,7 +23,6 @@ import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
-  // Xóa prop onMulliganSelectionChange vì không còn cần thiết
 }
 
 const CARD_BASE_WIDTH = 120;
@@ -33,7 +32,6 @@ export default function Hand({ onCardSelect }: HandProps) {
   const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
 
-  // === TRUY VẤN DỮ LIỆU TAY BÀI TỪ WORLD ===
   const handEntities = useMemo(() => {
     if (!world) return [];
     return world
@@ -55,7 +53,6 @@ export default function Hand({ onCardSelect }: HandProps) {
       };
     });
   }, [world, handEntities, worldVersion]);
-  // ==========================================
 
   const phase = useStore(useGameStore, (state) => state.phase);
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
@@ -68,20 +65,17 @@ export default function Hand({ onCardSelect }: HandProps) {
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
   const handRef = useRef<HTMLDivElement>(null);
 
-  // Lấy mulliganSelection từ global state
   const globalState = world?.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
   const mulliganSelection = globalState?.mulliganSelection ?? [];
 
   useOnClickOutside(handRef, () => {
     if (phase !== "mulligan") {
-      // Chỉ hoạt động khi không ở phase mulligan
       setSelectedCardUuid(null);
       onCardSelect(null);
     }
   });
 
   const handleCardClick = (card: CardInstance) => {
-    // Luôn cập nhật preview khi click, bất kể phase nào
     onCardSelect(card);
     const cardEntityId = parseInt(card.uuid);
 
@@ -89,27 +83,20 @@ export default function Hand({ onCardSelect }: HandProps) {
       const newSelection = mulliganSelection.includes(cardEntityId)
         ? mulliganSelection.filter((id) => id !== cardEntityId)
         : [...mulliganSelection, cardEntityId];
-
-      // Gửi lựa chọn mới lên global state
       dispatchUpdateMulliganSelection(newSelection);
     } else {
-      // Logic click bình thường (chỉ để hiển thị preview, đã được xử lý ở dòng đầu tiên)
-      // Chúng ta có thể thêm lại logic selectedUuid nếu muốn có hiệu ứng "khóa"
       if (selectedCardUuid === card.uuid) {
         setSelectedCardUuid(null);
-        onCardSelect(null); // Click lần 2 thì ẩn preview
+        onCardSelect(null);
       } else {
         setSelectedCardUuid(card.uuid);
-        // onCardSelect(card) đã được gọi ở trên
       }
     }
   };
 
-  // Tạm thời vô hiệu hóa logic playableSigniUuids
   const playableSigniUuids = useMemo(() => {
     if (!world || phase !== "main") return [];
 
-    // Logic kiểm tra Level/Limit y hệt như trong PlaceSigniSystem
     const lrigZoneEntities = world
       .query([ZoneComponent])
       .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "lrigZone");
@@ -165,16 +152,13 @@ export default function Hand({ onCardSelect }: HandProps) {
             const isSelectedForPreview =
               phase !== "mulligan" && selectedCardUuid === card.uuid;
 
-            // === THÊM GUARD CLAUSE ĐỂ TRÁNH LỖI NaN ===
+            // === ADDED GUARD CLAUSE TO PREVENT NaN ERROR ===
             const numCards = hand.length;
-            if (numCards === 0) return null; // Tránh chia cho 0
-            // ========================================
+            if (numCards === 0) return null;
+            // ===============================================
 
-            // ... logic transform ...
             const centerIndex = (numCards - 1) / 2;
             const distanceFromCenter = index - centerIndex;
-
-            // Kiểm tra lại để chắc chắn không có NaN
             const translateX = isNaN(distanceFromCenter)
               ? 0
               : distanceFromCenter * 60;
@@ -189,27 +173,24 @@ export default function Hand({ onCardSelect }: HandProps) {
                 className="absolute bottom-0 left-1/2 cursor-pointer origin-bottom"
                 style={{
                   marginLeft: `-${CARD_BASE_WIDTH / 2}px`,
-                  // zIndex cơ bản dựa trên vị trí
                   zIndex: numCards - Math.abs(distanceFromCenter),
                 }}
                 animate={{
                   y: isSelectedForMulligan || isSelectedForPreview ? -40 : 0,
                   scale:
                     isSelectedForMulligan || isSelectedForPreview ? 1.2 : 1,
-                  // Thêm hiệu ứng làm mờ
                   opacity:
                     phase === "main" &&
                     card.type === "SIGNI" &&
                     !playableSigniUuids.includes(card.uuid)
                       ? 0.5
                       : 1,
-                  // ... transform và filter ...
                   transform: transform,
                   filter: isSelectedForPreview
                     ? "drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))"
                     : isSelectedForMulligan
-                    ? "drop-shadow(0 0 15px rgba(34, 197, 94, 0.8))" // Viền xanh cho mulligan
-                    : "drop-shadow(0 0 0 rgba(255, 255, 255, 0))", // Thay màu shadow cho đẹp hơn
+                    ? "drop-shadow(0 0 15px rgba(34, 197, 94, 0.8))"
+                    : "drop-shadow(0 0 0 rgba(255, 255, 255, 0))",
                   transition: { type: "spring", stiffness: 400, damping: 30 },
                 }}
                 whileHover={{
@@ -226,12 +207,10 @@ export default function Hand({ onCardSelect }: HandProps) {
                   <ContextMenu
                     showChargeEner={phase === "ener"}
                     onChargeEner={() => {
-                      // Chuyển đổi uuid (string) thành entityId (number)
                       dispatchChargeEnerAction("hand", parseInt(card.uuid));
                       setSelectedCardUuid(null);
                       onCardSelect(null);
                     }}
-                    // Logic cũ cho End Phase
                     showDiscard={phase === "end" && mustDiscard}
                     onDiscard={() => {
                       dispatchDiscardCardAction(parseInt(card.uuid));
@@ -244,20 +223,17 @@ export default function Hand({ onCardSelect }: HandProps) {
                       playableSigniUuids.includes(card.uuid)
                     }
                     onPlaySigni={() => {
-                      initiatePlaceSigni(card.uuid); // Kích hoạt chế độ đặt bài trong uiSlice
+                      initiatePlaceSigni(card.uuid);
                       setSelectedCardUuid(null);
                       onCardSelect(null);
                     }}
                   />
                 )}
-
                 <div
                   className={cn(
                     "relative transition-all duration-300",
-                    // Thêm viền xanh nếu được chọn cho mulligan
                     isSelectedForMulligan &&
                       "ring-4 ring-blue-500 ring-offset-2 ring-offset-background rounded-lg",
-                    // Thêm hiệu ứng grayscale để rõ hơn
                     phase === "main" &&
                       card.type === "SIGNI" &&
                       !playableSigniUuids.includes(card.uuid) &&
