@@ -12,9 +12,10 @@ import {
 import useGameStore from "@/store/gameStore";
 import eventBus from "../core/event.bus";
 import { GameEvent } from "../core/events.types";
-import { GameAction } from "../core/actions.types"; // <-- IMPORT
+import { GameAction, GameActionType } from "../core/actions.types"; // <-- IMPORT
 import { produce } from "immer"; // <-- IMPORT IMMER
 import { effectResolverMap } from "./effects.map";
+import { Reducer, Saga } from "../core/reducer.types";
 
 // XÓA: Import tất cả các system - chúng sẽ được đăng ký từ bên ngoài
 // import { SetupSystem } from "./systems/setup.system";
@@ -42,6 +43,10 @@ class GameManager {
   private loopSystems: System[] = [];
   private systems: System[] = [];
 
+  // Thêm reducers và sagas
+  private reducers: Map<GameActionType, Reducer<any>[]> = new Map();
+  private sagas: Map<GameActionType, Saga<any>[]> = new Map();
+
   public createNewGame(): World {
     this.world = this.factory.createNewGame();
     // XÓA: Không đăng ký system ở đây nữa - sẽ được làm từ bên ngoài
@@ -57,6 +62,24 @@ class GameManager {
     }
   }
 
+  // Thêm phương thức đăng ký reducer
+  public registerReducer<T extends GameAction>(
+    actionType: T["type"],
+    reducer: Reducer<T>
+  ) {
+    if (!this.reducers.has(actionType)) this.reducers.set(actionType, []);
+    this.reducers.get(actionType)!.push(reducer as Reducer<any>);
+  }
+
+  // Thêm phương thức đăng ký saga
+  public registerSaga<T extends GameAction>(
+    actionType: T["type"],
+    saga: Saga<T>
+  ) {
+    if (!this.sagas.has(actionType)) this.sagas.set(actionType, []);
+    this.sagas.get(actionType)!.push(saga as Saga<any>);
+  }
+
   // Khởi tạo các system sau khi đã đăng ký xong
   public initializeSystems(): void {
     const dependencies: SystemDependencies = { eventBus, gameManager: this };
@@ -70,6 +93,11 @@ class GameManager {
     eventBus.on(GameEvent.STOP_GAME_LOOP, () => {
       this.stopLoop();
     });
+  }
+
+  // Thêm phương thức khởi tạo dependencies cho sagas
+  public initializeDependencies(): SystemDependencies {
+    return { eventBus, gameManager: this };
   }
 
   public onUpdate(listener: UpdateListener) {
@@ -149,21 +177,25 @@ class GameManager {
       const action = this.actionQueue.shift()!;
       console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
 
-      nextWorldState = produce(nextWorldState, (draftWorld) => {
-        const actionRequest = draftWorld.getComponent(
-          GLOBAL_ENTITY,
-          ActionRequestComponent
-        )!;
-        actionRequest.request = action;
-
-        // Chạy các system để xử lý action
-        for (const system of this.systems) {
-          system.update(draftWorld as World);
+      // 1. CHẠY REDUCER
+      let worldAfterReducer = produce(nextWorldState, (draftWorld) => {
+        const actionReducers = this.reducers.get(action.type);
+        if (actionReducers) {
+          for (const reducer of actionReducers) {
+            reducer(draftWorld as World, action.payload);
+          }
         }
-
-        // Dọn dẹp request ngay sau khi xử lý
-        actionRequest.request = null;
       });
+      nextWorldState = worldAfterReducer;
+
+      // 2. CHẠY SAGAS
+      const actionSagas = this.sagas.get(action.type);
+      if (actionSagas) {
+        const dependencies = this.initializeDependencies();
+        for (const saga of actionSagas) {
+          (saga as Saga<any>)(action, nextWorldState, dependencies);
+        }
+      }
     }
     // Ưu tiên 3: (Nếu cả hai đều rỗng) Chạy các system tự động
     else {
