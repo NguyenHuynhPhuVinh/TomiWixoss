@@ -5,6 +5,7 @@ import { divaDebutDeckEn } from "@/data/decks/diva-debut-deck-en";
 import { v4 as uuidv4 } from "uuid";
 import shuffle from "shuffle-array";
 import { findInitialLrigs } from "@/logic/setup"; // <-- IMPORT HÀM MỚI
+import { validateDeck } from "@/logic/deckValidation"; // <-- IMPORT HÀM MỚI
 
 // Thêm phase 'mulligan'
 type GamePhase =
@@ -105,20 +106,42 @@ const useGameStore = create<GameState>((set, get) => ({
     checkZone: [null],
   },
 
-  // BƯỚC 1: Chuẩn bị 2 bộ bài, sau đó tự động gọi bước 2
+  // BƯỚC 1: Xác thực, sau đó chuẩn bị 2 bộ bài, rồi tự động gọi bước 2
   prepareDecks: () => {
-    let playerMainDeck = divaDebutDeckEn
+    // === BƯỚC XÁC THỰC MỚI ===
+    // Tạo bộ bài đầy đủ từ dữ liệu gốc để xác thực
+    const fullMainDeckData = divaDebutDeckEn
       .filter((c) => c.backType === "MAIN")
-      .flatMap((card) =>
-        Array(4)
-          .fill(card)
-          .map(() => createCardInstance(card, "player"))
-      )
+      .flatMap((card) => Array(4).fill(card))
       .slice(0, 40);
+
+    const fullLrigDeckData = divaDebutDeckEn.filter(
+      (c) => c.backType === "LRIG" || c.backType === "PIECE"
+    );
+
+    // Chạy hàm xác thực
+    const validation = validateDeck(fullMainDeckData, fullLrigDeckData);
+
+    if (!validation.isValid) {
+      // Nếu bộ bài không hợp lệ, hiển thị lỗi và dừng lại
+      const errorMessages =
+        "Bộ bài không hợp lệ:\n- " + validation.errors.join("\n- ");
+      console.error(errorMessages);
+      alert(errorMessages);
+      return; // Rất quan trọng: Dừng action tại đây
+    }
+    // =============================
+
+    // Nếu bộ bài hợp lệ, tiếp tục logic tạo instance và xáo bài như cũ
+    const playerMainDeck = fullMainDeckData.map((data) =>
+      createCardInstance(data, "player")
+    );
     shuffle(playerMainDeck);
-    let playerLrigDeck = divaDebutDeckEn
-      .filter((c) => c.backType === "LRIG" || c.backType === "PIECE")
-      .map((c) => createCardInstance(c, "player"));
+
+    const playerLrigDeck = fullLrigDeckData.map((data) =>
+      createCardInstance(data, "player")
+    );
+
     set({
       gameStarted: true,
       player: {
@@ -127,6 +150,7 @@ const useGameStore = create<GameState>((set, get) => ({
         lrigDeck: playerLrigDeck,
       },
     });
+
     // Tự động gọi bước tiếp theo
     setTimeout(() => get().drawInitialHand(), 500);
   },
