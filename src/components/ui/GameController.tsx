@@ -23,6 +23,7 @@ export default function GameController() {
     (state) => state.actionTakenInPhase
   );
   const initializeGame = useGameStore((state) => state.initializeGame);
+  const openZoneViewer = useGameStore((state) => state.openZoneViewer);
   // const setPhase = useGameStore((state) => state.setPhase); // Không còn cần thiết
 
   const globalState = world?.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
@@ -82,6 +83,30 @@ export default function GameController() {
             </p>
             <Button onClick={dispatchConfirmMulliganAction} className="w-full">
               Xác nhận đổi bài
+            </Button>
+          </>
+        );
+
+      case "grow":
+        return (
+          <>
+            <h3 className="font-bold">Turn {turn} - Grow Phase</h3>
+            {actionTakenInPhase ? (
+              <p className="text-sm text-green-500 my-2">Đã Grow.</p>
+            ) : (
+              <Button
+                onClick={openZoneViewer}
+                className="w-full mt-2"
+                variant="secondary"
+              >
+                Xem LRIG Deck
+              </Button>
+            )}
+            <Button
+              onClick={dispatchAdvancePhaseAction}
+              className="w-full mt-2"
+            >
+              Next Phase
             </Button>
           </>
         );

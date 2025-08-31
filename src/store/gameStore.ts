@@ -28,6 +28,8 @@ export interface GameStore {
   addLog: (message: string, type?: LogType) => void;
   initiatePlaceSigni: (cardUuid: string) => void;
   cancelPlayerAction: () => void;
+  openZoneViewer: () => void;
+  closeZoneViewer: () => void;
 }
 
 const useGameStore = create<GameStore>((set, get) => {
@@ -97,6 +99,8 @@ const useGameStore = create<GameStore>((set, get) => {
     initiatePlaceSigni: (cardUuid) =>
       set({ playerAction: { type: "place_signi", cardUuid } }),
     cancelPlayerAction: () => set({ playerAction: null }),
+    openZoneViewer: () => set({ isZoneViewerOpen: true }),
+    closeZoneViewer: () => set({ isZoneViewerOpen: false }),
   };
 });
 

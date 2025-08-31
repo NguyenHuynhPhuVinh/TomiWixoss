@@ -105,3 +105,23 @@ export function dispatchConfirmMulliganAction() {
     gameManager.handlePlayerAction();
   }
 }
+
+export function dispatchGrowLrigAction(
+  targetEntityId: number,
+  zoneIndex: number
+) {
+  const world = gameManager.world;
+  if (!world) return;
+
+  const actionRequest = world.getComponent(
+    GLOBAL_ENTITY,
+    ActionRequestComponent
+  );
+  if (actionRequest) {
+    actionRequest.request = {
+      type: "GROW_LRIG",
+      payload: { targetEntityId, zoneIndex },
+    };
+    gameManager.handlePlayerAction();
+  }
+}

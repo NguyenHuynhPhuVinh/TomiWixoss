@@ -12,6 +12,7 @@ import {
   StatusComponent,
 } from "@/logic/ecs/components/card.components";
 import { dispatchConfirmLrigSelectionAction } from "@/logic/ecs/actions";
+import { dispatchGrowLrigAction } from "@/logic/ecs/actions";
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -34,9 +35,9 @@ const GameLog = dynamic(() => import("@/components/ui/GameLog"), {
 const LrigSelector = dynamic(() => import("@/components/ui/LrigSelector"), {
   ssr: false,
 });
-// const DeckViewer = dynamic(() => import("@/components/ui/DeckViewer"), {
-//   ssr: false,
-// });
+const DeckViewer = dynamic(() => import("@/components/ui/DeckViewer"), {
+  ssr: false,
+});
 
 export default function ClientOnlyLoader() {
   const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
@@ -46,6 +47,10 @@ export default function ClientOnlyLoader() {
   const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
   const phase = useStore(useGameStore, (state) => state.phase);
+  const isZoneViewerOpen = useStore(
+    useGameStore,
+    (state) => state.isZoneViewerOpen
+  );
 
   // === TRUY VẤN DỮ LIỆU CHO LRIG SELECTOR ===
   const lrigDeckForSelector: CardInstance[] = useMemo(() => {
@@ -72,6 +77,53 @@ export default function ClientOnlyLoader() {
       };
     });
   }, [world, worldVersion]);
+  // ===========================================
+
+  // === TRUY VẤN DỮ LIỆU CHO GROW OPTIONS ===
+  const growOptions: CardInstance[] = useMemo(() => {
+    if (!world) return [];
+
+    const lrigZoneEntities = world
+      .query([ZoneComponent])
+      .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "lrigZone");
+    const currentCenterEntity = lrigZoneEntities.find(
+      (e) => world.getComponent(e, ZoneComponent)!.index === 1
+    );
+    if (!currentCenterEntity) return [];
+    const currentCenterInfo = world.getComponent(
+      currentCenterEntity,
+      CardInfoComponent
+    )!;
+
+    const lrigDeckEntities = world
+      .query([ZoneComponent])
+      .filter((e) => world.getComponent(e, ZoneComponent)!.zone === "lrigDeck");
+
+    return lrigDeckEntities
+      .filter((entity) => {
+        const cardInfo = world.getComponent(entity, CardInfoComponent)!;
+        // Logic kiểm tra Grow cho Center LRIG
+        if (phase === "grow") {
+          return (
+            cardInfo.data.level === (currentCenterInfo.data.level ?? -1) + 1 &&
+            cardInfo.data.lrigType === currentCenterInfo.data.lrigType
+          );
+        }
+        // TODO: Thêm logic kiểm tra cho Assist LRIG sau
+        return false;
+      })
+      .map((entity) => {
+        const cardInfo = world.getComponent(entity, CardInfoComponent)!;
+        const status = world.getComponent(entity, StatusComponent)!;
+        const zone = world.getComponent(entity, ZoneComponent)!;
+        return {
+          ...cardInfo.data,
+          ...status,
+          uuid: entity.toString(),
+          owner: zone.owner,
+        };
+      });
+  }, [world, worldVersion, phase]);
   // ===========================================
 
   return (
@@ -106,6 +158,17 @@ export default function ClientOnlyLoader() {
         }}
       />
       {/* =========================================== */}
+      <DeckViewer
+        title="LRIG Deck - Chọn để Grow"
+        cards={growOptions}
+        isOpen={isZoneViewerOpen}
+        onOpenChange={() => {}} // Có thể để trống hoặc thêm logic
+        onCardClick={(card) => {
+          const targetEntityId = parseInt(card.uuid);
+          // Hiện tại chỉ xử lý Grow cho Center LRIG (zoneIndex = 1)
+          dispatchGrowLrigAction(targetEntityId, 1);
+        }}
+      />
       {/* <DeckViewer /> */}
     </>
   );

@@ -4,6 +4,7 @@ import { GameFactory } from "./game.factory";
 import { UpSystem } from "./systems/up.system";
 import { DrawSystem } from "./systems/draw.system";
 import { EnerSystem } from "./systems/ener.system"; // <-- IMPORT
+import { GrowSystem } from "./systems/grow.system"; // <-- IMPORT
 import { PhaseSystem } from "./systems/phase.system"; // <-- IMPORT
 import { SetupSystem } from "./systems/setup.system"; // <-- IMPORT
 import { System } from "./ecs.types";
@@ -28,6 +29,7 @@ class GameManager {
     // Phân loại các system
     this.actionSystems["SETUP"] = new SetupSystem();
     this.actionSystems["ENER"] = new EnerSystem();
+    this.actionSystems["GROW"] = new GrowSystem(); // <-- THÊM VÀO ĐÂY
     this.actionSystems["PHASE"] = new PhaseSystem();
     // ... các system hành động khác
 
@@ -102,6 +104,9 @@ class GameManager {
     switch (requestType) {
       case "CHARGE_ENER":
         systemKey = "ENER";
+        break;
+      case "GROW_LRIG":
+        systemKey = "GROW";
         break;
       case "ADVANCE_PHASE":
         systemKey = "PHASE";
