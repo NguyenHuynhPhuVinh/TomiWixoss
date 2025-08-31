@@ -105,6 +105,32 @@ export class GrowSystem implements System {
       return;
     }
 
+    // === C. THÊM KIỂM TRA VỚI CENTER LRIG CHO ASSIST GROW ===
+    if (!isCenterGrow) {
+      const centerLrigEntity = world.query([ZoneComponent]).find((e) => {
+        const zone = world.getComponent(e, ZoneComponent)!;
+        return zone.zone === "lrigZone" && zone.index === 1;
+      });
+      if (centerLrigEntity) {
+        const centerLrigInfo = world.getComponent(
+          centerLrigEntity,
+          CardInfoComponent
+        )!;
+        const centerLrigLevel = centerLrigInfo.data.level ?? 0;
+        const targetLevel = targetLrigInfo.data.level ?? 0;
+
+        if (targetLevel > centerLrigLevel) {
+          addLog(
+            `Không thể Grow Assist LRIG: Level (${targetLevel}) cao hơn Center LRIG (${centerLrigLevel}).`,
+            "info"
+          );
+          actionRequest.request = null;
+          return;
+        }
+      }
+    }
+    // ======================================================
+
     // --- 2. THANH TOÁN COST ---
     const enerZoneEntities = world
       .query([ZoneComponent])

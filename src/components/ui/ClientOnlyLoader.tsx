@@ -60,6 +60,10 @@ export default function ClientOnlyLoader() {
     useGameStore,
     (state) => state.initializeGame
   );
+  const closeLrigDeckViewer = useStore(
+    useGameStore,
+    (state) => state.closeLrigDeckViewer
+  );
 
   // Khởi tạo game một lần khi component được mount
   useEffect(() => {
@@ -212,7 +216,7 @@ export default function ClientOnlyLoader() {
         }
         cards={growOptions}
         isOpen={isZoneViewerOpen}
-        onOpenChange={() => {}} // Có thể để trống hoặc thêm logic
+        onOpenChange={closeLrigDeckViewer}
         onCardClick={(card) => {
           const targetEntityId = parseInt(card.uuid);
           // Xác định zoneIndex dựa trên phase hoặc viewingLrigDeckForGrow

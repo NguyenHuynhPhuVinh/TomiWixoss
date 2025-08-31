@@ -11,6 +11,20 @@ export function getValidGrowOptions(zoneIndex: number): number[] {
   const { world, phase } = useGameStore.getState();
   if (!world) return [];
 
+  // === LẤY THÔNG TIN CENTER LRIG ĐỂ SO SÁNH ===
+  const centerLrigEntity = world.query([ZoneComponent]).find((e) => {
+    const zone = world.getComponent(e, ZoneComponent)!;
+    return zone.zone === "lrigZone" && zone.index === 1;
+  });
+  // Nếu không có Center LRIG (trường hợp rất hiếm), không cho Grow gì cả
+  if (!centerLrigEntity) return [];
+  const centerLrigInfo = world.getComponent(
+    centerLrigEntity,
+    CardInfoComponent
+  )!;
+  const centerLrigLevel = centerLrigInfo.data.level ?? 0;
+  // ============================================
+
   const currentLrigEntity = world.query([ZoneComponent]).find((e) => {
     const zone = world.getComponent(e, ZoneComponent)!;
     return zone.zone === "lrigZone" && zone.index === zoneIndex;
@@ -48,6 +62,16 @@ export function getValidGrowOptions(zoneIndex: number): number[] {
       }
     }
     // ==========================
+
+    // === THÊM ĐIỀU KIỆN KIỂM TRA MỚI CHO ASSIST LRIG ===
+    if (zoneIndex !== 1) {
+      // Nếu đang kiểm tra cho Assist LRIG
+      const targetLevel = cardInfo.data.level ?? 0;
+      if (targetLevel > centerLrigLevel) {
+        return false; // Loại bỏ nếu level cao hơn Center
+      }
+    }
+    // ===============================================
 
     // Kiểm tra level và lrigType như cũ
     return (
