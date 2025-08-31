@@ -37,6 +37,11 @@ export default function GameController({
     (state) => state.actionTakenInPhase
   );
 
+  const openZoneViewer = useStore(
+    useGameStore,
+    (state) => state.openZoneViewer
+  );
+
   const renderContent = () => {
     switch (phase) {
       case "pre_game":
@@ -119,6 +124,32 @@ export default function GameController({
               <p className="text-sm text-muted-foreground my-2">
                 Tùy chọn: Chọn một lá bài trên tay để nạp vào Ener Zone.
               </p>
+            )}
+            <Button onClick={goToNextPhase} className="w-full mt-2">
+              Next Phase
+            </Button>
+          </>
+        );
+      case "grow":
+        return (
+          <>
+            <h3 className="font-bold">Turn {turn} - Grow Phase</h3>
+            {actionTakenInPhase ? (
+              <p className="text-sm text-green-500 my-2">Đã Grow.</p>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground my-2">
+                  Tùy chọn: Click vào LRIG Deck để xem các lựa chọn Grow.
+                </p>
+                {/* Nút này chỉ để mở viewer, hành động chính là click vào lá bài trong viewer */}
+                <Button
+                  onClick={openZoneViewer}
+                  className="w-full mt-2"
+                  variant="secondary"
+                >
+                  Xem LRIG Deck
+                </Button>
+              </>
             )}
             <Button onClick={goToNextPhase} className="w-full mt-2">
               Next Phase

@@ -9,6 +9,7 @@ import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 import LrigSelector from "./LrigSelector"; // Import component mới
 import { useStore } from "zustand";
 import useGameStore from "@/store/gameStore";
+import DeckViewer from "./DeckViewer"; // Đảm bảo đã import
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -30,6 +31,32 @@ export default function ClientOnlyLoader() {
   const dealRemainingSetup = useStore(
     useGameStore,
     (state) => state.dealRemainingSetup
+  );
+
+  const isZoneViewerOpen = useStore(
+    useGameStore,
+    (state) => state.isZoneViewerOpen
+  );
+  const closeZoneViewer = useStore(
+    useGameStore,
+    (state) => state.closeZoneViewer
+  );
+  const lrigDeck = useStore(useGameStore, (state) => state.player.lrigDeck);
+  const currentCenterLrig = useStore(
+    useGameStore,
+    (state) => state.player.lrigZone[1]
+  );
+  const growCenterLrig = useStore(
+    useGameStore,
+    (state) => state.growCenterLrig
+  );
+
+  // Lọc ra các lựa chọn Grow hợp lệ
+  const validGrowOptions = lrigDeck.filter(
+    (card) =>
+      currentCenterLrig &&
+      card.level === (currentCenterLrig.level ?? -1) + 1 &&
+      card.lrigType === currentCenterLrig.lrigType
   );
 
   return (
@@ -57,6 +84,18 @@ export default function ClientOnlyLoader() {
         isOpen={phase === "selecting_lrigs"}
         fullLrigDeck={fullLrigDeck}
         onConfirm={dealRemainingSetup}
+      />
+
+      <DeckViewer
+        title="LRIG Deck - Chọn để Grow"
+        cards={phase === "grow" ? validGrowOptions : lrigDeck}
+        isOpen={isZoneViewerOpen}
+        onOpenChange={closeZoneViewer}
+        onCardClick={(card) => {
+          if (phase === "grow") {
+            growCenterLrig(card.uuid);
+          }
+        }}
       />
 
       {/* Ẩn DeckViewer */}

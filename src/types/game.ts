@@ -53,6 +53,7 @@ export interface CardInstance extends CardData {
   isFaceUp: boolean;
   isDowned: boolean;
   owner: "player" | "ai";
+  underneathCards?: CardInstance[]; // <-- THÊM DÒNG NÀY
 }
 
 // Key cho các vùng có thể chứa bài

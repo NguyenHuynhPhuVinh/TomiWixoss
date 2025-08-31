@@ -70,6 +70,11 @@ interface GameState {
   checkEndPhaseConditions: () => void; // Kiểm tra và set cờ mustDiscard
   // --- ACTION MỚI CHO ENER PHASE ---
   chargeEnerFromHand: (cardUuid: string) => void;
+  // --- ACTION MỚI CHO GROW PHASE ---
+  growCenterLrig: (targetLrigUuid: string) => void;
+  isZoneViewerOpen: boolean; // State mới để điều khiển modal
+  openZoneViewer: () => void;
+  closeZoneViewer: () => void;
 }
 
 // Hàm helper giữ nguyên
@@ -91,6 +96,8 @@ const useGameStore = create<GameState>((set, get) => ({
   mulliganSelection: [],
   mustDiscard: false, // Ban đầu là false
   actionTakenInPhase: false, // Giá trị ban đầu
+  isZoneViewerOpen: false, // Giá trị ban đầu
+
   player: {
     mainDeck: [],
     lrigDeck: [],
@@ -447,6 +454,123 @@ const useGameStore = create<GameState>((set, get) => ({
       };
     });
   },
+
+  // --- ACTION MỚI CHO GROW PHASE ---
+  growCenterLrig: (targetLrigUuid: string) => {
+    // --- 1. CÁC BƯỚC KIỂM TRA ĐIỀU KIỆN ---
+    if (get().phase !== "grow") return;
+    if (get().actionTakenInPhase) {
+      console.warn("Grow action already taken this turn.");
+      return;
+    }
+
+    const state = get();
+    const targetLrig = state.player.lrigDeck.find(
+      (c) => c.uuid === targetLrigUuid
+    );
+    const currentCenterLrig = state.player.lrigZone[1];
+
+    if (!targetLrig || !currentCenterLrig) {
+      console.error("Target LRIG or current Center LRIG not found.");
+      return;
+    }
+
+    // Kiểm tra Level và LRIG Type
+    if (
+      targetLrig.level !== (currentCenterLrig.level ?? -1) + 1 ||
+      targetLrig.lrigType !== currentCenterLrig.lrigType
+    ) {
+      console.error("Invalid Grow target: Level or LRIG Type mismatch.");
+      return;
+    }
+
+    // --- 2. XỬ LÝ THANH TOÁN CHI PHÍ (COST) ---
+    const growCost = targetLrig.growCost;
+    if (!growCost) {
+      console.error("Target LRIG has no Grow Cost defined.");
+      return;
+    }
+
+    // Tạm thời, chúng ta sẽ có một logic thanh toán đơn giản.
+    // Logic này sẽ được cải tiến sau này để người chơi có thể chọn Ener.
+    const tempEnerZone = [...state.player.enerZone];
+    const paidEner: CardInstance[] = [];
+    let canPay = true;
+
+    for (const color in growCost) {
+      for (let i = 0; i < growCost[color]; i++) {
+        let enerIndex = -1;
+        if (color === "Colorless") {
+          enerIndex = tempEnerZone.findIndex((e) => e); // Lấy bất kỳ lá nào
+        } else {
+          // Ưu tiên lá có màu chính xác trước
+          enerIndex = tempEnerZone.findIndex((e) =>
+            e.colors.includes(color as any)
+          );
+          // Nếu không có, tìm lá Multi Ener
+          if (enerIndex === -1) {
+            enerIndex = tempEnerZone.findIndex((e) =>
+              e.abilities?.some((a) => a.description.includes("[Multi Ener]"))
+            );
+          }
+        }
+
+        if (enerIndex !== -1) {
+          paidEner.push(tempEnerZone.splice(enerIndex, 1)[0]);
+        } else {
+          canPay = false;
+          break;
+        }
+      }
+      if (!canPay) break;
+    }
+
+    if (!canPay) {
+      console.error("Cannot pay Grow Cost.", growCost);
+      alert("Không đủ Ener để thực hiện Grow!");
+      return;
+    }
+
+    // --- 3. CẬP NHẬT STATE SAU KHI MỌI THỨ HỢP LỆ ---
+    set((currentState) => {
+      // Di chuyển Ener đã trả vào mộ
+      const newTrash = [...currentState.player.trash, ...paidEner];
+
+      // Tạo LRIG mới với các lá bài cũ nằm dưới
+      const newCenterLrig: CardInstance = {
+        ...targetLrig,
+        isFaceUp: true,
+        underneathCards: [
+          currentCenterLrig,
+          ...(currentCenterLrig.underneathCards || []),
+        ],
+      };
+
+      // Cập nhật LRIG Zone
+      const newLrigZone = [...currentState.player.lrigZone];
+      newLrigZone[1] = newCenterLrig;
+
+      // Xóa LRIG đã dùng khỏi LRIG Deck
+      const newLrigDeck = currentState.player.lrigDeck.filter(
+        (c) => c.uuid !== targetLrigUuid
+      );
+
+      return {
+        player: {
+          ...currentState.player,
+          enerZone: tempEnerZone, // Ener Zone đã bị trừ
+          trash: newTrash,
+          lrigDeck: newLrigDeck,
+          lrigZone: newLrigZone,
+        },
+        actionTakenInPhase: true,
+        isZoneViewerOpen: false, // Tự động đóng modal sau khi Grow thành công
+      };
+    });
+  },
+
+  openZoneViewer: () => set({ isZoneViewerOpen: true }),
+  closeZoneViewer: () => set({ isZoneViewerOpen: false }),
 }));
 
 export default useGameStore;

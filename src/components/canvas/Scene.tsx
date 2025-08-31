@@ -20,6 +20,22 @@ export default function Scene() {
   const player = useStore(useGameStore, (state) => state.player);
   const coords = P1_ZONE_COORDINATES;
 
+  const phase = useStore(useGameStore, (state) => state.phase);
+  const actionTakenInPhase = useStore(
+    useGameStore,
+    (state) => state.actionTakenInPhase
+  );
+  const openZoneViewer = useStore(
+    useGameStore,
+    (state) => state.openZoneViewer
+  );
+
+  const handleLrigDeckClick = () => {
+    if (phase === "grow" && !actionTakenInPhase) {
+      openZoneViewer();
+    }
+  };
+
   const boardWidth = 12;
   const boardHeight = boardWidth / (4962 / 3509);
 
@@ -88,6 +104,7 @@ export default function Scene() {
               (player.lrigDeck.length * CARD_DIMENSIONS.thickness) / 2,
             coords.LRIG_DECK.z,
           ]}
+          onClick={handleLrigDeckClick} // <-- THÊM DÒNG NÀY
         >
           <boxGeometry
             args={[
@@ -109,6 +126,7 @@ export default function Scene() {
             coords.LRIG_DECK.z,
           ]}
           rotation={[-Math.PI / 2, 0, card.type === "PIECE" ? 0 : Math.PI / 2]}
+          onClick={handleLrigDeckClick} // Thêm onClick cho từng lá để đảm bảo vùng click lớn
         />
       ))}
 
