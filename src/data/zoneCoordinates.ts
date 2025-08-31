@@ -5,7 +5,7 @@ import { CARD_WIDTH, CARD_HEIGHT } from "@/components/canvas/CardModel"; // Impo
 export const CARD_DIMENSIONS = {
   width: CARD_WIDTH,
   height: CARD_HEIGHT,
-  thickness: 0.02,
+  thickness: 0.03, // Giữ nguyên độ dày đã tăng
 };
 
 // Tọa độ gốc cho người chơi 1 (phía dưới)
@@ -24,7 +24,7 @@ export const P1_ZONE_COORDINATES = {
   LRIG_TRASH: { x: 6.6, y: 0.01, z: 7.0 },
 
   ENER_ZONE: { x: -5.2, y: 0.01, z: 3.3 },
-  LIFE_CLOTH: { x: -0.7, y: 0.01, z: 7.6 },
+  LIFE_CLOTH: { x: -2.7, y: 0.01, z: 7.6 },
   CHECK_ZONE: { x: -5.0, y: 0.01, z: 7.25 },
 };
 

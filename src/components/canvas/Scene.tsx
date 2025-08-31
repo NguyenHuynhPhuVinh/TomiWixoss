@@ -227,23 +227,33 @@ export default function Scene({ onDeckClick }: SceneProps) {
         );
       })}
 
-      {/* LIFE CLOTH */}
-      {player.lifeCloth.map((card, index) => (
-        <Card
-          key={card.uuid}
-          card={card}
-          position={[
-            // Tính toán vị trí dựa trên kích thước mới để chúng không bị chồng chéo
-            // Tăng khoảng cách từ 0.1 lên 0.2 để phù hợp với kích thước lá bài lớn hơn
-            coords.LIFE_CLOTH.x -
-              3 * (CARD_DIMENSIONS.width + 0.2) +
-              index * (CARD_DIMENSIONS.width + 0.2),
-            coords.LIFE_CLOTH.y,
-            coords.LIFE_CLOTH.z,
-          ]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        />
-      ))}
+      {/* === CẬP NHẬT LOGIC RENDER LIFE CLOTH === */}
+      {player.lifeCloth.map((card, index) => {
+        // Khoảng cách nhỏ giữa các lá bài xếp chồng
+        const stackOffsetX = 0.67; // Dịch chuyển sang phải cho mỗi lá để xòe rộng dải bài
+        const stackOffsetY = CARD_DIMENSIONS.thickness; // Nâng lên một chút để không bị z-fighting
+
+        return (
+          <Card
+            key={card.uuid}
+            card={card}
+            position={[
+              // Vị trí X: Bắt đầu từ tọa độ gốc của Life Cloth và dịch sang phải một chút cho mỗi lá
+              coords.LIFE_CLOTH.x + index * stackOffsetX,
+              // Vị trí Y: Nâng mỗi lá bài lên một chút so với lá dưới nó
+              coords.LIFE_CLOTH.y + index * stackOffsetY,
+              // Vị trí Z: Giữ nguyên tọa độ Z của khu vực Life Cloth
+              coords.LIFE_CLOTH.z,
+            ]}
+            rotation={[
+              -Math.PI / 2, // 1. Xoay 90 độ để nằm phẳng trên bàn
+              0, // 2. Không xoay quanh trục Y
+              Math.PI / 2, // 3. Xoay 90 độ để lá bài nằm ngang
+            ]}
+          />
+        );
+      })}
+      {/* === KẾT THÚC CẬP NHẬT === */}
 
       {/* TODO: Render các lá bài trong SIGNI Zone, Ener Zone, Trash... tương tự */}
 
