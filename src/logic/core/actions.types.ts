@@ -10,6 +10,9 @@ interface ConfirmLrigSelectionPayload {
 interface ConfirmMulliganPayload {
   entities: Entity[];
 }
+interface UpdateMulliganSelectionPayload {
+  selection: Entity[];
+}
 interface AdvancePhasePayload {}
 interface ChargeEnerPayload {
   source: "hand" | "signi";
@@ -32,6 +35,10 @@ export type GameAction =
   | { type: "START_SETUP"; payload: StartSetupPayload }
   | { type: "CONFIRM_LRIG_SELECTION"; payload: ConfirmLrigSelectionPayload }
   | { type: "CONFIRM_MULLIGAN"; payload: ConfirmMulliganPayload }
+  | {
+      type: "UPDATE_MULLIGAN_SELECTION";
+      payload: UpdateMulliganSelectionPayload;
+    }
   | { type: "ADVANCE_PHASE"; payload: AdvancePhasePayload }
   | { type: "CHARGE_ENER"; payload: ChargeEnerPayload }
   | { type: "GROW_LRIG"; payload: GrowLrigPayload }

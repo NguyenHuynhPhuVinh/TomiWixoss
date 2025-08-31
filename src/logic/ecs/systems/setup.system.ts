@@ -99,6 +99,15 @@ export class SetupSystem implements System {
           break;
         }
 
+        // === THÊM CASE MỚI Ở ĐÂY ===
+        case "UPDATE_MULLIGAN_SELECTION": {
+          if (globalState.phase !== "mulligan") break;
+          // Thay đổi trực tiếp trên bản nháp
+          globalState.mulliganSelection = payload.selection;
+          break;
+        }
+        // ===========================
+
         // --- YÊU CẦU XÁC NHẬN MULLIGAN ---
         case "CONFIRM_MULLIGAN": {
           if (globalState.phase !== "mulligan") break;

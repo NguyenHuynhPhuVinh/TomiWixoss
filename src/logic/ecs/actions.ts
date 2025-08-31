@@ -52,15 +52,11 @@ export function dispatchConfirmLrigSelectionAction(
  * @param selection - Mảng các Entity ID đã được chọn.
  */
 export function dispatchUpdateMulliganSelection(selection: Entity[]) {
-  // This updates local global state directly and notifies UI.
-  const world = gameManager.world;
-  if (!world) return;
-
-  const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
-  if (globalState) {
-    globalState.mulliganSelection = selection;
-    gameManager.notifyUpdate();
-  }
+  const action: GameAction = {
+    type: "UPDATE_MULLIGAN_SELECTION",
+    payload: { selection },
+  };
+  gameManager.queueAction(action);
 }
 
 /**
