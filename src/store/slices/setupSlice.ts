@@ -21,6 +21,8 @@ const createCardInstance = (
 
 // Định nghĩa interface cho slice
 export interface SetupSlice {
+  mulliganSelection: string[];
+  setMulliganSelection: (selection: string[]) => void;
   prepareDecks: () => void;
   drawInitialHand: () => void;
   performMulligan: (cardsToReturnUuids: string[]) => void;
@@ -37,6 +39,14 @@ export const createSetupSlice: StateCreator<GameStore, [], [], SetupSlice> = (
   set,
   get
 ) => ({
+  // State ban đầu
+  mulliganSelection: [],
+
+  // Actions
+  setMulliganSelection: (selection: string[]) => {
+    set({ mulliganSelection: selection });
+  },
+
   prepareDecks: () => {
     get().addLog("Bắt đầu chuẩn bị trận đấu...", "system");
     const fullMainDeckData = divaDebutDeckEn
