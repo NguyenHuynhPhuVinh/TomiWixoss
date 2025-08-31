@@ -205,7 +205,13 @@ export default function Scene({ onDeckClick }: SceneProps) {
             coords.LRIG_DECK.y + CARD_DIMENSIONS.thickness * index,
             coords.LRIG_DECK.z,
           ]}
-          rotation={[-Math.PI / 2, 0, 0]}
+          rotation={[
+            -Math.PI / 2, // Nằm phẳng
+            0,
+            // Nếu là PIECE (vốn đã ngang) thì không xoay (0).
+            // Nếu là LRIG (dọc) thì xoay 90 độ (Math.PI / 2) để thành ngang.
+            card.type === "PIECE" ? 0 : Math.PI / 2,
+          ]}
         />
       ))}
 
@@ -218,16 +224,13 @@ export default function Scene({ onDeckClick }: SceneProps) {
           coords.ASSIST_LRIG_2,
         ][index];
 
-        // Chỉ Piece là không xoay ngang
-        const isHorizontal = card.type !== "PIECE";
-        const rotationY = isHorizontal ? Math.PI / 2 : 0;
-
         return (
           <Card
             key={card.uuid}
             card={card}
             position={[lrigCoords.x, lrigCoords.y, lrigCoords.z]}
-            rotation={[-Math.PI / 2, 0, rotationY]} // Áp dụng xoay ngang
+            // Tất cả các lá bài trên sân đều nằm dọc
+            rotation={[-Math.PI / 2, 0, 0]}
           />
         );
       })}
@@ -280,23 +283,30 @@ export default function Scene({ onDeckClick }: SceneProps) {
 
       {/* ENER ZONE */}
       {/* Các lá bài trong Ener Zone sẽ được xếp chồng lệch sang phải */}
-      {player.enerZone.map((card, index) => (
-        <Card
-          key={card.uuid}
-          card={card}
-          position={[
-            coords.ENER_ZONE.x,
-            coords.ENER_ZONE.y + index * CARD_DIMENSIONS.thickness,
-            // Xếp chồng từ trên xuống dưới (tăng giá trị Z)
-            coords.ENER_ZONE.z + index * 0.7,
-          ]}
-          rotation={[
-            -Math.PI / 2, // Nằm phẳng
-            0,
-            Math.PI, // Xoay 180 độ để hướng về đối thủ
-          ]}
-        />
-      ))}
+      {player.enerZone.map((card, index) => {
+        const totalEnerCards = player.enerZone.length;
+        return (
+          <Card
+            key={card.uuid}
+            card={card}
+            position={[
+              coords.ENER_ZONE.x,
+              // === THAY ĐỔI LOGIC TÍNH Y (Z-INDEX) ===
+              // Lá bài đầu tiên (index 0) sẽ có Y cao nhất.
+              // Lá bài cuối cùng (index = total - 1) sẽ có Y thấp nhất.
+              coords.ENER_ZONE.y +
+                (totalEnerCards - 1 - index) * CARD_DIMENSIONS.thickness,
+              // Logic vị trí Z (giãn cách) không đổi
+              coords.ENER_ZONE.z + index * 0.7,
+            ]}
+            rotation={[
+              -Math.PI / 2, // Nằm phẳng
+              0,
+              Math.PI, // Xoay 180 độ để hướng về đối thủ
+            ]}
+          />
+        );
+      })}
 
       {/* TRASH (Mộ bài chính) */}
       {/* Hiển thị lá bài trên cùng của mộ */}
