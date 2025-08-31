@@ -4,11 +4,14 @@ import useGameStore from "@/store/gameStore";
 import { Button } from "./button";
 import gameManager from "@/logic/ecs/game.manager";
 import { GamePhase } from "@/types/game";
+import { GlobalStateComponent } from "@/logic/ecs/components/card.components";
+import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
 
 export default function GameController() {
   const phase = useGameStore((state) => state.phase);
   const turn = useGameStore((state) => state.turn);
-  const startGame = useGameStore((state) => state.startGame);
+  const actionTakenInPhase = useGameStore((state) => state.actionTakenInPhase);
+  const initializeGame = useGameStore((state) => state.initializeGame);
   const setPhase = useGameStore((state) => state.setPhase);
 
   const handleNextPhase = () => {
@@ -24,17 +27,30 @@ export default function GameController() {
     ];
     const currentIndex = phaseOrder.indexOf(phase);
     let nextIndex = currentIndex + 1;
+    let nextPhase: GamePhase;
     if (nextIndex >= phaseOrder.length) {
-      setPhase(phaseOrder[0]);
+      nextPhase = phaseOrder[0];
     } else {
-      setPhase(phaseOrder[nextIndex]);
+      nextPhase = phaseOrder[nextIndex];
+    }
+
+    // Cập nhật state trong world
+    const world = gameManager.world;
+    if (world) {
+      const globalState = world.getComponent(
+        GLOBAL_ENTITY,
+        GlobalStateComponent
+      )!;
+      globalState.phase = nextPhase;
+      globalState.actionTakenInPhase = false; // Reset cho phase mới
+      gameManager.forceUpdate();
     }
   };
 
   const renderContent = () => {
     switch (phase) {
       case "pre_game":
-        return <Button onClick={startGame}>Chuẩn bị</Button>;
+        return <Button onClick={initializeGame}>Chuẩn bị</Button>;
 
       case "up":
         return (
@@ -45,6 +61,28 @@ export default function GameController() {
               className="w-full mt-2"
             >
               Up All Cards
+            </Button>
+            <Button
+              onClick={handleNextPhase}
+              variant="outline"
+              className="w-full mt-2"
+            >
+              Next Phase
+            </Button>
+          </>
+        );
+
+      case "draw":
+        const amountToDraw = turn === 1 ? 1 : 2;
+        return (
+          <>
+            <h3 className="font-bold">Turn {turn} - Draw Phase</h3>
+            <Button
+              onClick={() => gameManager.forceUpdate()}
+              className="w-full mt-2"
+              disabled={actionTakenInPhase}
+            >
+              {actionTakenInPhase ? "Đã rút bài" : `Rút ${amountToDraw} lá`}
             </Button>
             <Button
               onClick={handleNextPhase}
@@ -82,7 +120,7 @@ export default function GameController() {
         <p className="text-muted-foreground mb-6">
           Sẵn sàng để bắt đầu một trận đấu.
         </p>
-        <Button onClick={startGame} className="w-full" size="lg">
+        <Button onClick={initializeGame} className="w-full" size="lg">
           Chuẩn bị
         </Button>
       </div>

@@ -5,22 +5,25 @@ import gameManager from "@/logic/ecs/game.manager";
 import { GamePhase } from "@/types/game"; // Lấy GamePhase từ types/game.ts
 import { LogEntry, LogType, PlayerAction } from "./types"; // Import lại types
 import { v4 as uuidv4 } from "uuid";
+import { GlobalStateComponent } from "@/logic/ecs/components/card.components";
+import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
 
-// Định nghĩa state mới
 export interface GameStore {
   world: World | null;
-  worldVersion: number; // <-- THÊM THUỘC TÍNH MỚI
+  worldVersion: number;
+  // Các state "gương" để UI theo dõi
   phase: GamePhase;
   turn: number;
-  // Các state UI khác có thể thêm ở đây sau
-  isZoneViewerOpen: boolean;
+  actionTakenInPhase: boolean;
+
+  // State UI
   logs: LogEntry[];
   playerAction: PlayerAction | null;
+  isZoneViewerOpen: boolean;
 
   // Actions
-  _updateWorld: (world: World) => void; // Action nội bộ mới
-  _setWorld: (world: World) => void; // Action nội bộ để cập nhật world
-  startGame: () => void;
+  initializeGame: () => void;
+  _syncStateFromWorld: (world: World) => void;
   setPhase: (phase: GamePhase) => void; // Tạm thời cần action này
   addLog: (message: string, type?: LogType) => void;
   initiatePlaceSigni: (cardUuid: string) => void;
@@ -30,38 +33,40 @@ export interface GameStore {
 const useGameStore = create<GameStore>((set, get) => {
   // Kết nối store với GameManager
   gameManager.onUpdate((updatedWorld) => {
-    // Thay vì set trực tiếp, chúng ta gọi một action nội bộ
-    get()._updateWorld(updatedWorld);
+    // Chỉ gọi hàm đồng bộ hóa
+    get()._syncStateFromWorld(updatedWorld);
   });
 
   return {
     world: null,
-    worldVersion: 0, // Giá trị ban đầu
+    worldVersion: 0,
     phase: "pre_game",
     turn: 0,
-    isZoneViewerOpen: false,
-    logs: [], // Thêm lại state ban đầu
+    actionTakenInPhase: false,
+    logs: [],
     playerAction: null,
+    isZoneViewerOpen: false,
 
-    _updateWorld: (world) => {
-      // Chúng ta lưu trực tiếp instance World
-      // và tăng `worldVersion` để báo cho React biết có sự thay đổi
+    _syncStateFromWorld: (world) => {
+      const globalState = world.getComponent(
+        GLOBAL_ENTITY,
+        GlobalStateComponent
+      );
       set((state) => ({
-        world: world,
+        world: world, // <-- Lưu trực tiếp instance, KHÔNG sao chép
         worldVersion: state.worldVersion + 1,
+        // Đồng bộ hóa các state "gương"
+        phase: globalState?.phase ?? state.phase,
+        turn: globalState?.turn ?? state.turn,
+        actionTakenInPhase:
+          globalState?.actionTakenInPhase ?? state.actionTakenInPhase,
       }));
     },
 
-    _setWorld: (world) => set({ world }),
-
-    startGame: () => {
+    initializeGame: () => {
       const newWorld = gameManager.createNewGame();
-      set({
-        world: newWorld,
-        worldVersion: 1,
-        phase: "up", // Bắt đầu thẳng vào Up Phase của Lượt 1
-        turn: 1,
-      });
+      // Gọi hàm đồng bộ hóa để cập nhật store lần đầu
+      get()._syncStateFromWorld(newWorld);
       gameManager.startLoop(); // Bắt đầu vòng lặp game
     },
 

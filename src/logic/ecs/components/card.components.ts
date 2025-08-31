@@ -1,6 +1,6 @@
 // src/logic/ecs/components/card.components.ts
 import { Component } from "../ecs.types";
-import { CardData, ZoneKey } from "@/types/game";
+import { CardData, ZoneKey, GamePhase } from "@/types/game"; // Import GamePhase
 
 /**
  * Chứa dữ liệu tĩnh của lá bài, không bao giờ thay đổi.
@@ -41,4 +41,16 @@ export class InHandComponent implements Component {}
  */
 export class PowerComponent implements Component {
   constructor(public base: number, public modified: number) {}
+}
+
+/**
+ * Component singleton chứa trạng thái toàn cục của game.
+ * Sẽ chỉ có một entity duy nhất trong World có component này.
+ */
+export class GlobalStateComponent implements Component {
+  constructor(
+    public phase: GamePhase = "pre_game",
+    public turn: number = 0,
+    public actionTakenInPhase: boolean = false
+  ) {}
 }

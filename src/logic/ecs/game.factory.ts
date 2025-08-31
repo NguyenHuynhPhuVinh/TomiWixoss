@@ -7,7 +7,11 @@ import {
   CardInfoComponent,
   ZoneComponent,
   StatusComponent,
+  GlobalStateComponent, // <-- 1. IMPORT COMPONENT MỚI
 } from "./components/card.components";
+
+// Định nghĩa một hằng số cho entity toàn cục để dễ nhận biết
+export const GLOBAL_ENTITY = 0;
 
 export class GameFactory {
   /**
@@ -15,6 +19,11 @@ export class GameFactory {
    */
   public createNewGame(): World {
     const world = new World();
+
+    // === 2. TẠO ENTITY TOÀN CỤC VÀ GẮN COMPONENT ===
+    const globalEntity = world.createEntity(); // Sẽ là entity 0
+    world.addComponent(globalEntity, new GlobalStateComponent("up", 1, false));
+    // ===============================================
 
     // 1. Lấy dữ liệu deck
     const mainDeckData = divaDebutDeckEn

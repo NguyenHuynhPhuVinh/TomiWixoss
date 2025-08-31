@@ -2,6 +2,7 @@
 import { World } from "./world";
 import { GameFactory } from "./game.factory";
 import { UpSystem } from "./systems/up.system";
+import { DrawSystem } from "./systems/draw.system"; // <-- IMPORT
 
 type UpdateListener = (world: World) => void;
 
@@ -15,6 +16,7 @@ class GameManager {
   public createNewGame(): World {
     this.world = this.factory.createNewGame();
     this.world.addSystem(new UpSystem());
+    this.world.addSystem(new DrawSystem()); // <-- THÊM VÀO ĐÂY
     // ... thêm các system khác
     return this.world;
   }
