@@ -6,7 +6,7 @@ import {
   GlobalStateComponent,
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import { TURN_PHASES, GamePhase } from "@/store/types";
+import { TURN_PHASES, GamePhase } from "@/types/game";
 import useGameStore from "@/store/gameStore";
 
 // Các phase sẽ tự động chuyển tiếp nếu hành động đã xong

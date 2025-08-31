@@ -1,59 +1,86 @@
 // src/store/slices/gameSlice.ts
 import { StateCreator } from "zustand";
-import { GameStore, GameState, GamePhase } from "../types";
-import { Game } from "@/logic/models/game.model";
-import { PlayerState } from "../types";
+import { GameStore } from "../types";
+import { World } from "@/logic/ecs/world";
+import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
+import {
+  GlobalStateComponent,
+  ZoneComponent,
+  CardInfoComponent,
+  StatusComponent,
+} from "@/logic/ecs/components/card.components";
+import gameManager from "@/logic/ecs/game.manager";
+import { CardInstance } from "@/types/game";
+
+// Định nghĩa một kiểu đơn giản cho trạng thái bàn đấu
+export interface BoardState {
+  player: {
+    signiZone: (CardInstance | null)[];
+    lrigZone: (CardInstance | null)[];
+    // Thêm các zone khác nếu cần
+  };
+}
 
 export interface GameSlice {
-  game: Game | null;
-  initializeGame: (initialState: GameState) => void;
-  updateGame: (gameInstance: Game) => void;
-  // Xóa các action không cần thiết
-  // setPhase: (phase: GamePhase) => void;
-  // setPlayer: (player: PlayerState) => void;
-  // setAi: (ai: PlayerState) => void;
-  // getPlayer: () => PlayerState;
-  // getAi: () => PlayerState;
-  // drawCards: (amount: number) => void;
+  initializeGame: () => void;
+  _syncStateFromWorld: (world: World) => void;
 }
 
 export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
   set,
   get
 ) => ({
-  game: null,
-
-  initializeGame: (initialState) => {
-    const gameInstance = new Game(initialState);
-    // Khi khởi tạo, chúng ta cũng đồng bộ hóa state lần đầu tiên
-    set({
-      game: gameInstance,
-      // Cập nhật các state cấp cao
-      phase: gameInstance.phase,
-      turn: gameInstance.turn,
-      player: gameInstance.player,
-      ai: gameInstance.ai,
-      actionTakenInPhase: gameInstance.actionTakenInPhase,
-      mustDiscard: gameInstance.mustDiscard, // <-- THÊM DÒNG ĐỒNG BỘ HÓA
-      gameStarted: true,
-    });
+  initializeGame: () => {
+    const newWorld = gameManager.createNewGame();
+    get()._syncStateFromWorld(newWorld);
+    gameManager.startLoop();
   },
 
-  updateGame: (gameInstance) => {
-    // Tạo một instance mới để đảm bảo React nhận diện được sự thay đổi
-    const newGameInstance = new Game(gameInstance as any);
-    // Mỗi khi cập nhật, lại đồng bộ hóa state
-    set({
-      game: newGameInstance,
-      // Cập nhật các state cấp cao
-      phase: newGameInstance.phase,
-      turn: newGameInstance.turn,
-      player: newGameInstance.player,
-      ai: newGameInstance.ai,
-      actionTakenInPhase: newGameInstance.actionTakenInPhase,
-      mustDiscard: newGameInstance.mustDiscard, // <-- THÊM DÒNG ĐỒNG BỘ HÓA
-    });
-  },
+  _syncStateFromWorld: (world) => {
+    const globalState = world.getComponent(GLOBAL_ENTITY, GlobalStateComponent);
 
-  // Các action khác đã được xóa vì updateGame đã đảm nhiệm
+    // === TẠO VÀ CẬP NHẬT boardState ===
+    const newBoardState: BoardState = {
+      player: {
+        signiZone: [null, null, null],
+        lrigZone: [null, null, null],
+      },
+    };
+
+    const entitiesOnField = world.query([
+      ZoneComponent,
+      CardInfoComponent,
+      StatusComponent,
+    ]);
+    for (const entity of entitiesOnField) {
+      const zone = world.getComponent(entity, ZoneComponent)!;
+      const cardInfo = world.getComponent(entity, CardInfoComponent)!;
+      const status = world.getComponent(entity, StatusComponent)!;
+
+      const cardInstance: CardInstance = {
+        ...cardInfo.data,
+        ...status,
+        uuid: entity.toString(),
+        owner: zone.owner,
+      };
+
+      if (zone.zone === "signiZone") {
+        newBoardState.player.signiZone[zone.index] = cardInstance;
+      }
+      if (zone.zone === "lrigZone") {
+        newBoardState.player.lrigZone[zone.index] = cardInstance;
+      }
+    }
+    // ===================================
+
+    set((state) => ({
+      world: world,
+      worldVersion: state.worldVersion + 1,
+      phase: globalState?.phase ?? state.phase,
+      turn: globalState?.turn ?? state.turn,
+      actionTakenInPhase:
+        globalState?.actionTakenInPhase ?? state.actionTakenInPhase,
+      boardState: newBoardState,
+    }));
+  },
 });

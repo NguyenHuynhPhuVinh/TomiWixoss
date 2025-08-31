@@ -13,6 +13,17 @@ export type GamePhase =
   | "main"
   | "attack"
   | "end";
+
+// Thêm TURN_PHASES tại đây
+export const TURN_PHASES: GamePhase[] = [
+  "up",
+  "draw",
+  "ener",
+  "grow",
+  "main",
+  "attack",
+  "end",
+];
 // =====================
 
 // Loại lá bài chính

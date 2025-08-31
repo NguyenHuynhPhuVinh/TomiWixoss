@@ -1,5 +1,6 @@
 // src/store/types.ts
-import { CardInstance } from "@/types/game"; // Import các type cần thiết
+import { GamePhase } from "@/types/game";
+import { World } from "@/logic/ecs/world";
 
 // Định nghĩa kiểu cho một entry trong log
 export type LogType = "info" | "action" | "system" | "cost";
@@ -10,91 +11,47 @@ export interface LogEntry {
   timestamp: number;
 }
 
-// Giữ GamePhase ở đây để các slice khác có thể dùng
-export type GamePhase =
-  | "pre_game"
-  | "selecting_lrigs"
-  | "mulligan"
-  | "up"
-  | "draw"
-  | "ener"
-  | "grow"
-  | "main"
-  | "attack"
-  | "end";
-
-export const TURN_PHASES: GamePhase[] = [
-  "up",
-  "draw",
-  "ener",
-  "grow",
-  "main",
-  "attack",
-  "end",
-];
-
-// Định nghĩa một kiểu cho các hành động của người chơi
+// Định nghĩa một kiểu cho các hành động của người chơi trên UI
 export type PlayerAction = {
   type: "place_signi";
-  cardUuid: string;
+  cardUuid: string; // Thực ra đây là Entity ID dạng string
 };
 
-export interface PlayerState {
-  mainDeck: CardInstance[];
-  lrigDeck: CardInstance[];
-  lrigZone: (CardInstance | null)[];
-  lifeCloth: CardInstance[];
-  hand: CardInstance[];
-  signiZone: (CardInstance | null)[];
-  enerZone: CardInstance[];
-  trash: CardInstance[];
-  lrigTrash: CardInstance[];
-  checkZone: (CardInstance | null)[];
-}
-
-// Interface cho phần state thuần túy
+// Interface cho STATE của toàn bộ store
 export interface GameState {
-  gameStarted: boolean;
+  world: World | null;
+  worldVersion: number;
+
+  // Các state "gương" được đồng bộ từ GlobalStateComponent trong World
   phase: GamePhase;
   turn: number;
-  player: PlayerState;
-  ai: PlayerState;
-  logs: LogEntry[];
   actionTakenInPhase: boolean;
-  // Các state liên quan đến UI sẽ nằm ở đây
+
+  // State của UI
+  logs: LogEntry[];
   playerAction: PlayerAction | null;
   isZoneViewerOpen: boolean;
   viewingLrigDeckForGrow: { forAssistIndex: number | null } | null;
-  mustDiscard: boolean; // <-- THÊM LẠI VÌ CẦN CHO STORE
+  boardState: any; // Sẽ được định nghĩa chi tiết hơn
 }
 
-// Interface cho tất cả các action
+// Interface cho ACTIONS của toàn bộ store
 export interface GameActions {
   // Log Actions
   addLog: (message: string, type?: LogType) => void;
 
-  // Game Slice Actions
-  initializeGame: (initialState: GameState) => void;
-  updateGame: (gameInstance: any) => void; // Sử dụng any tạm thời cho Game
-  // Xóa các action không cần thiết
-  // setPhase: (phase: GamePhase) => void;
-  // setPlayer: (player: PlayerState) => void;
-  // setAi: (ai: PlayerState) => void;
-  // getPlayer: () => PlayerState;
-  // getAi: () => PlayerState;
-  // drawCards: (amount: number) => void;
+  // Game/World Actions
+  initializeGame: () => void;
+  _syncStateFromWorld: (world: World) => void;
 
-  // UI Slice Actions
+  // UI Actions
   initiatePlaceSigni: (cardUuid: string) => void;
   cancelPlayerAction: () => void;
   openZoneViewer: () => void;
   closeZoneViewer: () => void;
   openLrigDeckViewerForAssist: (zoneIndex: number) => void;
   closeLrigDeckViewer: () => void;
-  // setMustDiscard: (mustDiscard: boolean) => void; // <-- XÓA ACTION NÀY
 }
 
-// Đây sẽ là interface tổng hợp, bao gồm cả state và các action từ các slice
-export interface GameStore extends GameState, GameActions {
-  game: any; // Thêm game instance
-}
+// Interface tổng hợp
+export interface GameStore extends GameState, GameActions {}

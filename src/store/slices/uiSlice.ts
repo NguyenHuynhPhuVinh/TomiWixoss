@@ -6,14 +6,12 @@ export interface UiSlice {
   playerAction: GameStore["playerAction"];
   isZoneViewerOpen: GameStore["isZoneViewerOpen"];
   viewingLrigDeckForGrow: GameStore["viewingLrigDeckForGrow"];
-  mustDiscard: boolean; // <-- THÊM LẠI
   initiatePlaceSigni: GameStore["initiatePlaceSigni"];
   cancelPlayerAction: GameStore["cancelPlayerAction"];
   openZoneViewer: GameStore["openZoneViewer"];
   closeZoneViewer: GameStore["closeZoneViewer"];
   openLrigDeckViewerForAssist: GameStore["openLrigDeckViewerForAssist"];
   closeLrigDeckViewer: GameStore["closeLrigDeckViewer"];
-  // setMustDiscard: (mustDiscard: boolean) => void; // <-- XÓA ACTION NÀY
 }
 
 export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
@@ -22,7 +20,6 @@ export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
   playerAction: null,
   isZoneViewerOpen: false,
   viewingLrigDeckForGrow: null,
-  mustDiscard: false, // <-- THÊM LẠI VÌ CẦN CHO STORE
 
   initiatePlaceSigni: (cardUuid) => {
     console.log(
@@ -49,6 +46,4 @@ export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
   closeLrigDeckViewer: () => {
     set({ isZoneViewerOpen: false, viewingLrigDeckForGrow: null });
   },
-
-  // setMustDiscard: (mustDiscard) => set({ mustDiscard }), // <-- XÓA IMPLEMENTATION NÀY
 });
