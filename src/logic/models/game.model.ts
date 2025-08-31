@@ -33,6 +33,11 @@ export class Game {
     let nextPhaseIndex = currentPhaseIndex + 1;
     let newTurn = this.turn;
 
+    // Bỏ qua Attack Phase ở lượt đầu tiên của người chơi đầu tiên
+    if (this.turn === 1 && this.phase === "main") {
+      nextPhaseIndex = TURN_PHASES.indexOf("end");
+    }
+
     if (nextPhaseIndex >= TURN_PHASES.length) {
       nextPhaseIndex = 0;
       newTurn += 1;
