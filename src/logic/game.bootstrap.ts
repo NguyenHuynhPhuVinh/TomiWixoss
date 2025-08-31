@@ -19,20 +19,20 @@ export function initializeWixossEngine() {
   // ============================================
 
   // Đăng ký tất cả các System đặc thù của Wixoss theo thứ tự quan trọng
-  // Các system xử lý action của người chơi nên ở trên
-  gameManager.registerSystem(new SetupSystem());
-  gameManager.registerSystem(new EnerSystem());
-  gameManager.registerSystem(new GrowSystem());
-  gameManager.registerSystem(new PlaceSigniSystem());
-  gameManager.registerSystem(new DiscardSystem());
+  // Các system xử lý action của người chơi
+  gameManager.registerSystem(new SetupSystem(), "action");
+  gameManager.registerSystem(new EnerSystem(), "action");
+  gameManager.registerSystem(new GrowSystem(), "action");
+  gameManager.registerSystem(new PlaceSigniSystem(), "action");
+  gameManager.registerSystem(new DiscardSystem(), "action");
 
-  // Các system tự động ở dưới
-  gameManager.registerSystem(new UpSystem());
-  gameManager.registerSystem(new DrawSystem());
-  gameManager.registerSystem(new PhaseSystem());
+  // Các system tự động
+  gameManager.registerSystem(new UpSystem(), "loop");
+  gameManager.registerSystem(new DrawSystem(), "loop");
+  gameManager.registerSystem(new PhaseSystem(), "loop");
 
   // LUÔN ĐĂNG KÝ SIDEEFFECTSYSTEM CUỐI CÙNG
-  gameManager.registerSystem(new SideEffectSystem());
+  gameManager.registerSystem(new SideEffectSystem(), "loop");
 
   // Khởi tạo các system sau khi đăng ký xong
   gameManager.initializeSystems();

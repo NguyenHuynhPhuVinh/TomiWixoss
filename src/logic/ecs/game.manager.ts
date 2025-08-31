@@ -37,7 +37,9 @@ class GameManager {
 
   private actionQueue: GameAction[] = [];
 
-  // Chỉ còn một danh sách system duy nhất
+  // Phân loại systems
+  private actionSystems: System[] = [];
+  private loopSystems: System[] = [];
   private systems: System[] = [];
 
   public createNewGame(): World {
@@ -47,16 +49,22 @@ class GameManager {
   }
 
   // Thêm phương thức đăng ký system
-  public registerSystem(system: System): void {
-    this.systems.push(system);
+  public registerSystem(system: System, type: "action" | "loop"): void {
+    if (type === "action") {
+      this.actionSystems.push(system);
+    } else {
+      this.loopSystems.push(system);
+    }
   }
 
   // Khởi tạo các system sau khi đã đăng ký xong
   public initializeSystems(): void {
     const dependencies: SystemDependencies = { eventBus, gameManager: this };
-    for (const system of this.systems) {
+    for (const system of [...this.actionSystems, ...this.loopSystems]) {
       system.setup?.(dependencies);
     }
+
+    this.systems = [...this.actionSystems, ...this.loopSystems];
 
     // Đăng ký listener cho các event hệ thống
     eventBus.on(GameEvent.STOP_GAME_LOOP, () => {
@@ -98,33 +106,28 @@ class GameManager {
   }
 
   private loop() {
-    if (!this.world || !this.isLooping) {
+    if (!this.world) return;
+    if (!this.isLooping) {
       this.notifyUpdate();
       return;
     }
 
-    // === TOÀN BỘ LOGIC LOOP BÂY GIỜ NẰM TRONG PRODUCE ===
-    const nextWorldState = produce(this.world, (draftWorld) => {
-      const globalState = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        GlobalStateComponent
-      )!;
-      const effectStack = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        EffectStackComponent
-      )!;
-      const actionRequest = draftWorld.getComponent(
-        GLOBAL_ENTITY,
-        ActionRequestComponent
-      )!;
+    let nextWorldState = this.world;
+    const effectStack = nextWorldState.getComponent(
+      GLOBAL_ENTITY,
+      EffectStackComponent
+    )!;
 
-      // 1. Ưu tiên xử lý Stack
-      if (effectStack.stack.length > 0) {
-        globalState.engineState = "RESOLVING_STACK";
+    // --- LOGIC VÒNG LẶP MỚI, TUẦN TỰ TUYỆT ĐỐI ---
 
-        // TODO: Logic hỏi người chơi có muốn phản ứng không
-
-        const effectToResolve = effectStack.stack.pop()!;
+    // Ưu tiên 1: Xử lý MỘT hiệu ứng từ Stack
+    if (effectStack.stack.length > 0) {
+      nextWorldState = produce(nextWorldState, (draftWorld) => {
+        const stack = draftWorld.getComponent(
+          GLOBAL_ENTITY,
+          EffectStackComponent
+        )!.stack;
+        const effectToResolve = stack.pop()!;
         console.log(
           `%cRESOLVING EFFECT: ${effectToResolve.type}`,
           "color: #1ABC9C",
@@ -133,44 +136,47 @@ class GameManager {
 
         const resolver = effectResolverMap[effectToResolve.type];
         if (resolver) {
-          // resolver bây giờ sẽ thay đổi trực tiếp trên `draftWorld`
           resolver.resolve(draftWorld as World, effectToResolve.payload);
         } else {
           console.warn(
             `No resolver found for effect type: ${effectToResolve.type}`
           );
         }
-      }
-      // 2. Nếu Stack rỗng, xử lý Action Queue
-      else if (this.actionQueue.length > 0) {
-        globalState.engineState = "IDLE";
-        const action = this.actionQueue.shift()!;
-        console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
+      });
+    }
+    // Ưu tiên 2: (Nếu Stack rỗng) Xử lý MỘT hành động từ Queue
+    else if (this.actionQueue.length > 0) {
+      const action = this.actionQueue.shift()!;
+      console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
 
+      nextWorldState = produce(nextWorldState, (draftWorld) => {
+        const actionRequest = draftWorld.getComponent(
+          GLOBAL_ENTITY,
+          ActionRequestComponent
+        )!;
         actionRequest.request = action;
 
-        // Chạy các system để xử lý action.
-        // Các system này bây giờ thay đổi trực tiếp trên draftWorld
+        // Chạy các system để xử lý action
         for (const system of this.systems) {
           system.update(draftWorld as World);
         }
 
-        actionRequest.request = null; // Dọn dẹp request sau khi xử lý
-      }
-      // 3. Nếu không có gì cả, chạy các system tự động
-      else {
-        globalState.engineState = "IDLE";
-
-        // Chạy các system tự động
+        // Dọn dẹp request ngay sau khi xử lý
+        actionRequest.request = null;
+      });
+    }
+    // Ưu tiên 3: (Nếu cả hai đều rỗng) Chạy các system tự động
+    else {
+      nextWorldState = produce(nextWorldState, (draftWorld) => {
         for (const system of this.systems) {
           system.update(draftWorld as World);
         }
-      }
-    });
-    // ===================================================
+      });
+    }
+    // ===========================================
 
     this.world = nextWorldState;
-    this.processSideEffects(); // Vẫn cần chạy sau khi world mới được tạo
+    this.processSideEffects();
     this.notifyUpdate();
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }

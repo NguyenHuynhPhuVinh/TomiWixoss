@@ -165,12 +165,23 @@ export default function Hand({ onCardSelect }: HandProps) {
             const isSelectedForPreview =
               phase !== "mulligan" && selectedCardUuid === card.uuid;
 
+            // === THÊM GUARD CLAUSE ĐỂ TRÁNH LỖI NaN ===
+            const numCards = hand.length;
+            if (numCards === 0) return null; // Tránh chia cho 0
+            // ========================================
+
             // ... logic transform ...
             const centerIndex = (numCards - 1) / 2;
             const distanceFromCenter = index - centerIndex;
-            const transform = `translateX(${
-              distanceFromCenter * 60
-            }px) rotate(${distanceFromCenter * 4}deg)`;
+
+            // Kiểm tra lại để chắc chắn không có NaN
+            const translateX = isNaN(distanceFromCenter)
+              ? 0
+              : distanceFromCenter * 60;
+            const rotateZ = isNaN(distanceFromCenter)
+              ? 0
+              : distanceFromCenter * 4;
+            const transform = `translateX(${translateX}px) rotate(${rotateZ}deg)`;
 
             return (
               <motion.div
