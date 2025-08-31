@@ -2,77 +2,28 @@
 "use client";
 import useGameStore from "@/store/gameStore";
 import { Button } from "./button";
+import { useStore } from "zustand";
 
 export default function GameController() {
-  const phase = useGameStore((state) => state.phase);
-  const turn = useGameStore((state) => state.turn);
-  const startGame = useGameStore((state) => state.startGame);
-  const goToNextPhase = useGameStore((state) => state.goToNextPhase);
-  const drawCard = useGameStore((state) => state.drawCard);
+  const gameStarted = useStore(useGameStore, (state) => state.gameStarted);
+  const setupDecks = useStore(useGameStore, (state) => state.setupDecks);
 
-  const renderContent = () => {
-    switch (phase) {
-      case "pre_game":
-        return (
-          <>
-            <p className="text-muted-foreground mb-4">
-              Chào mừng đến với TomiWixoss - Chế độ Sandbox.
-            </p>
-            <Button onClick={startGame} className="w-full">
-              Bắt đầu Game
-            </Button>
-          </>
-        );
-      case "setup":
-        return (
-          <>
-            <p className="text-muted-foreground mb-4">
-              Click vào Main Deck hoặc LRIG Deck để xem và chọn bài đặt.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Sau đó click vào vùng trống trên sân để đặt bài.
-            </p>
-          </>
-        );
-      case "draw":
-        const amountToDraw = turn === 1 ? 1 : 2;
-        return (
-          <>
-            <h3 className="text-lg font-bold">Turn {turn}</h3>
-            <p className="text-muted-foreground mb-2">Draw Phase</p>
-            <Button
-              onClick={() => drawCard(amountToDraw)}
-              className="w-full mb-2"
-            >
-              Rút {amountToDraw} lá
-            </Button>
-            <Button
-              onClick={goToNextPhase}
-              variant="outline"
-              className="w-full"
-            >
-              Kết thúc Phase
-            </Button>
-          </>
-        );
-
-      default: // Các phase còn lại
-        const phaseText = phase.charAt(0).toUpperCase() + phase.slice(1);
-        return (
-          <>
-            <h3 className="text-lg font-bold">Turn {turn}</h3>
-            <p className="text-muted-foreground mb-4">{phaseText} Phase</p>
-            <Button onClick={goToNextPhase} className="w-full">
-              Kết thúc Phase
-            </Button>
-          </>
-        );
-    }
-  };
+  // Nếu game đã bắt đầu, không hiển thị gì cả
+  if (gameStarted) {
+    return null;
+  }
 
   return (
-    <div className="absolute top-4 right-4 bg-card p-4 rounded-lg shadow-lg z-10 border w-52 text-center pointer-events-auto">
-      {renderContent()}
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card p-6 rounded-lg shadow-lg z-10 border text-center pointer-events-auto">
+      <h2 className="text-2xl font-bold mb-2 text-card-foreground">
+        TomiWixoss
+      </h2>
+      <p className="text-muted-foreground mb-6">
+        Sẵn sàng để bắt đầu một trận đấu.
+      </p>
+      <Button onClick={setupDecks} className="w-full" size="lg">
+        Chuẩn bị
+      </Button>
     </div>
   );
 }
