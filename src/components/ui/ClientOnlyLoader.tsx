@@ -12,7 +12,7 @@ import { world } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
 import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex";
 import { startGameLoop } from "@/logic/game.engine.miniplex";
-// import { confirmLrigSelectionAction, growLrigAction } from "@/logic/actions.miniplex"; // Chưa có
+import { confirmLrigSelectionAction } from "@/logic/actions.miniplex";
 
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 
@@ -163,13 +163,7 @@ export default function ClientOnlyLoader() {
         fullLrigDeck={lrigDeckForSelector}
         onConfirm={(centerUuid, assist1Uuid, assist2Uuid) => {
           // Gọi action mới
-          // confirmLrigSelectionAction(centerUuid, [assist1Uuid, assist2Uuid]);
-          console.log(
-            "Confirm LRIG selection:",
-            centerUuid,
-            assist1Uuid,
-            assist2Uuid
-          );
+          confirmLrigSelectionAction(centerUuid, [assist1Uuid, assist2Uuid]);
         }}
       />
       <DeckViewer

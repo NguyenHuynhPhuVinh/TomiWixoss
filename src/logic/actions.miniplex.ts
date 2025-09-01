@@ -172,3 +172,111 @@ export function updateMulliganSelectionAction(entityUuid: string) {
     globalState.mulliganSelection = [...currentSelection, entityUuid];
   }
 }
+
+/**
+ * Hành động: Bắt đầu quá trình chuẩn bị game.
+ * Chuyển từ phase 'pre_game' sang 'selecting_lrigs'.
+ */
+export function startSetupAction() {
+  const { globalState, sideEffectQueue } = globalEntity;
+  if (!globalState || globalState.phase !== "pre_game") {
+    return; // Không làm gì nếu không ở đúng phase
+  }
+
+  // Logic từ startSetupReducer cũ
+  globalState.phase = "selecting_lrigs";
+
+  // Gửi side effect để ghi log
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: "Bắt đầu chuẩn bị trận đấu...",
+    logType: "system",
+  });
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: "Chọn LRIG để bắt đầu trận đấu.",
+    logType: "system",
+  });
+}
+
+/**
+ * Hành động: Xác nhận lựa chọn LRIG và bắt đầu game.
+ * @param centerUuid UUID của Center LRIG
+ * @param assistUuids Mảng UUID của 2 Assist LRIG
+ */
+export function confirmLrigSelectionAction(
+  centerUuid: string,
+  assistUuids: string[]
+) {
+  const { globalState, sideEffectQueue } = globalEntity;
+  if (!globalState || globalState.phase !== "selecting_lrigs") return;
+
+  const lrigsToPlace = [assistUuids[0], centerUuid, assistUuids[1]];
+
+  lrigsToPlace.forEach((uuid, index) => {
+    const entities = world.with("uuid", "zone", "status");
+    let entity: Entity | undefined;
+    for (const e of entities) {
+      if (e.uuid === uuid) {
+        entity = e;
+        break;
+      }
+    }
+    if (entity && entity.zone && entity.status) {
+      entity.zone.zone = "lrigZone";
+      entity.zone.index = index;
+      entity.status.isFaceUp = true;
+    }
+  });
+
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: "Đã chọn LRIG. Rút 5 lá bài khởi đầu.",
+    logType: "action",
+  });
+
+  // Rút 5 lá bài đầu tiên (logic từ setup.reducer cũ)
+  drawInitialHand(5);
+
+  globalState.phase = "mulligan";
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: "Bắt đầu giai đoạn Mulligan.",
+    logType: "system",
+  });
+}
+
+// --- Helper Functions (thêm vào cuối file) ---
+
+function getTopCardsOfDeck(amount: number): Entity[] {
+  const mainDeckEntities = Array.from(
+    world.with("zone").where((e) => e.zone.zone === "mainDeck")
+  );
+
+  mainDeckEntities.sort((a, b) => b.zone.index - a.zone.index);
+  return mainDeckEntities.slice(0, amount);
+}
+
+function reindexDeck() {
+  const mainDeckEntities = Array.from(
+    world.with("zone").where((e) => e.zone.zone === "mainDeck")
+  );
+  mainDeckEntities.sort((a, b) => a.zone.index - b.zone.index);
+  mainDeckEntities.forEach((entity, i) => {
+    if (entity.zone) {
+      entity.zone.index = i;
+    }
+  });
+}
+
+function drawInitialHand(amount: number) {
+  const cardsToDraw = getTopCardsOfDeck(amount);
+  cardsToDraw.forEach((entity) => {
+    if (entity.zone && entity.status) {
+      entity.zone.zone = "hand";
+      entity.status.isFaceUp = true;
+      entity.zone.index = 0; // index không quan trọng trong tay
+    }
+  });
+  reindexDeck();
+}

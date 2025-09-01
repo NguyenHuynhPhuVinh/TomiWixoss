@@ -18,7 +18,7 @@ import { GamePhase } from "@/types/game";
 // --- THAY ĐỔI LỚN ---
 import { world, globalEntity } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
-import { advancePhaseAction } from "@/logic/actions.miniplex";
+import { advancePhaseAction, startSetupAction } from "@/logic/actions.miniplex";
 
 export default function GameController() {
   const phase = useStore(useGameStore, (state) => state.phase);
@@ -68,9 +68,7 @@ export default function GameController() {
     switch (phase) {
       case "pre_game":
         // Nút này bây giờ sẽ dispatch action
-        return (
-          <Button onClick={() => console.log("Start setup")}>Chuẩn bị</Button>
-        );
+        return <Button onClick={startSetupAction}>Chuẩn bị</Button>;
 
       case "selecting_lrigs":
         // Giao diện này bây giờ sẽ được hiển thị đúng
@@ -212,11 +210,7 @@ export default function GameController() {
         <p className="text-muted-foreground mb-6">
           Sẵn sàng để bắt đầu một trận đấu.
         </p>
-        <Button
-          onClick={() => console.log("Start setup")}
-          className="w-full"
-          size="lg"
-        >
+        <Button onClick={startSetupAction} className="w-full" size="lg">
           Chuẩn bị
         </Button>
       </div>
