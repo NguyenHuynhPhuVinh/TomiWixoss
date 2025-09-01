@@ -8,8 +8,13 @@ import { Entity } from "../types.miniplex";
 import { GameEvent } from "../../events.types";
 import eventBus from "../../event.bus";
 
+let isInitialized = false; // <-- Biến cờ
+
 // System bây giờ là một hàm khởi tạo
 export function initializeScriptingSystem() {
+  if (isInitialized) return; // <-- Ngăn chặn chạy lại
+  isInitialized = true;
+
   console.log("Initializing Scripting System...");
   // Đăng ký lắng nghe các sự kiện game
   eventBus.on(GameEvent.CARD_PLAYED, onCardPlayed);

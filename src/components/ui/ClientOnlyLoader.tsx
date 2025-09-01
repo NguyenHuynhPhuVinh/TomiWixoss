@@ -20,6 +20,12 @@ import {
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 import { bootstrapGame } from "@/logic/game.bootstrap"; // <-- IMPORT MỚI
 
+// --- CHẠY BOOTSTRAP NGAY LẬP TỨC KHI FILE NÀY ĐƯỢC LOAD ---
+// Điều này đảm bảo nó chỉ chạy một lần duy nhất phía client.
+if (typeof window !== "undefined") {
+  bootstrapGame();
+}
+
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
 });
@@ -78,9 +84,6 @@ export default function ClientOnlyLoader() {
   useEffect(() => {
     // Hàm này chỉ chạy một lần khi component mount
     const init = async () => {
-      // 1. Khởi tạo engine (Lua, systems, game loop)
-      await bootstrapGame();
-
       // 2. Nạp dữ liệu deck vào game
       initializeGame();
     };

@@ -11,7 +11,8 @@ let isInitialized = false;
  * Chỉ nên được gọi MỘT LẦN khi ứng dụng bắt đầu.
  */
 export async function bootstrapGame() {
-  if (isInitialized) return;
+  if (isInitialized) return; // <-- Ngăn chặn chạy lại
+  isInitialized = true; // <-- Đặt cờ ngay lập tức
 
   console.log("--- Bootstrapping Game Engine ---");
 
@@ -27,6 +28,5 @@ export async function bootstrapGame() {
   // 4. Bắt đầu vòng lặp game
   startGameLoop();
 
-  isInitialized = true;
   console.log("--- Game Engine Bootstrapped Successfully ---");
 }

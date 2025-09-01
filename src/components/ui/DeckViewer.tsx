@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription, // <-- Thêm import
 } from "@/components/ui/dialog";
 import { CardInstance } from "@/types/game";
 import Image from "next/image";
@@ -31,6 +32,10 @@ export default function DeckViewer({
           <DialogTitle>
             {title} ({cards.length} lá)
           </DialogTitle>
+          {/* THÊM DÒNG NÀY */}
+          <DialogDescription>
+            Chọn một lá bài để thực hiện hành động.
+          </DialogDescription>
         </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-4">
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
