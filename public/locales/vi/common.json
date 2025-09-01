@@ -1,6 +1,57 @@
 {
-  "welcome_title": "TomiWixoss",
-  "welcome_subtitle": "Sẵn sàng để bắt đầu một trận đấu.",
-  "prepare_button": "Chuẩn bị",
-  "game_log_title": "Log Trận Đấu"
+  "appName": "TomiWixoss",
+  "languages": {
+    "vi": "VI",
+    "en": "EN"
+  },
+  "gameController": {
+    "welcomeSubtitle": "Sẵn sàng để bắt đầu một trận đấu.",
+    "prepareButton": "Chuẩn bị",
+    "selectingLrigs": "Vui lòng chọn LRIG...",
+    "phaseTitle": "Lượt {{turn}} - {{phase}} Phase",
+    "autoPhase": "Đang tự động thực hiện...",
+    "enerCharged": "Đã nạp Ener.",
+    "enerPrompt": "Chọn một lá bài trên tay hoặc trên sân để nạp Ener.",
+    "nextPhaseButton": "Phase Tiếp theo",
+    "mulliganPrompt": "Chọn các lá bài trên tay muốn đổi.",
+    "mulliganSelected": "Đã chọn: {{count}}",
+    "mulliganConfirm": "Xác nhận đổi bài",
+    "growDone": "Đã Grow.",
+    "viewLrigDeck": "Xem LRIG Deck",
+    "endPhaseDiscard": "Tay bạn có {{handSize}} lá. Hãy bỏ {{discardCount}} lá.",
+    "endTurnButton": "Kết thúc Lượt",
+    "placeSigniPrompt": "Chọn một ô SIGNI trống trên sân...",
+    "cancelButton": "Hủy"
+  },
+  "gameLog": {
+    "title": "Log Trận Đấu"
+  },
+  "contextMenu": {
+    "chargeEner": "Nạp Ener",
+    "playSigni": "Đặt SIGNI",
+    "discard": "Bỏ bài"
+  },
+  "deckViewer": {
+    "title_center": "Chọn Center LRIG để Grow",
+    "title_assist": "Chọn Assist LRIG để Grow",
+    "description": "Chọn một lá bài để thực hiện hành động.",
+    "cardCount": "{{count}} lá"
+  },
+  "lrigSelector": {
+    "title": "Chọn LRIG Khởi đầu",
+    "description": "Chọn 1 Center LRIG (có dòng tiến hóa) và 2 Assist LRIG.",
+    "centerLabel": "Center LRIG",
+    "assistLabel_plural": "Chọn 2 Assist LRIG",
+    "assistLabel_singular": "Chọn thêm 1 Assist LRIG",
+    "assistLabel_done": "Đã chọn 2 Assist LRIG",
+    "confirmButton": "Xác nhận và Bắt đầu"
+  },
+  "card": {
+    "levelLabel": "Lv",
+    "ability_Enter": "[Vào sân]",
+    "ability_Action": "[Hành động]",
+    "ability_Auto": "[Tự động]",
+    "ability_Const": "[Thường trực]",
+    "ability_Guard": "[Guard]"
+  }
 }

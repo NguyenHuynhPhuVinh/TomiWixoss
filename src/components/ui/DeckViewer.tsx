@@ -1,41 +1,47 @@
-// src/components/ui/DeckViewer.tsx
 "use client";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription, // <-- Thêm import
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { CardInstance } from "@/types/game";
 import Image from "next/image";
+import { useTranslation } from "react-i18next"; // Import hook
 
 interface DeckViewerProps {
-  title: string;
+  // title prop giờ có thể bỏ nếu muốn, vì chúng ta sẽ tự tính
   cards: CardInstance[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onCardClick: (card: CardInstance) => void;
+  // Thêm prop để xác định context
+  context: "center_grow" | "assist_grow";
 }
 
 export default function DeckViewer({
-  title,
   cards,
   isOpen,
   onOpenChange,
   onCardClick,
+  context,
 }: DeckViewerProps) {
+  const { t } = useTranslation(); // Sử dụng hook
+
+  const dialogTitle =
+    context === "center_grow"
+      ? t("deckViewer.title_center")
+      : t("deckViewer.title_assist");
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {title} ({cards.length} lá)
+            {dialogTitle} ({t("deckViewer.cardCount", { count: cards.length })})
           </DialogTitle>
-          {/* THÊM DÒNG NÀY */}
-          <DialogDescription>
-            Chọn một lá bài để thực hiện hành động.
-          </DialogDescription>
+          <DialogDescription>{t("deckViewer.description")}</DialogDescription>
         </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-4">
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">

@@ -1,6 +1,7 @@
-// src/components/ui/ContextMenu.tsx
+"use client";
 import { motion } from "framer-motion";
 import { Button } from "./button";
+import { useTranslation } from "react-i18next"; // Import hook
 
 interface ContextMenuProps {
   onDiscard?: () => void; // Thay đổi onDiscard thành optional
@@ -19,6 +20,8 @@ export default function ContextMenu({
   showPlaySigni,
   showDiscard,
 }: ContextMenuProps) {
+  const { t } = useTranslation(); // Sử dụng hook
+
   return (
     <motion.div
       className="absolute -top-12 left-1/2 -translate-x-1/2 w-max bg-card border rounded-md shadow-lg p-1"
@@ -33,7 +36,7 @@ export default function ContextMenu({
           onClick={onChargeEner}
           className="mr-1"
         >
-          Charge Ener
+          {t("contextMenu.chargeEner")}
         </Button>
       )}
       {showPlaySigni && onPlaySigni && (
@@ -43,12 +46,12 @@ export default function ContextMenu({
           onClick={onPlaySigni}
           className="mr-1"
         >
-          Play SIGNI
+          {t("contextMenu.playSigni")}
         </Button>
       )}
       {showDiscard && onDiscard && (
         <Button variant="destructive" size="sm" onClick={onDiscard}>
-          Bỏ bài
+          {t("contextMenu.discard")}
         </Button>
       )}
     </motion.div>

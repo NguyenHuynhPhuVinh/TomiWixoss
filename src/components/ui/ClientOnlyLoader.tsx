@@ -194,11 +194,7 @@ export default function ClientOnlyLoader() {
         }}
       />
       <DeckViewer
-        title={
-          viewingLrigDeckForGrow
-            ? "Chọn Assist LRIG để Grow"
-            : "Chọn Center LRIG để Grow"
-        }
+        context={viewingLrigDeckForGrow ? "assist_grow" : "center_grow"}
         cards={growOptions}
         isOpen={isZoneViewerOpen}
         onOpenChange={closeZoneViewer}
@@ -206,8 +202,7 @@ export default function ClientOnlyLoader() {
           const zoneIndex =
             phase === GamePhase.GROW
               ? 1
-              : viewingLrigDeckForGrow!.forAssistIndex!; // <-- Sử dụng hằng số
-          // Gọi action mới
+              : viewingLrigDeckForGrow!.forAssistIndex!;
           growLrigAction(card.uuid, zoneIndex);
         }}
       />

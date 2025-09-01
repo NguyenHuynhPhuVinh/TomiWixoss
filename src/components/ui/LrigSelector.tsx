@@ -1,6 +1,5 @@
-// src/components/ui/LrigSelector.tsx
 "use client";
-import { useState, useMemo, useEffect } from "react"; // Thêm useEffect
+import { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,7 @@ import { CardInstance } from "@/types/game";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next"; // Import hook
 
 interface LrigSelectorProps {
   isOpen: boolean;
@@ -30,6 +30,7 @@ export default function LrigSelector({
   fullLrigDeck,
   onConfirm,
 }: LrigSelectorProps) {
+  const { t } = useTranslation(); // Sử dụng hook
   const [selectedCenter, setSelectedCenter] = useState<string | null>(null);
   const [selectedAssists, setSelectedAssists] = useState<string[]>([]);
 
@@ -69,23 +70,23 @@ export default function LrigSelector({
 
   const isSelectionComplete = selectedCenter && selectedAssists.length === 2;
   const getAssistLabel = () => {
-    if (selectedAssists.length === 0) return "Chọn 2 Assist LRIG";
-    if (selectedAssists.length === 1) return "Chọn thêm 1 Assist LRIG";
-    return "Đã chọn 2 Assist LRIG";
+    if (selectedAssists.length === 0)
+      return t("lrigSelector.assistLabel_plural");
+    if (selectedAssists.length === 1)
+      return t("lrigSelector.assistLabel_singular");
+    return t("lrigSelector.assistLabel_done");
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="max-w-3xl pointer-events-auto">
         <DialogHeader>
-          <DialogTitle>Chọn LRIG Khởi đầu</DialogTitle>
-          <DialogDescription>
-            Chọn 1 Center LRIG (có dòng tiến hóa) và 2 Assist LRIG.
-          </DialogDescription>
+          <DialogTitle>{t("lrigSelector.title")}</DialogTitle>
+          <DialogDescription>{t("lrigSelector.description")}</DialogDescription>
         </DialogHeader>
 
         <div>
-          <h4 className="font-bold mb-2">Center LRIG</h4>
+          <h4 className="font-bold mb-2">{t("lrigSelector.centerLabel")}</h4>
           <div className="flex gap-4 p-2 bg-muted/50 rounded-lg">
             {centerCandidates.map((card) => {
               const isSelected = selectedCenter === card.uuid;
@@ -156,7 +157,7 @@ export default function LrigSelector({
               onConfirm(selectedCenter!, selectedAssists[0], selectedAssists[1])
             }
           >
-            Xác nhận và Bắt đầu
+            {t("lrigSelector.confirmButton")}
           </Button>
         </DialogFooter>
       </DialogContent>

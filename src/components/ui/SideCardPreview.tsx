@@ -2,12 +2,15 @@
 import { CardInstance } from "@/types/game";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface SideCardPreviewProps {
   card: CardInstance | null;
 }
 
 export default function SideCardPreview({ card }: SideCardPreviewProps) {
+  const { t } = useTranslation();
+
   return (
     <AnimatePresence>
       {card && (
@@ -38,7 +41,9 @@ export default function SideCardPreview({ card }: SideCardPreviewProps) {
             <div className="flex justify-between items-center text-sm text-muted-foreground mb-1">
               <span>
                 {card.type}
-                {card.level !== undefined ? ` - Lv ${card.level}` : ""}
+                {card.level !== undefined
+                  ? ` - ${t("card.levelLabel")} ${card.level}`
+                  : ""}
               </span>
               {card.power !== undefined && (
                 <span className="font-bold text-lg">{card.power}</span>
@@ -55,7 +60,8 @@ export default function SideCardPreview({ card }: SideCardPreviewProps) {
               {card.abilities?.map((ability, index) => (
                 <div key={index} className="border-t pt-2">
                   <p className="font-bold text-primary/80">
-                    [{ability.type}] {ability.timing?.join(", ")}
+                    {t(`card.ability_${ability.type}`)}{" "}
+                    {ability.timing?.join(", ")}
                   </p>
                   <p className="text-sm leading-snug">{ability.description}</p>
                 </div>

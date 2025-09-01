@@ -1,11 +1,7 @@
-// src/components/ui/GameController.tsx
 "use client";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import { Button } from "./button";
-import { useTranslation } from "react-i18next";
-
-// --- THAY ĐỔI LỚN ---
 import { world, globalEntity } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
 import {
@@ -13,74 +9,73 @@ import {
   startSetupAction,
   confirmMulliganAction,
 } from "@/logic/actions.miniplex";
-// === THAY ĐỔI: Import constants ===
 import { GamePhase, Zone } from "@/logic/constants";
-import { cancelPlayerActionInECS } from "@/logic/actions.miniplex"; // <-- Import action mới
+import { cancelPlayerActionInECS } from "@/logic/actions.miniplex";
+import { useTranslation } from "react-i18next"; // Import hook
 
 export default function GameController() {
-  const { t } = useTranslation();
-  // === THAY ĐỔI: Chỉ dùng useStore để trigger re-render ===
-  // Component này sẽ render lại mỗi khi worldVersion thay đổi
+  const { t } = useTranslation(); // Sử dụng hook
   useStore(useGameStore, (state) => state.worldVersion);
 
-  // === THAY ĐỔI: Đọc state trực tiếp từ globalEntity ===
   const phase = globalEntity.globalState?.phase;
   const turn = globalEntity.globalState?.turn;
   const actionTakenInPhase = globalEntity.globalState?.actionTakenInPhase;
   const mulliganSelectionCount =
     globalEntity.globalState?.mulliganSelection.length ?? 0;
-  const playerAction = globalEntity.globalState?.playerAction; // <-- ĐỌC TỪ ĐÂY
+  const playerAction = globalEntity.globalState?.playerAction;
 
-  // Lấy các state/action của UI từ Zustand
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
   const openZoneViewer = useGameStore((state) => state.openZoneViewer);
-  // const playerAction = useStore(useGameStore, (state) => state.playerAction); // <-- KHÔNG CẦN NỮA
-  // const cancelPlayerAction = useStore( // <-- KHÔNG CẦN NỮA
-  //   useGameStore,
-  //   (state) => state.cancelPlayerAction
-  // );
 
   const renderContent = () => {
     if (playerAction?.type === "place_signi") {
       return (
         <>
           <p className="text-sm text-blue-400 mb-2 animate-pulse">
-            Chọn một ô SIGNI trống trên sân...
+            {t("gameController.placeSigniPrompt")}
           </p>
           <Button
-            onClick={cancelPlayerActionInECS} // <-- GỌI TRỰC TIẾP ACTION CỦA ECS
+            onClick={cancelPlayerActionInECS}
             variant="destructive"
             size="sm"
             className="w-full mt-2"
           >
-            Hủy
+            {t("gameController.cancelButton")}
           </Button>
         </>
       );
     }
 
+    const phaseText = phase
+      ? phase.charAt(0).toUpperCase() + phase.slice(1)
+      : "Loading...";
+    const phaseTitle = t("gameController.phaseTitle", {
+      turn: turn,
+      phase: phaseText,
+    });
+
     switch (phase) {
       case GamePhase.PRE_GAME:
-        return <Button onClick={startSetupAction}>Chuẩn bị</Button>;
+        return (
+          <Button onClick={startSetupAction}>
+            {t("gameController.prepareButton")}
+          </Button>
+        );
 
       case GamePhase.SELECTING_LRIGS:
         return (
           <p className="text-muted-foreground animate-pulse">
-            Vui lòng chọn LRIG...
+            {t("gameController.selectingLrigs")}
           </p>
         );
 
       case GamePhase.UP:
       case GamePhase.DRAW:
-        const phaseTextAuto = (phase.charAt(0).toUpperCase() +
-          phase.slice(1)) as string;
         return (
           <>
-            <h3 className="font-bold">
-              Turn {turn} - {phaseTextAuto} Phase
-            </h3>
+            <h3 className="font-bold">{phaseTitle}</h3>
             <p className="text-muted-foreground animate-pulse mt-4">
-              Đang tự động thực hiện...
+              {t("gameController.autoPhase")}
             </p>
           </>
         );
@@ -88,19 +83,21 @@ export default function GameController() {
       case GamePhase.ENER:
         return (
           <>
-            <h3 className="font-bold">Turn {turn} - Ener Phase</h3>
+            <h3 className="font-bold">{phaseTitle}</h3>
             {actionTakenInPhase ? (
-              <p className="text-sm text-green-500 my-2">Đã nạp Ener.</p>
+              <p className="text-sm text-green-500 my-2">
+                {t("gameController.enerCharged")}
+              </p>
             ) : (
               <p className="text-sm text-muted-foreground my-2">
-                Chọn một lá bài trên tay hoặc trên sân để nạp Ener.
+                {t("gameController.enerPrompt")}
               </p>
             )}
             <Button
               onClick={() => advancePhaseAction()}
               className="w-full mt-2"
             >
-              Next Phase
+              {t("gameController.nextPhaseButton")}
             </Button>
           </>
         );
@@ -109,14 +106,16 @@ export default function GameController() {
         return (
           <>
             <p className="text-muted-foreground mb-4">
-              Chọn các lá bài trên tay muốn đổi.
+              {t("gameController.mulliganPrompt")}
               <br />
               <span className="font-bold">
-                Đã chọn: {mulliganSelectionCount}
+                {t("gameController.mulliganSelected", {
+                  count: mulliganSelectionCount,
+                })}
               </span>
             </p>
             <Button onClick={confirmMulliganAction} className="w-full">
-              Xác nhận đổi bài
+              {t("gameController.mulliganConfirm")}
             </Button>
           </>
         );
@@ -124,23 +123,25 @@ export default function GameController() {
       case GamePhase.GROW:
         return (
           <>
-            <h3 className="font-bold">Turn {turn} - Grow Phase</h3>
+            <h3 className="font-bold">{phaseTitle}</h3>
             {actionTakenInPhase ? (
-              <p className="text-sm text-green-500 my-2">Đã Grow.</p>
+              <p className="text-sm text-green-500 my-2">
+                {t("gameController.growDone")}
+              </p>
             ) : (
               <Button
                 onClick={openZoneViewer}
                 className="w-full mt-2"
                 variant="secondary"
               >
-                Xem LRIG Deck
+                {t("gameController.viewLrigDeck")}
               </Button>
             )}
             <Button
               onClick={() => advancePhaseAction()}
               className="w-full mt-2"
             >
-              Next Phase
+              {t("gameController.nextPhaseButton")}
             </Button>
           </>
         );
@@ -155,12 +156,13 @@ export default function GameController() {
           : 0;
         return (
           <>
-            <h3 className="font-bold">Turn {turn} - End Phase</h3>
+            <h3 className="font-bold">{phaseTitle}</h3>
             {mustDiscard && (
               <p className="text-destructive text-sm my-2">
-                Tay bạn có {handSize} lá.
-                <br />
-                Hãy bỏ {handSize - 6} lá.
+                {t("gameController.endPhaseDiscard", {
+                  handSize: handSize,
+                  discardCount: handSize - 6,
+                })}
               </p>
             )}
             <Button
@@ -168,24 +170,19 @@ export default function GameController() {
               className="w-full mt-2"
               disabled={mustDiscard}
             >
-              Kết thúc Lượt
+              {t("gameController.endTurnButton")}
             </Button>
           </>
         );
       default:
-        const phaseText = phase
-          ? phase.charAt(0).toUpperCase() + phase.slice(1)
-          : "Loading...";
         return (
           <>
-            <h3 className="font-bold">
-              Turn {turn} - {phaseText} Phase
-            </h3>
+            <h3 className="font-bold">{phaseTitle}</h3>
             <Button
               onClick={() => advancePhaseAction()}
               className="w-full mt-2"
             >
-              Next Phase
+              {t("gameController.nextPhaseButton")}
             </Button>
           </>
         );
@@ -196,11 +193,13 @@ export default function GameController() {
     return (
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card p-6 rounded-lg shadow-lg z-10 border text-center pointer-events-auto">
         <h2 className="text-2xl font-bold mb-2 text-card-foreground">
-          {t("welcome_title")}
+          {t("appName")}
         </h2>
-        <p className="text-muted-foreground mb-6">{t("welcome_subtitle")}</p>
+        <p className="text-muted-foreground mb-6">
+          {t("gameController.welcomeSubtitle")}
+        </p>
         <Button onClick={startSetupAction} className="w-full" size="lg">
-          {t("prepare_button")}
+          {t("gameController.prepareButton")}
         </Button>
       </div>
     );

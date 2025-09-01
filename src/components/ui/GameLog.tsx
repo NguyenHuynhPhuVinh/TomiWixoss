@@ -22,7 +22,7 @@ export default function GameLog() {
   return (
     <div className="absolute bottom-4 right-4 w-80 h-64 bg-card/70 backdrop-blur-sm border rounded-lg shadow-lg pointer-events-auto flex flex-col">
       <div className="p-2 border-b">
-        <h4 className="font-bold text-center text-sm">{t("game_log_title")}</h4>
+        <h4 className="font-bold text-center text-sm">{t("gameLog.title")}</h4>
       </div>
       {/* 
         SỬ DỤNG LẠI flex-col-reverse:

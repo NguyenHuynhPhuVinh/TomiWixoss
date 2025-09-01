@@ -1,15 +1,13 @@
 "use client";
-
 import { useTranslation } from "react-i18next";
 import { Button } from "./button";
 
 const languages = ["vi", "en"];
 
 export default function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation(); // Lấy thêm t
 
   const changeLanguage = (lng: string) => {
-    // Hàm này sẽ thay đổi ngôn ngữ và tự động lưu vào cookie/localStorage
     i18n.changeLanguage(lng);
   };
 
@@ -22,7 +20,8 @@ export default function LanguageSwitcher() {
           size="sm"
           onClick={() => changeLanguage(lng)}
         >
-          {lng.toUpperCase()}
+          {t(`languages.${lng}`)}{" "}
+          {/* Sử dụng key để có thể dịch tên ngôn ngữ */}
         </Button>
       ))}
     </div>
