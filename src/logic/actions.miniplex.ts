@@ -18,6 +18,7 @@ import {
 // === THAY ĐỔI: Import constants ===
 import { GamePhase, Zone, CardType } from "@/logic/constants";
 import { PlayerActionPayload } from "./ecs/types.miniplex"; // <-- THÊM IMPORT
+import i18n from "@/i18n"; // Import i18next instance để dịch các chuỗi nhỏ
 
 // --- Helper Function ---
 function findEntity(uuid: string): Entity | undefined {
@@ -36,7 +37,7 @@ export function chargeEnerAction(entityUuid: string) {
     // <-- Sử dụng hằng số
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: "Bây giờ không thể nạp Ener.",
+      key: "logs.invalidPhase",
       logType: "info",
     });
     return;
@@ -68,9 +69,18 @@ export function chargeEnerAction(entityUuid: string) {
   globalState.actionTakenInPhase = true;
 
   // --- Logic từ Saga cũ cũng được chuyển vào đây ---
+  // Dịch nguồn trước khi gửi đi
+  const sourceKey = source === "tay" ? "hand" : "field";
+  const sourceText = i18n.t(`logs.enerChargeSource.${sourceKey}`);
+
+  // Gửi LOG CÓ CẤU TRÚC
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: `Nạp Ener từ ${source}: ${entityToCharge.cardInfo.data.name}.`,
+    key: "logs.enerCharge",
+    payload: {
+      source: sourceText,
+      cardName: entityToCharge.cardInfo.data.name,
+    },
     logType: "action",
   });
 }
@@ -104,7 +114,8 @@ export function discardCardAction(entityUuid: string) {
   // Log action
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: `Bỏ bài: ${entityToDiscard.cardInfo.data.name}.`,
+    key: "logs.discard",
+    payload: { cardName: entityToDiscard.cardInfo.data.name },
     logType: "action",
   });
 
@@ -156,7 +167,11 @@ export function advancePhaseAction() {
 
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: `Bắt đầu ${nextPhase} Phase. (Turn ${globalState.turn})`,
+    key: "logs.phaseChange",
+    payload: {
+      turn: globalState.turn,
+      phase: nextPhase.charAt(0).toUpperCase() + nextPhase.slice(1),
+    },
     logType: "system",
   });
 }
@@ -205,12 +220,12 @@ export function startSetupAction() {
   // Gửi side effect để ghi log
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: "Bắt đầu chuẩn bị trận đấu...",
+    key: "logs.setupStart",
     logType: "system",
   });
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: "Chọn LRIG để bắt đầu trận đấu.",
+    key: "logs.selectLrigs",
     logType: "system",
   });
 }
@@ -240,7 +255,7 @@ export function confirmLrigSelectionAction(
 
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: "Đã chọn LRIG. Rút 5 lá bài khởi đầu.",
+    key: "logs.lrigsSelected",
     logType: "action",
   });
 
@@ -250,7 +265,7 @@ export function confirmLrigSelectionAction(
   globalState.phase = GamePhase.MULLIGAN; // <-- Sử dụng hằng số
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: "Bắt đầu giai đoạn Mulligan.",
+    key: "logs.mulliganStart",
     logType: "system",
   });
 }
@@ -268,7 +283,8 @@ export function confirmMulliganAction() {
   if (amountToRedraw > 0) {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: `Đổi ${amountToRedraw} lá bài.`,
+      key: "logs.mulligan.confirm",
+      payload: { count: amountToRedraw },
       logType: "action",
     });
 
@@ -289,7 +305,7 @@ export function confirmMulliganAction() {
   } else {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: "Không đổi bài.",
+      key: "logs.mulligan.skip",
       logType: "info",
     });
   }
@@ -305,7 +321,7 @@ export function confirmMulliganAction() {
   reindexDeck(); // Cập nhật lại index cho deck sau khi chia life cloth
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: "Chia 7 lá Life Cloth.",
+    key: "logs.mulligan.lifeClothSet",
     logType: "system",
   });
 
@@ -317,7 +333,7 @@ export function confirmMulliganAction() {
   globalState.turn = 1;
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: `Bắt đầu Turn 1 - Up Phase`,
+    key: "logs.mulligan.gameStart",
     logType: "system",
   });
 }
@@ -333,7 +349,7 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
     // <-- Sử dụng hằng số
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: "Chỉ có thể đặt SIGNI trong Main Phase.",
+      key: "logs.invalidPhase",
       logType: "info",
     });
     return;
@@ -360,7 +376,8 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
   if (cardLevel > lrigLevel) {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: `Không thể đặt SIGNI: Level quá cao (yêu cầu <= ${lrigLevel}).`,
+      key: "logs.placeSigniError.level",
+      payload: { requiredLevel: lrigLevel },
       logType: "info",
     });
     return;
@@ -377,7 +394,8 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
   if (currentTotalLevel + cardLevel > lrigLimit) {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: `Không thể đặt SIGNI: Vượt quá giới hạn Level trên sân (Limit: ${lrigLimit}).`,
+      key: "logs.placeSigniError.limit",
+      payload: { limit: lrigLimit },
       logType: "info",
     });
     return;
@@ -390,9 +408,11 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
 
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: `Đặt SIGNI: ${cardToPlay.cardInfo.data.name} vào vị trí ${
-      zoneIndex + 1
-    }.`,
+    key: "logs.placeSigni",
+    payload: {
+      cardName: cardToPlay.cardInfo.data.name,
+      position: zoneIndex + 1,
+    },
     logType: "action",
   });
 
@@ -425,7 +445,7 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   if (!isValidChoice) {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: "Mục tiêu Grow không hợp lệ.",
+      key: "logs.growLrigError.invalid",
       logType: "info",
     });
     return; // Dừng lại nếu không hợp lệ
@@ -463,7 +483,7 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   if (!paymentResult.canPay) {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: "Không thể Grow: Không đủ Ener.",
+      key: "logs.growLrigError.cost",
       logType: "info",
     });
     return;
@@ -477,7 +497,8 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   if (paymentResult.paidEner.length > 0) {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: `Trả ${paymentResult.paidEner.length} Ener.`,
+      key: "logs.growLrigCost",
+      payload: { count: paymentResult.paidEner.length },
       logType: "cost",
     });
   }
@@ -510,7 +531,8 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
 
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: `Grow LRIG thành ${targetLrig.cardInfo!.data.name}!`,
+    key: "logs.growLrig",
+    payload: { cardName: targetLrig.cardInfo!.data.name },
     logType: "action",
   });
 
@@ -539,7 +561,8 @@ export function enerChargeAction(amount: number) {
 
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: `Nạp ${cardsToCharge.length} lá bài vào Ener Zone.`,
+    key: "logs.enerCharged",
+    payload: { count: cardsToCharge.length },
     logType: "action",
   });
 }

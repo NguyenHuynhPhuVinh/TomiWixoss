@@ -53,5 +53,47 @@
     "ability_Auto": "[Tự động]",
     "ability_Const": "[Thường trực]",
     "ability_Guard": "[Guard]"
+  },
+  "logs": {
+    "phaseChange": "Bắt đầu {{phase}} Phase. (Lượt {{turn}})",
+    "enerCharge": "Nạp Ener từ {{source}}: {{cardName}}.",
+    "enerChargeSource": {
+      "hand": "tay",
+      "field": "sân"
+    },
+    "discard": "Bỏ bài: {{cardName}}.",
+    "mulligan": {
+      "confirm": "Đổi {{count}} lá bài.",
+      "skip": "Không đổi bài.",
+      "lifeClothSet": "Chia 7 lá Life Cloth.",
+      "gameStart": "Bắt đầu Lượt 1 - Up Phase"
+    },
+    "placeSigni": "Đặt SIGNI: {{cardName}} vào vị trí {{position}}.",
+    "placeSigniError": {
+      "level": "Không thể đặt SIGNI: Level quá cao (yêu cầu ≤ {{requiredLevel}}).",
+      "limit": "Không thể đặt SIGNI: Vượt quá giới hạn Level trên sân (Limit: {{limit}})."
+    },
+    "growLrig": "Grow LRIG thành {{cardName}}!",
+    "growLrigCost": "Trả {{count}} Ener.",
+    "growLrigError": {
+      "cost": "Không thể Grow: Không đủ Ener.",
+      "invalid": "Mục tiêu Grow không hợp lệ."
+    },
+    "upPhase": {
+      "uppedCards": "Up {{count}} lá bài trên sân.",
+      "noCards": "Không có lá bài nào cần Up."
+    },
+    "drawPhase": {
+      "drawCards": "Rút {{count}} lá bài.",
+      "deckEmpty": "Bộ bài đã hết!"
+    },
+    "setupStart": "Bắt đầu chuẩn bị trận đấu...",
+    "selectLrigs": "Chọn LRIG để bắt đầu trận đấu.",
+    "lrigsSelected": "Đã chọn LRIG. Rút 5 lá bài khởi đầu.",
+    "mulliganStart": "Bắt đầu giai đoạn Mulligan.",
+    "enerCharged": "Nạp {{count}} lá bài vào Ener Zone.",
+    "invalidPhase": "Bây giờ không thể thực hiện hành động này.",
+    "discardRequired": "Tay bạn có {{handSize}} lá. Hãy bỏ {{discardCount}} lá.",
+    "noGrowOptions": "Không có lựa chọn Grow hợp lệ."
   }
 }

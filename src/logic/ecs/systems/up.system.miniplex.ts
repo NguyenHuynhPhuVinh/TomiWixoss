@@ -39,13 +39,14 @@ export function upSystem() {
   if (uppedCardCount > 0) {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: `Up ${uppedCardCount} lá bài trên sân.`,
+      key: "logs.upPhase.uppedCards",
+      payload: { count: uppedCardCount },
       logType: "action",
     });
   } else {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: "Không có lá bài nào cần Up.",
+      key: "logs.upPhase.noCards",
       logType: "info",
     });
   }

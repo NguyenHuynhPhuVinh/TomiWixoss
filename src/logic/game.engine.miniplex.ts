@@ -7,6 +7,7 @@ import { initializeScriptingSystem } from "./ecs/systems/scripting.system";
 import { autoPhaseSystem } from "./ecs/systems/autoPhase.system.miniplex";
 import { drawSystem } from "./ecs/systems/draw.system.miniplex"; // <-- THÊM IMPORT
 import { endPhaseSystem } from "./ecs/systems/endPhase.system.miniplex"; // <-- THÊM IMPORT
+import { LogEntry } from "@/store/types";
 
 let animationFrameId: number;
 
@@ -33,7 +34,10 @@ function gameLoop() {
     sideEffectQueue.queue.forEach((effect) => {
       switch (effect.type) {
         case "LOG":
-          addLog(effect.message, effect.logType);
+          // effect giờ là { type: 'LOG', key: '...', payload: {...}, logType: '...' }
+          // Chúng ta cần truyền một object không có 'type'
+          const { type, logType, ...logData } = effect;
+          addLog({ ...logData, type: logType }); // Đổi tên logType thành type
           break;
         case "UPDATE_UI_FLAG":
           if (effect.flag === "mustDiscard") {

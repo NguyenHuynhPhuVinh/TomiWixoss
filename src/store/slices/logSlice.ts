@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 // Nó sẽ chứa cả state và action của riêng nó
 export interface LogSlice {
   logs: LogEntry[];
-  addLog: (message: string, type?: LogType) => void;
+  addLog: (logData: Omit<LogEntry, "id" | "timestamp">) => void;
 }
 
 // Hàm createLogSlice
@@ -21,11 +21,10 @@ export const createLogSlice: StateCreator<GameStore, [], [], LogSlice> = (
   logs: [], // State ban đầu
 
   // Action
-  addLog: (message, type = "info") => {
+  addLog: (logData) => {
     const newLog: LogEntry = {
       id: uuidv4(),
-      message,
-      type,
+      ...logData, // Spread object logData vào
       timestamp: Date.now(),
     };
 

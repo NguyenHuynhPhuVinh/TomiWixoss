@@ -15,7 +15,12 @@ export type Zone = { owner: "player" | "ai"; zone: ZoneKey; index: number };
 export type Underneath = { entities: Entity[] }; // Entity ở đây sẽ là kiểu Entity mới của chúng ta
 
 export type SideEffect =
-  | { type: "LOG"; message: string; logType: LogType }
+  | {
+      type: "LOG";
+      key: string;
+      payload?: Record<string, string | number>;
+      logType: LogType;
+    }
   | {
       type: "UPDATE_UI_FLAG";
       flag: "mustDiscard" | "isZoneViewerOpen";

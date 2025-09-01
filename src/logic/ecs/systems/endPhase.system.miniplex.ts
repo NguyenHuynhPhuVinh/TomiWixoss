@@ -28,7 +28,8 @@ export function endPhaseSystem() {
     const amountToDiscard = handSize - 6;
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: `Tay bạn có ${handSize} lá. Hãy bỏ ${amountToDiscard} lá.`,
+      key: "logs.discardRequired",
+      payload: { handSize, discardCount: amountToDiscard },
       logType: "system",
     });
     sideEffectQueue?.queue.push({

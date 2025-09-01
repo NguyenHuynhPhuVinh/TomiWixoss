@@ -7,7 +7,9 @@ import { GamePhase } from "@/logic/constants";
 export type LogType = "info" | "action" | "system" | "cost";
 export interface LogEntry {
   id: string;
-  message: string;
+  // Thay thế 'message' bằng 'key' và 'payload'
+  key: string; // Key để tra cứu trong file JSON, ví dụ: 'logs.enerCharge'
+  payload?: Record<string, string | number>; // Các biến động, ví dụ: { cardName: 'Servant #' }
   type: LogType;
   timestamp: number;
 }
@@ -39,7 +41,7 @@ export interface GameState {
 // Interface cho ACTIONS của toàn bộ store
 export interface GameActions {
   // Log Actions
-  addLog: (message: string, type?: LogType) => void;
+  addLog: (logData: Omit<LogEntry, "id" | "timestamp">) => void;
 
   // Game/World Actions
   initializeGame: () => void;

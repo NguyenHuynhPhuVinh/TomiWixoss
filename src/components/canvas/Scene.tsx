@@ -247,7 +247,7 @@ export default function Scene() {
                   openLrigDeckViewerForAssist(zone.index);
                 } else {
                   // 3. Nếu không, thông báo cho người chơi
-                  addLog("Không có lựa chọn Grow hợp lệ.", "info");
+                  addLog({ key: "logs.noGrowOptions", type: "info" });
                 }
               }
               // ... các logic click khác ...

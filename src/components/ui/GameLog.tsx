@@ -46,7 +46,7 @@ export default function GameLog() {
               transition={{ duration: 0.3 }}
               className={cn("text-xs mb-1", logTypeClasses[log.type])}
             >
-              {log.message}
+              {t(log.key, log.payload)}
             </motion.p>
           ))}
         </AnimatePresence>

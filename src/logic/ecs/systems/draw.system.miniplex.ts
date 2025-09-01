@@ -52,7 +52,7 @@ export function drawSystem() {
   if (cardsToDraw.length === 0) {
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: "Bộ bài đã hết!",
+      key: "logs.drawPhase.deckEmpty",
       logType: "system",
     });
   } else {
@@ -70,7 +70,8 @@ export function drawSystem() {
 
     sideEffectQueue?.queue.push({
       type: "LOG",
-      message: `Rút ${cardsToDraw.length} lá bài.`,
+      key: "logs.drawPhase.drawCards",
+      payload: { count: cardsToDraw.length },
       logType: "action",
     });
   }
