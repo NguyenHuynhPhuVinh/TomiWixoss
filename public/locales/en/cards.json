@@ -1,0 +1,202 @@
+{
+  "WXDi-D01-001": {
+    "name": "At =Noll=, the Opened Gate",
+    "class": null,
+    "abilities": []
+  },
+  "WXDi-D01-002": {
+    "name": "At =Ett=, the Opened Gate",
+    "class": null,
+    "abilities": []
+  },
+  "WXDi-D01-003": {
+    "name": "At =Tva=, the Opened Gate",
+    "class": null,
+    "abilities": [
+      {
+        "description": "Target three SIGNI on your field with different classes get +3000 power until end of turn."
+      },
+      {
+        "description": "[Ener Charge 2]. If the cards put into your Ener Zone this way do not share a class, [Ener Charge 1]."
+      }
+    ]
+  },
+  "WXDi-D01-004": {
+    "name": "At =Tre=, the Opened Gate",
+    "class": null,
+    "abilities": [
+      {
+        "description": "Target three SIGNI on your field with different classes get +3000 power until end of turn."
+      },
+      {
+        "description": "[Ener Charge 2]. If the cards put into your Ener Zone this way do not share a class, [Ener Charge 1]."
+      }
+    ]
+  },
+  "WXDi-D01-005": {
+    "name": "Tawil =Noll=, Awakened One",
+    "class": null,
+    "abilities": []
+  },
+  "WXDi-D01-006": {
+    "name": "Tawil =Screech=",
+    "class": null,
+    "abilities": [
+      {
+        "description": "Vanish target SIGNI on your opponent's field with power 8000 or less. Draw a card, and discard a card."
+      }
+    ]
+  },
+  "WXDi-D01-007": {
+    "name": "Tawil =Rainbow=",
+    "class": null,
+    "abilities": [
+      {
+        "description": "If there is a red SIGNI on your field, vanish target SIGNI on your opponent's field with power 10000 or less. If there is a blue SIGNI on your field, draw two cards. If there is a green SIGNI on your field, [Ener Charge 2]."
+      }
+    ]
+  },
+  "WXDi-D01-008": {
+    "name": "Umr =Noll=, Key to Salvation",
+    "class": null,
+    "abilities": []
+  },
+  "WXDi-D01-009": {
+    "name": "Umr =Draw=",
+    "class": null,
+    "abilities": [
+      {
+        "description": "Draw two cards."
+      }
+    ]
+  },
+  "WXDi-D01-010": {
+    "name": "Umr =Down=",
+    "class": null,
+    "abilities": [
+      {
+        "description": "Down target SIGNI on your opponent's field."
+      }
+    ]
+  },
+  "WXDi-D01-011": {
+    "name": "Harmonic Call",
+    "class": null,
+    "abilities": [
+      {
+        "description": "You have <Ancient Surprise> on your field with all members level one or more. Look at the top eight cards of your deck. Put up to one level one SIGNI, one level two SIGNI, and one level three SIGNI from among them onto your field. Put the rest on the bottom of your deck in a random order. Then, target level one SIGNI gains [Assassin], target level two SIGNI gains [Lancer], and target level three SIGNI gains [Double Crush] until end of turn."
+      }
+    ]
+  },
+  "WXDi-D01-012": {
+    "name": "Camelopar, Natural Planet",
+    "class": "Nature Tone: Cosmos",
+    "abilities": [
+      {
+        "description": "As long as there are three or more different classes among SIGNI in your Ener Zone, this SIGNI gets +4000 power."
+      }
+    ]
+  },
+  "WXDi-D01-013": {
+    "name": "Sen no Rikyu, Jade General",
+    "class": "Idle Tone: Brave",
+    "abilities": [
+      {
+        "description": "[Ener Charge 3]."
+      }
+    ]
+  },
+  "WXDi-D01-014": {
+    "name": "Zwei =Slow Loris=",
+    "class": "War Tone: Venom",
+    "abilities": [
+      {
+        "description": "As long as there are three or more different classes among SIGNI in your Ener Zone, this SIGNI gets +5000 power."
+      },
+      {
+        "description": "Another target SIGNI on your field with power 15000 or more gains [Lancer] until end of turn."
+      }
+    ]
+  },
+  "WXDi-D01-015": {
+    "name": "Tobiel, Full Armed",
+    "class": "War Tone: Armed",
+    "abilities": [
+      {
+        "description": "Whenever this SIGNI attacks, another target SIGNI on your field gets +5000 power until end of turn."
+      },
+      {
+        "description": "Discard two cards: Draw two cards."
+      },
+      {
+        "description": "Choose one - 1. Vanish target upped SIGNI on your opponent's field. 2. Draw a card."
+      }
+    ]
+  },
+  "WXDi-D01-016": {
+    "name": "Assylen, Natural Crystal",
+    "class": "Nature Tone: Jewel",
+    "abilities": [
+      {
+        "description": "Whenever this SIGNI attacks, if its power is 15000 or more, your opponent discards a card. If its power is 20000 or more, your opponent instead discards a card at random."
+      },
+      {
+        "description": "Down target SIGNI on your opponent's field and freeze it. Draw a card."
+      }
+    ]
+  },
+  "WXDi-D01-017": {
+    "name": "Atalanta, Jade Angel",
+    "class": "Idle Tone: Angel",
+    "abilities": [
+      {
+        "description": "Put three SIGNI with different classes from your Ener Zone into their owner's trash: Vanish target SIGNI on your opponent's field with power 8000 or more."
+      }
+    ]
+  },
+  "WXDi-D01-018": {
+    "name": "Water Buffalo, Phantom Aquatic Beast",
+    "class": "Living Tone: Aquatic Beast",
+    "abilities": [
+      {
+        "description": "(When paying costs, this card can be used as blue or green.)"
+      }
+    ]
+  },
+  "WXDi-D01-019": {
+    "name": "Koalala, Phantom Terra Beast",
+    "class": "Living Tone: Terra Beast",
+    "abilities": [
+      {
+        "description": "(When paying costs, this card can be used as red or green.)"
+      }
+    ]
+  },
+  "WXDi-D01-020": {
+    "name": "Servant #",
+    "class": "Primal Tone",
+    "abilities": [
+      {
+        "description": "(You may discard this card to prevent damage from a single LRIG attack.)"
+      },
+      {
+        "description": "[Multi Ener] (When paying costs, this card can be used as any color.)"
+      },
+      {
+        "description": "Add target SIGNI from your trash to your hand."
+      }
+    ]
+  },
+  "WXDi-D01-021": {
+    "name": "Polygenesis",
+    "class": null,
+    "abilities": [
+      {
+        "description": "Add target green SIGNI from your Ener Zone to your hand. If there are three <Ancient Surprise> LRIG on your field, instead add target SIGNI from your Ener Zone to your hand."
+      },
+      {
+        "description": "Vanish target upped SIGNI on your opponent's field."
+      }
+    ]
+  }
+}

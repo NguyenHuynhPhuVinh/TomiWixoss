@@ -22,6 +22,7 @@ import { Entity } from "@/logic/ecs/types.miniplex"; // <-- Sửa import
 import { v4 as uuidv4 } from "uuid"; // <-- Thêm import để tạo UUID
 // === THAY ĐỔI: Import hằng số mới ===
 import { Zone, GamePhase } from "@/logic/constants";
+import i18n from "@/i18n"; // Import instance i18next
 
 // Định nghĩa một kiểu đơn giản cho trạng thái bàn đấu
 export interface BoardState {
@@ -42,27 +43,66 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
   get
 ) => ({
   initializeGame: async () => {
-    // Tải dữ liệu deck từ file JSON (giữ nguyên)
+    // 1. Tải dữ liệu deck gốc (chứa thông tin không đổi và text tiếng Anh làm fallback)
     const response = await fetch("/data/decks/diva-debut-deck.json");
     const fullDeckData: CardData[] = await response.json();
 
-    // Preload ảnh (giữ nguyên)
-    const imageUrls = fullDeckData.map((card) => card.imageUrl);
+    // 2. Lấy ngôn ngữ hiện tại và tải file dịch tương ứng
+    const currentLang = i18n.language;
+    let cardTranslations: Record<string, any> = {};
+    try {
+      const translationResponse = await fetch(
+        `/locales/${currentLang}/cards.json`
+      );
+      if (translationResponse.ok) {
+        cardTranslations = await translationResponse.json();
+      }
+    } catch (error) {
+      console.error(
+        `Could not load card translations for ${currentLang}`,
+        error
+      );
+    }
+
+    // 3. Hợp nhất dữ liệu gốc và dữ liệu dịch
+    const translatedDeckData = fullDeckData.map((card) => {
+      const translation = cardTranslations[card.id];
+      if (translation) {
+        // Tạo một bản sao của card để không thay đổi dữ liệu gốc
+        const newCard = { ...card };
+        // Ghi đè các trường văn bản
+        newCard.name = translation.name || card.name;
+        newCard.class = translation.class || card.class;
+        // Ghi đè mô tả năng lực
+        if (translation.abilities && Array.isArray(translation.abilities)) {
+          newCard.abilities =
+            card.abilities?.map((ability, index) => ({
+              ...ability,
+              description:
+                translation.abilities[index]?.description ||
+                ability.description,
+            })) || [];
+        }
+        return newCard;
+      }
+      return card; // Trả về card gốc nếu không có bản dịch
+    });
+
+    // 4. Preload ảnh (giữ nguyên)
+    const imageUrls = translatedDeckData.map((card) => card.imageUrl);
     addCardImageUrlsToPreload(imageUrls);
 
-    // Tạo deck và validate (giữ nguyên)
-    const mainDeckData = fullDeckData
+    // 5. Tạo deck và nạp vào Miniplex World (sử dụng dữ liệu đã dịch)
+    const mainDeckData = translatedDeckData
       .filter((c) => c.backType === "MAIN")
       .flatMap((c) => Array(4).fill(c))
       .slice(0, 40);
-    const lrigDeckData = fullDeckData.filter(
+    const lrigDeckData = translatedDeckData.filter(
       (c) => c.backType === "LRIG" || c.backType === "PIECE"
     );
-    // ... validation logic ...
 
-    // === PHẦN THAY ĐỔI LỚN: NẠP DỮ LIỆU VÀO MINIPLEX WORLD ===
+    // ... validation logic (giữ nguyên)
 
-    // Xóa tất cả các entity cũ (trừ global) để chuẩn bị cho game mới
     world.clear();
 
     // Hàm helper để biến CardData thành Entity của Miniplex
@@ -93,9 +133,9 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
     globalEntity.globalState!.phase = GamePhase.PRE_GAME; // <-- Sử dụng hằng số
     world.add(globalEntity);
 
-    console.log(`Miniplex World hydrated with ${world.size} entities.`);
-
-    // === THAY ĐỔI: Chỉ cần tăng version một lần sau khi khởi tạo ===
+    console.log(
+      `Miniplex World hydrated with translated data for language: ${currentLang}`
+    );
     get().incrementWorldVersion();
   },
 

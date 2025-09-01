@@ -16,7 +16,7 @@ i18n
 
     // Namespace mặc định
     defaultNS: "common",
-    ns: ["common"],
+    ns: ["common", "cards"],
 
     // Bật debug trong môi trường development
     debug: process.env.NODE_ENV === "development",

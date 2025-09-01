@@ -9,7 +9,15 @@ interface SideCardPreviewProps {
 }
 
 export default function SideCardPreview({ card }: SideCardPreviewProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(); // Lấy hàm t
+
+  // Hàm helper để dịch loại năng lực
+  const getAbilityTypeLabel = (type: string) => {
+    // Dùng key động dựa trên loại năng lực
+    const key = `card.ability_${type}`;
+    // `t` sẽ tự động trả về key nếu không tìm thấy bản dịch
+    return t(key);
+  };
 
   return (
     <AnimatePresence>
@@ -60,10 +68,13 @@ export default function SideCardPreview({ card }: SideCardPreviewProps) {
               {card.abilities?.map((ability, index) => (
                 <div key={index} className="border-t pt-2">
                   <p className="font-bold text-primary/80">
-                    {t(`card.ability_${ability.type}`)}{" "}
+                    {/* Dịch loại năng lực */}
+                    {getAbilityTypeLabel(ability.type)}{" "}
                     {ability.timing?.join(", ")}
                   </p>
-                  <p className="text-sm leading-snug">{ability.description}</p>
+                  <p className="text-sm leading-snug">
+                    {ability.description} {/* Mô tả đã được dịch */}
+                  </p>
                 </div>
               ))}
             </div>
