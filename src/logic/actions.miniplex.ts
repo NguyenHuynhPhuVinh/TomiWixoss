@@ -9,6 +9,12 @@ import { CardInstance } from "@/types/game"; // Thêm import này
 import { GameEvent } from "./events.types"; // Thêm import này
 import eventBus from "./event.bus"; // Thêm import này
 import { getValidGrowOptions } from "./ecs/selectors.miniplex"; // <-- THÊM IMPORT NÀY
+import {
+  getTopCardsOfDeck,
+  reindexDeck,
+  drawInitialHand,
+  shuffleMainDeck,
+} from "./ecs/utils.miniplex"; // <-- THÊM IMPORT NÀY
 
 // --- Helper Function ---
 function findEntity(uuid: string): Entity | undefined {
@@ -501,51 +507,6 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
 
   // TODO: Phát sự kiện CARD_GROWN để scripting system xử lý (nếu cần)
   // eventBus.dispatch(...)
-}
-
-// --- Helper Functions (thêm vào cuối file) ---
-
-function getTopCardsOfDeck(amount: number): Entity[] {
-  const mainDeckEntities = Array.from(
-    world.with("zone").where((e) => e.zone.zone === "mainDeck")
-  );
-
-  mainDeckEntities.sort((a, b) => b.zone.index - a.zone.index);
-  return mainDeckEntities.slice(0, amount);
-}
-
-function reindexDeck() {
-  const mainDeckEntities = Array.from(
-    world.with("zone").where((e) => e.zone.zone === "mainDeck")
-  );
-  mainDeckEntities.sort((a, b) => a.zone.index - b.zone.index);
-  mainDeckEntities.forEach((entity, i) => {
-    if (entity.zone) {
-      entity.zone.index = i;
-    }
-  });
-}
-
-function drawInitialHand(amount: number) {
-  const cardsToDraw = getTopCardsOfDeck(amount);
-  cardsToDraw.forEach((entity) => {
-    if (entity.zone && entity.status) {
-      entity.zone.zone = "hand";
-      entity.status.isFaceUp = true;
-      entity.zone.index = 0; // index không quan trọng trong tay
-    }
-  });
-  reindexDeck();
-}
-
-function shuffleMainDeck() {
-  const mainDeckEntities = Array.from(
-    world.with("zone").where((e) => e.zone.zone === "mainDeck")
-  );
-  shuffle(mainDeckEntities);
-  mainDeckEntities.forEach((entity, i) => {
-    entity.zone.index = i;
-  });
 }
 
 /**

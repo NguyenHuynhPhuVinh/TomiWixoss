@@ -5,7 +5,7 @@ import useGameStore from "@/store/gameStore";
 // --- THAY ĐỔI LỚN ---
 import { world } from "../world.miniplex";
 import { Entity } from "../types.miniplex";
-import { GameEvent } from "../../events.types";
+import { GameEvent, GameEventPayloads } from "../../events.types";
 import eventBus from "../../event.bus";
 
 let isInitialized = false; // <-- Biến cờ
@@ -21,12 +21,9 @@ export function initializeScriptingSystem() {
 }
 
 // Handler cho sự kiện card played
-async function onCardPlayed(payload: {
-  entityUuid: string;
-  cardId: string;
-  zone: string;
-  zoneIndex: number;
-}): Promise<void> {
+async function onCardPlayed(
+  payload: GameEventPayloads[GameEvent.CARD_PLAYED]
+): Promise<void> {
   const { entityUuid } = payload;
 
   // Tìm entity trong world
