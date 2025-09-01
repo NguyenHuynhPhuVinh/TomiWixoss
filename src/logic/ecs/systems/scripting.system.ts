@@ -5,24 +5,27 @@ import useGameStore from "@/store/gameStore";
 // --- THAY ĐỔI LỚN ---
 import { world } from "../world.miniplex";
 import { Entity } from "../types.miniplex";
-// import eventBus from "@/logic/core/event.bus";
+import { GameEvent } from "../../events.types";
+import eventBus from "../../event.bus";
 
 // System bây giờ là một hàm khởi tạo
 export function initializeScriptingSystem() {
   console.log("Initializing Scripting System...");
   // Đăng ký lắng nghe các sự kiện game
-  // eventBus.on(GameEvent.CARD_PLAYED, onCardPlayed);
+  eventBus.on(GameEvent.CARD_PLAYED, onCardPlayed);
 }
 
 // Handler cho sự kiện card played
 async function onCardPlayed(payload: {
-  entityId: number;
+  entityUuid: string;
   cardId: string;
+  zone: string;
+  zoneIndex: number;
 }): Promise<void> {
-  const { entityId } = payload;
+  const { entityUuid } = payload;
 
   // Tìm entity trong world
-  const entity = world.entities.find((e) => e.uuid === entityId.toString());
+  const entity = Array.from(world.entities).find((e) => e.uuid === entityUuid);
   if (!entity || !entity.cardInfo) return;
 
   // Kiểm tra xem lá bài này có script cho sự kiện 'onPlay' không

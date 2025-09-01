@@ -4,6 +4,7 @@ import useGameStore from "@/store/gameStore";
 import { globalEntity } from "./ecs/world.miniplex";
 import { upSystem } from "./ecs/systems/up.system.miniplex";
 import { initializeScriptingSystem } from "./ecs/systems/scripting.system";
+import { autoPhaseSystem } from "./ecs/systems/autoPhase.system.miniplex";
 // import { drawSystem } from "./ecs/systems/draw.system.miniplex"; // Sẽ tạo sau
 
 let animationFrameId: number;
@@ -11,6 +12,7 @@ let animationFrameId: number;
 // Các system chạy tự động mỗi frame
 const loopSystems = [
   upSystem,
+  autoPhaseSystem,
   // drawSystem,
 ];
 

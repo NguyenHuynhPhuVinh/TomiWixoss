@@ -6,6 +6,13 @@ import { TURN_PHASES } from "@/types/game";
 import shuffle from "shuffle-array"; // Thêm import này
 import { checkCost } from "@/logic/payment"; // Thêm import này
 import { CardInstance } from "@/types/game"; // Thêm import này
+import { GameEvent } from "./events.types"; // Thêm import này
+import eventBus from "./event.bus"; // Thêm import này
+
+// --- Helper Function ---
+function findEntity(uuid: string): Entity | undefined {
+  return Array.from(world.with("uuid")).find((e: Entity) => e.uuid === uuid);
+}
 
 /**
  * Hành động: Nạp một lá bài vào Ener Zone.
@@ -26,14 +33,7 @@ export function chargeEnerAction(entityUuid: string) {
 
   // Tìm entity trong world bằng UUID của nó
   // `archetype` là một cách query hiệu quả khác của Miniplex
-  const entities = world.with("uuid", "zone", "status", "cardInfo");
-  let entityToCharge: Entity | undefined;
-  for (const e of entities) {
-    if (e.uuid === entityUuid) {
-      entityToCharge = e;
-      break;
-    }
-  }
+  const entityToCharge = findEntity(entityUuid);
 
   if (
     !entityToCharge ||
@@ -73,14 +73,7 @@ export function discardCardAction(entityUuid: string) {
   const { globalState, sideEffectQueue } = globalEntity;
 
   // Tìm entity trong world
-  const entities = world.with("uuid", "zone", "status", "cardInfo");
-  let entityToDiscard: Entity | undefined;
-  for (const e of entities) {
-    if (e.uuid === entityUuid) {
-      entityToDiscard = e;
-      break;
-    }
-  }
+  const entityToDiscard = findEntity(entityUuid);
 
   if (
     !entityToDiscard ||
@@ -102,6 +95,12 @@ export function discardCardAction(entityUuid: string) {
     type: "LOG",
     message: `Bỏ bài: ${entityToDiscard.cardInfo.data.name}.`,
     logType: "action",
+  });
+
+  // Phát sự kiện
+  eventBus.dispatch(GameEvent.CARD_DISCARDED, {
+    entityUuid: entityToDiscard.uuid,
+    cardId: entityToDiscard.cardInfo.data.id,
   });
 
   // Kiểm tra lại hand size
@@ -217,14 +216,7 @@ export function confirmLrigSelectionAction(
   const lrigsToPlace = [assistUuids[0], centerUuid, assistUuids[1]];
 
   lrigsToPlace.forEach((uuid, index) => {
-    const entities = world.with("uuid", "zone", "status");
-    let entity: Entity | undefined;
-    for (const e of entities) {
-      if (e.uuid === uuid) {
-        entity = e;
-        break;
-      }
-    }
+    const entity = findEntity(uuid);
     if (entity && entity.zone && entity.status) {
       entity.zone.zone = "lrigZone";
       entity.zone.index = index;
@@ -268,14 +260,7 @@ export function confirmMulliganAction() {
 
     // Trả bài về deck
     cardsToReturnUuids.forEach((uuid) => {
-      const entities = world.with("uuid", "zone", "status");
-      let entity: Entity | undefined;
-      for (const e of entities) {
-        if (e.uuid === uuid) {
-          entity = e;
-          break;
-        }
-      }
+      const entity = findEntity(uuid);
       if (entity && entity.zone && entity.status) {
         entity.zone.zone = "mainDeck";
         entity.status.isFaceUp = false;
@@ -340,22 +325,12 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
   }
 
   const entities = world.with("uuid", "zone", "status", "cardInfo");
-  let cardToPlay: Entity | undefined;
-  for (const e of entities) {
-    if (e.uuid === entityUuid) {
-      cardToPlay = e;
-      break;
-    }
-  }
+  const cardToPlay = findEntity(entityUuid);
 
   const lrigs = world.with("zone", "cardInfo");
-  let centerLrig: Entity | undefined;
-  for (const e of lrigs) {
-    if (e.zone.zone === "lrigZone" && e.zone.index === 1) {
-      centerLrig = e;
-      break;
-    }
-  }
+  const centerLrig = Array.from(lrigs).find(
+    (e) => e.zone.zone === "lrigZone" && e.zone.index === 1
+  );
 
   if (!cardToPlay?.cardInfo || !centerLrig?.cardInfo) {
     console.error("Yêu cầu đặt SIGNI không hợp lệ.");
@@ -405,6 +380,14 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
     }.`,
     logType: "action",
   });
+
+  // Phát sự kiện để các hệ thống khác (như scripting) có thể lắng nghe
+  eventBus.dispatch(GameEvent.CARD_PLAYED, {
+    entityUuid: cardToPlay.uuid, // Gửi UUID (string)
+    cardId: cardToPlay.cardInfo.data.id,
+    zone: "signiZone",
+    zoneIndex,
+  });
 }
 
 /**
@@ -417,22 +400,12 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   if (!globalState) return;
 
   const entities = world.with("uuid", "zone", "status", "cardInfo");
-  let targetLrig: Entity | undefined;
-  for (const e of entities) {
-    if (e.uuid === targetEntityUuid) {
-      targetLrig = e;
-      break;
-    }
-  }
+  const targetLrig = findEntity(targetEntityUuid);
 
   const lrigs = world.with("zone", "cardInfo");
-  let currentLrig: Entity | undefined;
-  for (const e of lrigs) {
-    if (e.zone.zone === "lrigZone" && e.zone.index === zoneIndex) {
-      currentLrig = e;
-      break;
-    }
-  }
+  const currentLrig = Array.from(lrigs).find(
+    (e) => e.zone.zone === "lrigZone" && e.zone.index === zoneIndex
+  );
 
   if (!targetLrig?.cardInfo || !currentLrig?.cardInfo) {
     console.error("LRIG không hợp lệ để Grow.");
@@ -470,14 +443,7 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
 
   // Trừ Ener
   paymentResult.paidEner.forEach((paidCard) => {
-    const paidEntities = world.with("uuid", "zone");
-    let paidEntity: Entity | undefined;
-    for (const e of paidEntities) {
-      if (e.uuid === paidCard.uuid) {
-        paidEntity = e;
-        break;
-      }
-    }
+    const paidEntity = findEntity(paidCard.uuid);
     if (paidEntity) paidEntity.zone!.zone = "trash";
   });
   sideEffectQueue?.queue.push({
@@ -509,6 +475,13 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
     type: "LOG",
     message: `Grow LRIG thành ${targetLrig.cardInfo.data.name}!`,
     logType: "action",
+  });
+
+  // Phát sự kiện
+  eventBus.dispatch(GameEvent.LRIG_GROWN, {
+    entityUuid: targetLrig.uuid,
+    cardId: targetLrig.cardInfo.data.id,
+    zoneIndex,
   });
 }
 
@@ -554,5 +527,31 @@ function shuffleMainDeck() {
   shuffle(mainDeckEntities);
   mainDeckEntities.forEach((entity, i) => {
     entity.zone.index = i;
+  });
+}
+
+/**
+ * Hành động: Nạp một số lá bài từ trên cùng bộ bài vào ener.
+ * Dành cho các hiệu ứng của lá bài (ví dụ từ Lua).
+ * @param amount Số lượng lá bài cần nạp.
+ */
+export function enerChargeAction(amount: number) {
+  const { sideEffectQueue } = globalEntity;
+  const cardsToCharge = getTopCardsOfDeck(amount);
+
+  if (cardsToCharge.length < amount) {
+    console.warn(`Không đủ bài trong deck để nạp ${amount} ener.`);
+  }
+
+  cardsToCharge.forEach((entity) => {
+    entity.zone!.zone = "enerZone";
+    entity.status!.isFaceUp = true;
+  });
+  reindexDeck();
+
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: `Nạp ${cardsToCharge.length} lá bài vào Ener Zone.`,
+    logType: "action",
   });
 }

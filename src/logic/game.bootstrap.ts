@@ -2,7 +2,7 @@
 import { enableMapSet } from "immer"; // <-- IMPORT ENABLE MAPSET
 // import { registerWixossModule } from "./wixoss.module";
 import luaService from "./lua/lua.service";
-// import { GameAPI } from "./core/game.api";
+import { GameAPI } from "./game.api.miniplex"; // <-- Import API mới
 
 export async function initializeWixossEngine() {
   // <-- Chuyển thành async
@@ -12,7 +12,7 @@ export async function initializeWixossEngine() {
 
   // Khởi tạo Lua và expose API TRƯỚC khi đăng ký các module
   await luaService.initialize();
-  // luaService.expose("Game", GameAPI);
+  luaService.expose("Game", GameAPI); // <-- Expose API mới
 
   // registerWixossModule();
 }
