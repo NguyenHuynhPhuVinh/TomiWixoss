@@ -1,5 +1,6 @@
 // src/logic/core/actions.types.ts
 import { Entity } from "../ecs/ecs.types";
+import { SideEffect } from "../ecs/components/card.components"; // <-- Thêm import này
 
 // Định nghĩa payload cho từng loại action
 interface StartSetupPayload {}
@@ -34,6 +35,9 @@ interface EnerChargePayload {
   amount: number;
   player: "player" | "ai";
 }
+interface QueueSideEffectPayload {
+  effect: SideEffect;
+}
 
 // Sử dụng Discriminated Unions để tạo ra kiểu GameAction tổng hợp
 export type GameAction =
@@ -50,7 +54,8 @@ export type GameAction =
   | { type: "PLACE_SIGNI"; payload: PlaceSigniPayload }
   | { type: "DISCARD_CARD"; payload: DiscardCardPayload }
   // THÊM ACTION MỚI
-  | { type: "ENER_CHARGE"; payload: EnerChargePayload };
+  | { type: "ENER_CHARGE"; payload: EnerChargePayload }
+  | { type: "QUEUE_SIDE_EFFECT"; payload: QueueSideEffectPayload };
 
 // Helper để lấy ra kiểu Type của Action
 export type GameActionType = GameAction["type"];

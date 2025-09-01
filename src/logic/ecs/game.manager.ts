@@ -41,7 +41,7 @@ export class GameManager {
   private actionQueue: GameAction[] = [];
 
   // Thêm queue cho side effects
-  private sideEffectQueue: SideEffect[] = [];
+  // private sideEffectQueue: SideEffect[] = []; // <-- XÓA HÀNG ĐỢI TẠM THỜI NÀY
 
   // Phân loại systems
   private actionSystems: System[] = [];
@@ -167,11 +167,15 @@ export class GameManager {
 
   public queueSideEffect(sideEffect: SideEffect): void {
     console.log(
-      `%cSIDE EFFECT QUEUED: ${sideEffect.type}`,
+      `%cSIDE EFFECT ACTION QUEUED: ${sideEffect.type}`, // Thay đổi log
       "color: #9B59B6",
       sideEffect
     );
-    this.sideEffectQueue.push(sideEffect);
+    // Thay vì thêm vào hàng đợi tạm, hãy dispatch một action
+    this.queueAction({
+      type: "QUEUE_SIDE_EFFECT",
+      payload: { effect: sideEffect },
+    });
   }
 
   private loop() {
@@ -277,7 +281,7 @@ export class GameManager {
     // ===========================================
 
     this.world = nextWorldState;
-    this.processSideEffects();
+    // this.processSideEffects(); // <-- XÓA LỆNH GỌI HÀM NÀY
     this.notifyUpdate();
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
@@ -288,6 +292,8 @@ export class GameManager {
     }
   }
 
+  // XÓA TOÀN BỘ HÀM NÀY
+  /*
   private processSideEffects(): void {
     if (!this.world) return;
 
@@ -303,6 +309,7 @@ export class GameManager {
       sideEffectComponent.queue.push(sideEffect);
     }
   }
+  */
 }
 
 const gameManager = new GameManager();

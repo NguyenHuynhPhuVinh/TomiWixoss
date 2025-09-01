@@ -33,6 +33,7 @@ import { growLrigReducer } from "./reducers/grow.reducer";
 import { placeSigniReducer } from "./reducers/placeSigni.reducer";
 import { discardCardReducer } from "./reducers/discard.reducer";
 import { advancePhaseReducer } from "./reducers/phase.reducer";
+import { queueSideEffectReducer } from "./reducers/sideEffect.reducer"; // <-- IMPORT REDUCER MỚI
 
 import {
   confirmLrigSelectionSaga,
@@ -76,6 +77,7 @@ export function registerWixossModule() {
   gameManager.registerReducer("PLACE_SIGNI", placeSigniReducer);
   gameManager.registerReducer("DISCARD_CARD", discardCardReducer);
   gameManager.registerReducer("ADVANCE_PHASE", advancePhaseReducer);
+  gameManager.registerReducer("QUEUE_SIDE_EFFECT", queueSideEffectReducer); // <-- ĐĂNG KÝ REDUCER MỚI
 
   // Đăng ký tất cả các Sagas
   gameManager.registerSaga("CONFIRM_LRIG_SELECTION", confirmLrigSelectionSaga);
