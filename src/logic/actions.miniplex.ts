@@ -108,8 +108,19 @@ export function discardCardAction(entityUuid: string) {
     return;
   }
 
-  // Di chuyển lá bài vào mộ
-  entityToDiscard.zone.zone = Zone.TRASH; // <-- Sử dụng hằng số
+  // --- THAY ĐỔI BẮT ĐẦU TỪ ĐÂY ---
+
+  // 1. Đếm số lá bài hiện có trong mộ TRƯỚC KHI thêm lá mới
+  const trashEntities = world
+    .with("zone")
+    .where((e: Entity) => e.zone?.zone === Zone.TRASH);
+  const currentTrashSize = Array.from(trashEntities).length;
+
+  // 2. Di chuyển lá bài vào mộ và gán index mới
+  entityToDiscard.zone.zone = Zone.TRASH;
+  entityToDiscard.zone.index = currentTrashSize; // Lá đầu tiên index 0, lá thứ hai index 1, ...
+
+  // --- KẾT THÚC THAY ĐỔI ---
 
   // Log action
   sideEffectQueue?.queue.push({

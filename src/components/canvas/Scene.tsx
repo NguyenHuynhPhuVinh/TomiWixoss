@@ -138,17 +138,28 @@ function SceneContent() {
         const index = zone.index;
         switch (zoneName) {
           case Zone.MAIN_DECK:
-          case Zone.TRASH:
             position = [
               coords.MAIN_DECK.x,
               coords.MAIN_DECK.y + index * CARD_DIMENSIONS.thickness,
               coords.MAIN_DECK.z,
             ];
-            if (zoneName === Zone.TRASH) {
-              position[0] = coords.TRASH.x;
-              position[2] = coords.TRASH.z;
-            }
             break;
+
+          // Tách riêng TRASH ra khỏi MAIN_DECK và thêm logic mới
+          case Zone.TRASH: {
+            // Lấy trực tiếp index đã được gán từ logic game
+            const stackIndex = zone.index;
+
+            // Tính toán vị trí Y dựa trên stackIndex để xếp chồng chính xác
+            // Lá có index cao hơn (mới hơn) sẽ có vị trí Y cao hơn (nằm trên)
+            position = [
+              coords.TRASH.x,
+              coords.TRASH.y + stackIndex * CARD_DIMENSIONS.thickness,
+              coords.TRASH.z,
+            ];
+            break;
+          }
+
           case Zone.LRIG_DECK:
           case Zone.LRIG_TRASH:
             position = [
