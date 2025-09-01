@@ -4,16 +4,21 @@ import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import { shallow } from "zustand/shallow";
 import { Button } from "./button";
-import gameManager from "@/logic/ecs/game.manager";
+// import gameManager from "@/logic/ecs/game.manager";
 import { GamePhase } from "@/types/game";
-import { GlobalStateComponent } from "@/logic/ecs/components/card.components";
-import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
-import { ZoneComponent } from "@/logic/ecs/components/card.components"; // <-- IMPORT
-import {
-  dispatchAdvancePhaseAction,
-  dispatchConfirmMulliganAction,
-} from "@/logic/ecs/actions"; // <-- IMPORT ACTION MỚI
-import { dispatchStartSetupAction } from "@/logic/ecs/actions";
+// import { GlobalStateComponent } from "@/logic/ecs/components/card.components";
+// import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
+// import { ZoneComponent } from "@/logic/ecs/components/card.components"; // <-- IMPORT
+// import {
+//   dispatchAdvancePhaseAction,
+//   dispatchConfirmMulliganAction,
+// } from "@/logic/ecs/actions"; // <-- IMPORT ACTION MỚI
+// import { dispatchStartSetupAction } from "@/logic/ecs/actions";
+
+// --- THAY ĐỔI LỚN ---
+import { world, globalEntity } from "@/logic/ecs/world.miniplex";
+import { Entity } from "@/logic/ecs/types.miniplex";
+import { advancePhaseAction } from "@/logic/actions.miniplex";
 
 export default function GameController() {
   const phase = useStore(useGameStore, (state) => state.phase);
@@ -34,11 +39,8 @@ export default function GameController() {
   );
   // const setPhase = useGameStore((state) => state.setPhase); // Không còn cần thiết
 
-  const globalState = world?.getComponent<GlobalStateComponent>(
-    GLOBAL_ENTITY,
-    "GlobalState"
-  );
-  const mulliganSelectionCount = globalState?.mulliganSelection.length ?? 0;
+  const mulliganSelectionCount =
+    globalEntity.globalState?.mulliganSelection.length ?? 0;
 
   // Xóa hàm handleNextPhase cũ
   // const handleNextPhase = () => { ... };
@@ -67,7 +69,9 @@ export default function GameController() {
     switch (phase) {
       case "pre_game":
         // Nút này bây giờ sẽ dispatch action
-        return <Button onClick={dispatchStartSetupAction}>Chuẩn bị</Button>;
+        return (
+          <Button onClick={() => console.log("Start setup")}>Chuẩn bị</Button>
+        );
 
       case "selecting_lrigs":
         // Giao diện này bây giờ sẽ được hiển thị đúng
@@ -103,7 +107,7 @@ export default function GameController() {
               </p>
             )}
             <Button
-              onClick={dispatchAdvancePhaseAction}
+              onClick={() => advancePhaseAction()}
               className="w-full mt-2"
             >
               Next Phase
@@ -121,7 +125,10 @@ export default function GameController() {
                 Đã chọn: {mulliganSelectionCount}
               </span>
             </p>
-            <Button onClick={dispatchConfirmMulliganAction} className="w-full">
+            <Button
+              onClick={() => console.log("Confirm mulligan")}
+              className="w-full"
+            >
               Xác nhận đổi bài
             </Button>
           </>
@@ -143,7 +150,7 @@ export default function GameController() {
               </Button>
             )}
             <Button
-              onClick={dispatchAdvancePhaseAction}
+              onClick={() => advancePhaseAction()}
               className="w-full mt-2"
             >
               Next Phase
@@ -153,13 +160,9 @@ export default function GameController() {
 
       // Tạm thời các phase khác chỉ có nút Next
       case "end":
-        const handSize =
-          world
-            ?.query(["Zone"])
-            .filter(
-              (e) =>
-                world.getComponent<ZoneComponent>(e, "Zone")!.zone === "hand"
-            ).length ?? 0;
+        const handSize = world
+          .with("zone")
+          .where((e: Entity) => e.zone?.zone === "hand").length;
         return (
           <>
             <h3 className="font-bold">Turn {turn} - End Phase</h3>
@@ -171,7 +174,7 @@ export default function GameController() {
               </p>
             )}
             <Button
-              onClick={dispatchAdvancePhaseAction}
+              onClick={() => advancePhaseAction()}
               className="w-full mt-2"
               disabled={mustDiscard}
             >
@@ -187,7 +190,7 @@ export default function GameController() {
               Turn {turn} - {phaseText} Phase
             </h3>
             <Button
-              onClick={dispatchAdvancePhaseAction}
+              onClick={() => advancePhaseAction()}
               className="w-full mt-2"
             >
               Next Phase
@@ -207,7 +210,11 @@ export default function GameController() {
         <p className="text-muted-foreground mb-6">
           Sẵn sàng để bắt đầu một trận đấu.
         </p>
-        <Button onClick={dispatchStartSetupAction} className="w-full" size="lg">
+        <Button
+          onClick={() => console.log("Start setup")}
+          className="w-full"
+          size="lg"
+        >
           Chuẩn bị
         </Button>
       </div>

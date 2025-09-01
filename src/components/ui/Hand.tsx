@@ -1,25 +1,23 @@
 // src/components/ui/Hand.tsx
 "use client";
-
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import Image from "next/image";
 import { CardInstance } from "@/types/game";
 import { AnimatePresence, motion } from "framer-motion";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { cn } from "@/lib/utils"; // Import cn utility
-import ContextMenu from "./ContextMenu"; // Thêm import ContextMenu
-import { dispatchChargeEnerAction } from "@/logic/ecs/actions"; // <-- IMPORT
-import { dispatchUpdateMulliganSelection } from "@/logic/ecs/actions";
-import { dispatchDiscardCardAction } from "@/logic/ecs/actions"; // <-- IMPORT
+import { cn } from "@/lib/utils";
+import ContextMenu from "./ContextMenu";
+
+// --- THAY ĐỔI LỚN ---
+import { world, globalEntity } from "@/logic/ecs/world.miniplex";
+import { Entity } from "@/logic/ecs/types.miniplex";
 import {
-  CardInfoComponent,
-  ZoneComponent,
-  StatusComponent,
-  GlobalStateComponent,
-} from "@/logic/ecs/components/card.components";
-import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
+  chargeEnerAction,
+  discardCardAction,
+  updateMulliganSelectionAction,
+} from "@/logic/actions.miniplex";
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
@@ -32,32 +30,21 @@ export default function Hand({ onCardSelect }: HandProps) {
   const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
 
-  const handEntities = useMemo(() => {
-    if (!world) return [];
-    return world
-      .query(["CardInfo", "Zone"])
-      .filter(
-        (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "hand"
-      );
-  }, [world, worldVersion]);
-
+  // === TRUY VẤN DỮ LIỆU (VIẾT LẠI) ===
   const hand: CardInstance[] = useMemo(() => {
-    if (!world) return [];
-    return handEntities.map((entity) => {
-      const cardInfo = world.getComponent<CardInfoComponent>(
-        entity,
-        "CardInfo"
-      )!;
-      const status = world.getComponent<StatusComponent>(entity, "Status")!;
-      const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
-      return {
-        ...cardInfo.data,
-        ...status,
-        uuid: entity.toString(),
-        owner: zone.owner,
-      };
-    });
-  }, [world, handEntities, worldVersion]);
+    const handEntities = world
+      .with("uuid", "cardInfo", "status", "zone")
+      .where((e: Entity) => e.zone?.zone === "hand");
+
+    return handEntities.map(
+      (entity: Entity): CardInstance => ({
+        ...entity.cardInfo!.data,
+        ...entity.status!,
+        uuid: entity.uuid,
+        owner: entity.zone!.owner,
+      })
+    );
+  }, [worldVersion]);
 
   const phase = useStore(useGameStore, (state) => state.phase);
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
@@ -70,11 +57,8 @@ export default function Hand({ onCardSelect }: HandProps) {
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
   const handRef = useRef<HTMLDivElement>(null);
 
-  const globalState = world?.getComponent<GlobalStateComponent>(
-    GLOBAL_ENTITY,
-    "GlobalState"
-  );
-  const mulliganSelection = globalState?.mulliganSelection ?? [];
+  const mulliganSelectionUuids =
+    globalEntity.globalState?.mulliganSelection ?? [];
 
   useOnClickOutside(handRef, () => {
     if (phase !== "mulligan") {
@@ -85,69 +69,50 @@ export default function Hand({ onCardSelect }: HandProps) {
 
   const handleCardClick = (card: CardInstance) => {
     onCardSelect(card);
-    const cardEntityId = parseInt(card.uuid);
 
     if (phase === "mulligan") {
-      const newSelection = mulliganSelection.includes(cardEntityId)
-        ? mulliganSelection.filter((id) => id !== cardEntityId)
-        : [...mulliganSelection, cardEntityId];
-      dispatchUpdateMulliganSelection(newSelection);
+      updateMulliganSelectionAction(card.uuid); // Gọi action mới
     } else {
-      if (selectedCardUuid === card.uuid) {
-        setSelectedCardUuid(null);
-        onCardSelect(null);
-      } else {
-        setSelectedCardUuid(card.uuid);
-      }
+      setSelectedCardUuid((prev) => (prev === card.uuid ? null : card.uuid));
     }
   };
 
   const playableSigniUuids = useMemo(() => {
-    if (!world || phase !== "main") return [];
+    if (phase !== "main") return [];
 
-    const lrigZoneEntities = world
-      .query(["Zone"])
-      .filter(
-        (e) => world.getComponent<ZoneComponent>(e, "Zone")!.zone === "lrigZone"
-      );
-    const centerLrigEntity = lrigZoneEntities.find(
-      (e) => world.getComponent<ZoneComponent>(e, "Zone")!.index === 1
+    const lrigsOnField = [];
+    for (const e of world.with("zone", "cardInfo")) {
+      if (e.zone?.zone === "lrigZone") {
+        lrigsOnField.push(e);
+      }
+    }
+    const centerLrig = lrigsOnField.find((e: Entity) => e.zone?.index === 1);
+    if (!centerLrig) return [];
+
+    const lrigLevel = centerLrig.cardInfo!.data.level ?? 0;
+    const lrigLimit = centerLrig.cardInfo!.data.limit ?? 99;
+
+    const signiOnField = [];
+    for (const e of world.with("zone", "cardInfo")) {
+      if (e.zone?.zone === "signiZone") {
+        signiOnField.push(e);
+      }
+    }
+    const currentTotalLevel = signiOnField.reduce(
+      (sum: number, entity: Entity) => sum + (entity.cardInfo!.data.level ?? 0),
+      0
     );
-    if (!centerLrigEntity) return [];
-    const centerLrigInfo = world.getComponent<CardInfoComponent>(
-      centerLrigEntity,
-      "CardInfo"
-    )!;
-    const lrigLevel = centerLrigInfo.data.level ?? 0;
-    const lrigLimit =
-      typeof centerLrigInfo.data.limit === "number"
-        ? centerLrigInfo.data.limit
-        : 99;
-
-    const signiOnField = world
-      .query(["Zone"])
-      .filter(
-        (e) =>
-          world.getComponent<ZoneComponent>(e, "Zone")!.zone === "signiZone"
-      );
-    const currentTotalLevel = signiOnField.reduce((sum, entity) => {
-      return (
-        sum +
-        (world.getComponent<CardInfoComponent>(entity, "CardInfo")!.data
-          .level ?? 0)
-      );
-    }, 0);
 
     return hand
       .filter((card) => {
         if (card.type !== "SIGNI") return false;
         const cardLevel = card.level ?? 0;
-        const levelOk = cardLevel <= lrigLevel;
-        const limitOk = currentTotalLevel + cardLevel <= lrigLimit;
-        return levelOk && limitOk;
+        return (
+          cardLevel <= lrigLevel && currentTotalLevel + cardLevel <= lrigLimit
+        );
       })
       .map((card) => card.uuid);
-  }, [world, worldVersion, phase, hand]);
+  }, [worldVersion, phase, hand]);
 
   if (numCards === 0) return null;
 
@@ -161,7 +126,7 @@ export default function Hand({ onCardSelect }: HandProps) {
           {hand.map((card, index) => {
             const isSelectedForMulligan =
               phase === "mulligan" &&
-              mulliganSelection.includes(parseInt(card.uuid));
+              mulliganSelectionUuids.includes(card.uuid);
             const isSelectedForPreview =
               phase !== "mulligan" && selectedCardUuid === card.uuid;
 
@@ -222,13 +187,13 @@ export default function Hand({ onCardSelect }: HandProps) {
                   <ContextMenu
                     showChargeEner={phase === "ener"}
                     onChargeEner={() => {
-                      dispatchChargeEnerAction("hand", parseInt(card.uuid));
+                      chargeEnerAction(card.uuid); // Gọi action mới
                       setSelectedCardUuid(null);
                       onCardSelect(null);
                     }}
                     showDiscard={phase === "end" && mustDiscard}
                     onDiscard={() => {
-                      dispatchDiscardCardAction(parseInt(card.uuid));
+                      discardCardAction(card.uuid); // Gọi action mới
                       setSelectedCardUuid(null);
                       onCardSelect(null);
                     }}

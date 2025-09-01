@@ -4,14 +4,13 @@ import { createLogSlice } from "./slices/logSlice";
 import { createGameSlice } from "./slices/gameSlice";
 import { createUiSlice } from "./slices/uiSlice";
 import { GameStore } from "./types";
-import gameManager from "@/logic/ecs/game.manager";
+// Xóa import gameManager, chúng ta không dùng nó nữa
 
 const useGameStore = create<GameStore>((set, get) => {
-  gameManager.onUpdate((updatedWorld) => {
-    get().syncStateFromWorld(updatedWorld);
-  });
+  // Không cần listener onUpdate nữa. Game engine sẽ tự gọi syncStateFromWorld.
 
   return {
+    // Các state ban đầu
     world: null,
     worldVersion: 0,
     phase: "pre_game",
@@ -21,6 +20,7 @@ const useGameStore = create<GameStore>((set, get) => {
       player: { signiZone: [null, null, null], lrigZone: [null, null, null] },
     },
 
+    // Kết hợp các slice
     ...createLogSlice(set, get, {} as any),
     ...createGameSlice(set, get, {} as any),
     ...createUiSlice(set, get, {} as any),

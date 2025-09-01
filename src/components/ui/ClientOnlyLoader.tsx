@@ -1,22 +1,20 @@
 // src/components/ui/ClientOnlyLoader.tsx
 "use client";
 import dynamic from "next/dynamic";
-import { useState, useMemo, useRef } from "react"; // Thêm useRef
-import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { CardInstance } from "@/types/game";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
-import {
-  CardInfoComponent,
-  ZoneComponent,
-  StatusComponent,
-} from "@/logic/ecs/components/card.components";
-import { dispatchConfirmLrigSelectionAction } from "@/logic/ecs/actions";
-import { getValidGrowOptions } from "@/logic/ecs/selectors";
-import { dispatchGrowLrigAction } from "@/logic/ecs/actions";
-import { useEffect } from "react";
-import { useOnClickOutside } from "@/hooks/useOnClickOutside"; // <-- Import hook
-import { initializeWixossEngine } from "@/logic/game.bootstrap";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+
+// --- THAY ĐỔI LỚN ---
+import { world } from "@/logic/ecs/world.miniplex";
+import { Entity } from "@/logic/ecs/types.miniplex";
+import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex";
+import { startGameLoop } from "@/logic/game.engine.miniplex";
+// import { confirmLrigSelectionAction, growLrigAction } from "@/logic/actions.miniplex"; // Chưa có
+
+import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -73,14 +71,10 @@ export default function ClientOnlyLoader() {
     (state) => state.cancelPlayerAction
   );
 
-  // Khởi tạo game một lần khi component được mount
+  // Khởi tạo game và vòng lặp
   useEffect(() => {
-    // initializeWixossEngine bây giờ là async
-    const init = async () => {
-      await initializeWixossEngine();
-      initializeGame();
-    };
-    init();
+    initializeGame();
+    startGameLoop(); // Bắt đầu vòng lặp game mới
   }, [initializeGame]);
 
   const gameAreaRef = useRef<HTMLDivElement>(null); // <-- Tạo ref cho toàn bộ khu vực game
@@ -95,69 +89,48 @@ export default function ClientOnlyLoader() {
   });
   // =====================================
 
-  // === TRUY VẤN DỮ LIỆU CHO LRIG SELECTOR ===
+  // === TRUY VẤN DỮ LIỆU CHO LRIG SELECTOR (VIẾT LẠI) ===
   const lrigDeckForSelector: CardInstance[] = useMemo(() => {
-    if (!world) return [];
-
-    // Tìm tất cả các entity trong lrigDeck
-    const lrigEntities = world
-      .query(["CardInfo", "Zone"])
-      .filter((entity: number) => {
-        const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
-        return zone.zone === "lrigDeck";
-      });
-
-    // Chuyển đổi entity thành CardInstance mà LrigSelector có thể hiểu
-    return lrigEntities.map((entity: number) => {
-      const cardInfo = world.getComponent<CardInfoComponent>(
-        entity,
-        "CardInfo"
-      )!;
-      const status = world.getComponent<StatusComponent>(entity, "Status")!;
-      const zone = world.getComponent<ZoneComponent>(entity, "Zone")!;
-      return {
-        ...cardInfo.data,
-        ...status,
-        uuid: entity.toString(), // LrigSelector dùng uuid (string)
-        owner: zone.owner,
-      };
-    });
-  }, [world, worldVersion]);
-  // ===========================================
-
-  // === TRUY VẤN DỮ LIỆU CHO GROW OPTIONS ===
-  const growOptions: CardInstance[] = useMemo(() => {
-    if (!world) return [];
-
-    // Xác định zoneIndex dựa trên phase
-    let zoneIndex: number;
-    if (phase === "grow") {
-      zoneIndex = 1; // Center LRIG
-    } else if (viewingLrigDeckForGrow) {
-      zoneIndex = viewingLrigDeckForGrow.forAssistIndex!;
-    } else {
-      return []; // Không có yêu cầu xem deck
+    const lrigEntities = [];
+    for (const entity of world.with("cardInfo", "status", "zone")) {
+      if (entity.zone?.zone === "lrigDeck") {
+        lrigEntities.push(entity);
+      }
     }
 
-    // Truyền world và phase vào selector
-    const validIds = getValidGrowOptions(world, phase, zoneIndex);
-    // Chuyển đổi entity thành CardInstance
-    return validIds.map((entityId) => {
-      const cardInfo = world.getComponent<CardInfoComponent>(
-        entityId,
-        "CardInfo"
-      )!;
-      const status = world.getComponent<StatusComponent>(entityId, "Status")!;
-      const zone = world.getComponent<ZoneComponent>(entityId, "Zone")!;
-      return {
-        ...cardInfo.data,
-        ...status,
-        uuid: entityId.toString(),
-        owner: zone.owner,
-      };
-    });
-  }, [world, worldVersion, phase, viewingLrigDeckForGrow]);
-  // ===========================================
+    return lrigEntities.map(
+      (entity: Entity): CardInstance => ({
+        ...entity.cardInfo!.data,
+        ...entity.status!,
+        uuid: entity.uuid,
+        owner: entity.zone!.owner,
+      })
+    );
+  }, [useStore(useGameStore, (s) => s.worldVersion)]); // Lắng nghe sự thay đổi của world
+
+  // === TRUY VẤN DỮ LIỆU CHO GROW OPTIONS (VIẾT LẠI) ===
+  const growOptions: CardInstance[] = useMemo(() => {
+    let zoneIndex: number;
+    if (phase === "grow") zoneIndex = 1;
+    else if (viewingLrigDeckForGrow)
+      zoneIndex = viewingLrigDeckForGrow.forAssistIndex!;
+    else return [];
+
+    const validGrowEntities = getValidGrowOptions(phase, zoneIndex);
+
+    return validGrowEntities.map(
+      (entity: Entity): CardInstance => ({
+        ...entity.cardInfo!.data,
+        ...entity.status!,
+        uuid: entity.uuid,
+        owner: entity.zone!.owner,
+      })
+    );
+  }, [
+    phase,
+    viewingLrigDeckForGrow,
+    useStore(useGameStore, (s) => s.worldVersion),
+  ]);
 
   return (
     // Bọc toàn bộ game trong một div và gắn ref vào đó
@@ -183,10 +156,14 @@ export default function ClientOnlyLoader() {
         isOpen={phase === "selecting_lrigs"}
         fullLrigDeck={lrigDeckForSelector}
         onConfirm={(centerUuid, assist1Uuid, assist2Uuid) => {
-          // Chuyển đổi uuid (string) lại thành entityId (number) để dispatch
-          const centerId = parseInt(centerUuid);
-          const assistIds = [parseInt(assist1Uuid), parseInt(assist2Uuid)];
-          dispatchConfirmLrigSelectionAction(centerId, assistIds);
+          // Gọi action mới
+          // confirmLrigSelectionAction(centerUuid, [assist1Uuid, assist2Uuid]);
+          console.log(
+            "Confirm LRIG selection:",
+            centerUuid,
+            assist1Uuid,
+            assist2Uuid
+          );
         }}
       />
       <DeckViewer
@@ -199,11 +176,11 @@ export default function ClientOnlyLoader() {
         isOpen={isZoneViewerOpen}
         onOpenChange={closeZoneViewer}
         onCardClick={(card) => {
-          const targetEntityId = parseInt(card.uuid);
-          // Xác định zoneIndex dựa trên phase
           const zoneIndex =
             phase === "grow" ? 1 : viewingLrigDeckForGrow!.forAssistIndex!;
-          dispatchGrowLrigAction(targetEntityId, zoneIndex);
+          // Gọi action mới
+          // growLrigAction(card.uuid, zoneIndex);
+          console.log("Grow LRIG:", card.uuid, zoneIndex);
         }}
       />
     </div>

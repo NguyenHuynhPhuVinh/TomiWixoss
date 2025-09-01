@@ -1,6 +1,6 @@
 // src/store/types.ts
 import { GamePhase } from "@/types/game";
-import { World } from "@/logic/ecs/world";
+// import { World } from "@/logic/ecs/world";
 import { PlayerAction } from "./slices/uiSlice"; // Import từ uiSlice
 
 // Định nghĩa kiểu cho một entry trong log
@@ -20,7 +20,7 @@ export interface LogEntry {
 
 // Interface cho STATE của toàn bộ store
 export interface GameState {
-  world: World | null;
+  world: any; // World from Miniplex
   worldVersion: number;
 
   // Các state "gương" được đồng bộ từ GlobalStateComponent trong World
@@ -44,7 +44,7 @@ export interface GameActions {
 
   // Game/World Actions
   initializeGame: () => void;
-  syncStateFromWorld: (world: World) => void;
+  syncStateFromWorld: () => void;
 
   // UI Actions
   initiatePlaceSigni: (cardUuid: string) => void;

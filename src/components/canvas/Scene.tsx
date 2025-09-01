@@ -1,7 +1,7 @@
 // src/components/canvas/Scene.tsx
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -11,20 +11,17 @@ import {
 } from "@react-three/drei";
 import GameBoard from "./GameBoard";
 import Card from "./Card";
-import useGameStore from "@/store/gameStore";
-import { useStore } from "zustand";
-import { shallow } from "zustand/shallow";
-import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
-import {
-  CardInfoComponent,
-  ZoneComponent,
-  StatusComponent,
-} from "@/logic/ecs/components/card.components";
-import { Entity } from "@/logic/ecs/ecs.types";
-import { CardInstance } from "@/types/game";
-import { dispatchChargeEnerAction } from "@/logic/ecs/actions"; // <-- IMPORT
-import { getValidGrowOptions } from "@/logic/ecs/selectors"; // <-- IMPORT SELECTOR MỚI
 import InteractiveZone from "./InteractiveZone";
+import { useStore } from "zustand";
+import useGameStore from "@/store/gameStore";
+import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
+import { CardInstance } from "@/types/game";
+
+// --- THAY ĐỔI LỚN ---
+import { world } from "@/logic/ecs/world.miniplex";
+import { Entity } from "@/logic/ecs/types.miniplex";
+import { chargeEnerAction } from "@/logic/actions.miniplex";
+// import { openLrigDeckViewerForAssistAction } from "@/logic/actions.miniplex"; // Sẽ tạo action này sau
 
 export default function Scene() {
   const world = useStore(useGameStore, (state) => state.world);
@@ -70,17 +67,19 @@ export default function Scene() {
     );
   }
 
-  // Lấy ra tất cả các entity có thể render được
-  const renderableEntities = world.query(["CardInfo", "Zone", "Status"]);
+  // === TRUY VẤN DỮ LIỆU (VIẾT LẠI) ===
+  const renderableEntities = useMemo(() => {
+    return world.with("cardInfo", "zone", "status");
+  }, [worldVersion]); // Re-query khi world thay đổi
 
-  // Nhóm các entity theo zone để dễ dàng tính toán logic xếp chồng
+  // Nhóm các entity theo zone để tính toán xếp chồng
   const entitiesByZone = new Map<string, Entity[]>();
   for (const entity of renderableEntities) {
-    const zone = world.getComponent<ZoneComponent>(entity, "Zone")!.zone;
-    if (!entitiesByZone.has(zone)) {
-      entitiesByZone.set(zone, []);
+    const zoneName = entity.zone.zone;
+    if (!entitiesByZone.has(zoneName)) {
+      entitiesByZone.set(zoneName, []);
     }
-    entitiesByZone.get(zone)!.push(entity);
+    entitiesByZone.get(zoneName)!.push(entity);
   }
 
   return (
@@ -100,29 +99,28 @@ export default function Scene() {
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
 
-      {/* --- RENDER CÁC LÁ BÀI TỪ ECS WORLD --- */}
-      {renderableEntities.map((entity) => {
-        const cardInfo = world.getComponent<CardInfoComponent>(
-          entity,
-          "CardInfo"
-        )!;
-        const status = world.getComponent<StatusComponent>(entity, "Status")!;
-        const zoneInfo = world.getComponent<ZoneComponent>(entity, "Zone")!;
+      {/* --- RENDER CÁC LÁ BÀI TỪ MINIPLEX WORLD --- */}
+      {renderableEntities.map((entity: Entity) => {
+        // Thêm type cho entity
+        // Truy cập trực tiếp, không dùng getComponent
+        const { cardInfo, status, zone } = entity;
 
-        // Chuyển đổi dữ liệu ECS thành CardInstance mà component Card có thể hiểu
+        // Bỏ qua các lá bài không có đủ component để render
+        if (!cardInfo || !status || !zone) return null;
+
         const cardInstance: CardInstance = {
           ...cardInfo.data,
           ...status,
-          uuid: entity.toString(),
-          owner: zoneInfo.owner,
+          uuid: entity.uuid,
+          owner: zone.owner,
         };
 
         // --- LOGIC TÍNH TOÁN VỊ TRÍ VÀ XOAY BÀI ---
         let position: [number, number, number] = [0, 0, 0];
         let rotation: [number, number, number] = [-Math.PI / 2, 0, 0];
 
-        const zoneName = zoneInfo.zone;
-        const index = zoneInfo.index;
+        const zoneName = zone.zone;
+        const index = zone.index;
         const totalCardsInZone = entitiesByZone.get(zoneName)?.length ?? 1;
 
         switch (zoneName) {
@@ -207,44 +205,19 @@ export default function Scene() {
 
         return (
           <Card
-            key={entity}
+            key={entity.uuid}
             card={cardInstance}
             position={position}
             rotation={rotation}
             onClick={() => {
               if (
-                zoneInfo.zone === "signiZone" &&
+                zone.zone === "signiZone" &&
                 phase === "ener" &&
                 !actionTakenInPhase
               ) {
-                dispatchChargeEnerAction("signi", entity);
+                chargeEnerAction(entity.uuid); // Gọi action mới
               }
-              // Thêm logic click cho Assist LRIG
-              const isAssistLrig =
-                zoneInfo.zone === "lrigZone" &&
-                (zoneInfo.index === 0 || zoneInfo.index === 2);
-              const canTryGrowAssist =
-                isAssistLrig && ["main", "attack"].includes(phase);
-
-              if (canTryGrowAssist) {
-                // 1. Kiểm tra xem có lựa chọn nào không
-                const options = getValidGrowOptions(
-                  world,
-                  phase,
-                  zoneInfo.index
-                );
-
-                if (options.length > 0) {
-                  // 2. Nếu có, MỚI mở modal
-                  openLrigDeckViewerForAssist(zoneInfo.index);
-                } else {
-                  // 3. Nếu không, thông báo cho người chơi
-                  useGameStore
-                    .getState()
-                    .addLog("Không có lựa chọn Grow hợp lệ.", "info");
-                }
-              }
-              // ... các logic click khác
+              // ... các logic click khác ...
             }}
           />
         );
