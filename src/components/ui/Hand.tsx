@@ -18,6 +18,9 @@ import {
   discardCardAction,
   updateMulliganSelectionAction,
 } from "@/logic/actions.miniplex";
+// === THAY ĐỔI: Import hook mới và constants ===
+import { useWorldQuery } from "@/hooks/useWorldQuery";
+import { GamePhase, CardType, Zone } from "@/logic/constants";
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
@@ -27,18 +30,18 @@ const CARD_BASE_WIDTH = 120;
 const CARD_BASE_HEIGHT = 168;
 
 export default function Hand({ onCardSelect }: HandProps) {
-  const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
+  // === THAY ĐỔI: Sử dụng hook mới để lấy dữ liệu trực tiếp từ world ===
+  const handEntities = useWorldQuery(
+    () =>
+      Array.from(
+        world
+          .with("uuid", "cardInfo", "status", "zone")
+          .where((e: Entity) => e.zone?.zone === Zone.HAND)
+      ) // <-- Sử dụng hằng số
+  );
 
-  // === TRUY VẤN DỮ LIỆU (VIẾT LẠI) ===
   const hand: CardInstance[] = useMemo(() => {
-    // THÊM ĐIỀU KIỆN BẢO VỆ
-    if (!world) return [];
-
-    const handEntities = world
-      .with("uuid", "cardInfo", "status", "zone")
-      .where((e: Entity) => e.zone?.zone === "hand");
-
-    return Array.from(handEntities).map(
+    return handEntities.map(
       (entity: Entity): CardInstance => ({
         ...entity.cardInfo!.data,
         ...entity.status!,
@@ -46,10 +49,11 @@ export default function Hand({ onCardSelect }: HandProps) {
         owner: entity.zone!.owner,
       })
     );
-  }, [world, worldVersion]); // Thêm world vào dependency array
+  }, [handEntities]);
 
-  const phase = useStore(useGameStore, (state) => state.phase);
-  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
+  // === THAY ĐỔI: Lấy state game trực tiếp từ globalEntity ===
+  const phase = globalEntity.globalState?.phase;
+  const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard); // Vẫn lấy từ store vì đây là UI state
   const initiatePlaceSigni = useStore(
     useGameStore,
     (state) => state.initiatePlaceSigni
@@ -63,7 +67,8 @@ export default function Hand({ onCardSelect }: HandProps) {
     globalEntity.globalState?.mulliganSelection ?? [];
 
   useOnClickOutside(handRef, () => {
-    if (phase !== "mulligan") {
+    if (phase !== GamePhase.MULLIGAN) {
+      // <-- Sử dụng hằng số
       setSelectedCardUuid(null);
       onCardSelect(null);
     }
@@ -72,7 +77,8 @@ export default function Hand({ onCardSelect }: HandProps) {
   const handleCardClick = (card: CardInstance) => {
     onCardSelect(card);
 
-    if (phase === "mulligan") {
+    if (phase === GamePhase.MULLIGAN) {
+      // <-- Sử dụng hằng số
       updateMulliganSelectionAction(card.uuid); // Gọi action mới
     } else {
       setSelectedCardUuid((prev) => (prev === card.uuid ? null : card.uuid));
@@ -81,11 +87,12 @@ export default function Hand({ onCardSelect }: HandProps) {
 
   const playableSigniUuids = useMemo(() => {
     // THÊM ĐIỀU KIỆN BẢO VỆ
-    if (!world || phase !== "main") return [];
+    if (!world || phase !== GamePhase.MAIN) return []; // <-- Sử dụng hằng số
 
     const lrigsOnField = [];
     for (const e of world.with("zone", "cardInfo")) {
-      if (e.zone?.zone === "lrigZone") {
+      if (e.zone?.zone === Zone.LRIG_ZONE) {
+        // <-- Sử dụng hằng số
         lrigsOnField.push(e);
       }
     }
@@ -97,7 +104,8 @@ export default function Hand({ onCardSelect }: HandProps) {
 
     const signiOnField = [];
     for (const e of world.with("zone", "cardInfo")) {
-      if (e.zone?.zone === "signiZone") {
+      if (e.zone?.zone === Zone.SIGNI_ZONE) {
+        // <-- Sử dụng hằng số
         signiOnField.push(e);
       }
     }
@@ -108,14 +116,14 @@ export default function Hand({ onCardSelect }: HandProps) {
 
     return hand
       .filter((card) => {
-        if (card.type !== "SIGNI") return false;
+        if (card.type !== CardType.SIGNI) return false; // <-- Sử dụng hằng số
         const cardLevel = Number(card.level ?? 0);
         return (
           cardLevel <= lrigLevel && currentTotalLevel + cardLevel <= lrigLimit
         );
       })
       .map((card) => card.uuid);
-  }, [world, worldVersion, phase, hand]); // Thêm world vào dependency array
+  }, [world, phase, hand]); // <-- Loại bỏ worldVersion
 
   if (numCards === 0) return null;
 
@@ -128,10 +136,10 @@ export default function Hand({ onCardSelect }: HandProps) {
         <AnimatePresence>
           {hand.map((card, index) => {
             const isSelectedForMulligan =
-              phase === "mulligan" &&
+              phase === GamePhase.MULLIGAN && // <-- Sử dụng hằng số
               mulliganSelectionUuids.includes(card.uuid);
             const isSelectedForPreview =
-              phase !== "mulligan" && selectedCardUuid === card.uuid;
+              phase !== GamePhase.MULLIGAN && selectedCardUuid === card.uuid; // <-- Sử dụng hằng số
 
             // === ADDED GUARD CLAUSE TO PREVENT NaN ERROR ===
             const numCards = hand.length;
@@ -163,8 +171,8 @@ export default function Hand({ onCardSelect }: HandProps) {
                   scale:
                     isSelectedForMulligan || isSelectedForPreview ? 1.2 : 1,
                   opacity:
-                    phase === "main" &&
-                    card.type === "SIGNI" &&
+                    phase === GamePhase.MAIN && // <-- Sử dụng hằng số
+                    card.type === CardType.SIGNI && // <-- Sử dụng hằng số
                     !playableSigniUuids.includes(card.uuid)
                       ? 0.5
                       : 1,
@@ -188,21 +196,21 @@ export default function Hand({ onCardSelect }: HandProps) {
               >
                 {isSelectedForPreview && (
                   <ContextMenu
-                    showChargeEner={phase === "ener"}
+                    showChargeEner={phase === GamePhase.ENER} // <-- Sử dụng hằng số
                     onChargeEner={() => {
                       chargeEnerAction(card.uuid); // Gọi action mới
                       setSelectedCardUuid(null);
                       onCardSelect(null);
                     }}
-                    showDiscard={phase === "end" && mustDiscard}
+                    showDiscard={phase === GamePhase.END && mustDiscard} // <-- Sử dụng hằng số
                     onDiscard={() => {
                       discardCardAction(card.uuid); // Gọi action mới
                       setSelectedCardUuid(null);
                       onCardSelect(null);
                     }}
                     showPlaySigni={
-                      phase === "main" &&
-                      card.type === "SIGNI" &&
+                      phase === GamePhase.MAIN && // <-- Sử dụng hằng số
+                      card.type === CardType.SIGNI && // <-- Sử dụng hằng số
                       playableSigniUuids.includes(card.uuid)
                     }
                     onPlaySigni={() => {
@@ -217,8 +225,8 @@ export default function Hand({ onCardSelect }: HandProps) {
                     "relative transition-all duration-300",
                     isSelectedForMulligan &&
                       "ring-4 ring-blue-500 ring-offset-2 ring-offset-background rounded-lg",
-                    phase === "main" &&
-                      card.type === "SIGNI" &&
+                    phase === GamePhase.MAIN && // <-- Sử dụng hằng số
+                      card.type === CardType.SIGNI && // <-- Sử dụng hằng số
                       !playableSigniUuids.includes(card.uuid) &&
                       "grayscale pointer-events-none"
                   )}

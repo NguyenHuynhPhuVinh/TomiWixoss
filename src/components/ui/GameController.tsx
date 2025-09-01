@@ -23,15 +23,15 @@ import {
   startSetupAction,
   confirmMulliganAction,
 } from "@/logic/actions.miniplex";
+// === THAY ĐỔI: Import constants ===
+import { GamePhase as GamePhaseConst, Zone } from "@/logic/constants";
 
 export default function GameController() {
-  const phase = useStore(useGameStore, (state) => state.phase);
-  const turn = useStore(useGameStore, (state) => state.turn);
+  // === THAY ĐỔI: Lấy phase, turn, actionTakenInPhase từ globalEntity ===
+  const phase = globalEntity.globalState?.phase;
+  const turn = globalEntity.globalState?.turn;
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
-  const actionTakenInPhase = useStore(
-    useGameStore,
-    (state) => state.actionTakenInPhase
-  );
+  const actionTakenInPhase = globalEntity.globalState?.actionTakenInPhase;
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
   const initializeGame = useGameStore((state) => state.initializeGame);
   const openZoneViewer = useGameStore((state) => state.openZoneViewer);
@@ -70,11 +70,11 @@ export default function GameController() {
     // ===============================================
 
     switch (phase) {
-      case "pre_game":
+      case GamePhaseConst.PRE_GAME: // <-- Sử dụng hằng số
         // Nút này bây giờ sẽ dispatch action
         return <Button onClick={startSetupAction}>Chuẩn bị</Button>;
 
-      case "selecting_lrigs":
+      case GamePhaseConst.SELECTING_LRIGS: // <-- Sử dụng hằng số
         // Giao diện này bây giờ sẽ được hiển thị đúng
         return (
           <p className="text-muted-foreground animate-pulse">
@@ -82,9 +82,9 @@ export default function GameController() {
           </p>
         );
 
-      case "up":
-      case "draw":
-        const phaseTextAuto = phase.charAt(0).toUpperCase() + phase.slice(1);
+      case GamePhaseConst.UP: // <-- Sử dụng hằng số
+      case GamePhaseConst.DRAW: // <-- Sử dụng hằng số
+        const phaseTextAuto = phase!.charAt(0).toUpperCase() + phase!.slice(1); // <-- Thêm ! vì đã guard
         return (
           <>
             <h3 className="font-bold">
@@ -96,7 +96,7 @@ export default function GameController() {
           </>
         );
 
-      case "ener":
+      case GamePhaseConst.ENER: // <-- Sử dụng hằng số
         return (
           <>
             <h3 className="font-bold">Turn {turn} - Ener Phase</h3>
@@ -116,7 +116,7 @@ export default function GameController() {
           </>
         );
 
-      case "mulligan":
+      case GamePhaseConst.MULLIGAN: // <-- Sử dụng hằng số
         return (
           <>
             <p className="text-muted-foreground mb-4">
@@ -132,7 +132,7 @@ export default function GameController() {
           </>
         );
 
-      case "grow":
+      case GamePhaseConst.GROW: // <-- Sử dụng hằng số
         return (
           <>
             <h3 className="font-bold">Turn {turn} - Grow Phase</h3>
@@ -157,11 +157,13 @@ export default function GameController() {
         );
 
       // Tạm thời các phase khác chỉ có nút Next
-      case "end":
+      case GamePhaseConst.END: // <-- Sử dụng hằng số
         // THÊM ĐIỀU KIỆN BẢO VỆ
         const handSize = world
           ? Array.from(
-              world.with("zone").where((e: Entity) => e.zone?.zone === "hand")
+              world
+                .with("zone")
+                .where((e: Entity) => e.zone?.zone === Zone.HAND) // <-- Sử dụng hằng số
             ).length
           : 0;
         return (
@@ -184,6 +186,7 @@ export default function GameController() {
           </>
         );
       default:
+        if (!phase) return null; // Guard clause
         const phaseText = phase.charAt(0).toUpperCase() + phase.slice(1);
         return (
           <>
@@ -202,7 +205,8 @@ export default function GameController() {
   };
 
   // ... JSX render controller ...
-  if (phase === "pre_game") {
+  if (phase === GamePhaseConst.PRE_GAME) {
+    // <-- Sử dụng hằng số
     return (
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card p-6 rounded-lg shadow-lg z-10 border text-center pointer-events-auto">
         <h2 className="text-2xl font-bold mb-2 text-card-foreground">

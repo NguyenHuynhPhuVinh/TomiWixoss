@@ -1,12 +1,13 @@
 // src/logic/ecs/systems/draw.system.miniplex.ts
 
 import { globalEntity, world } from "../world.miniplex";
+import { GamePhase, Zone } from "../../constants"; // <-- Import constants
 
 // Helper function để lấy các lá bài trên cùng của bộ bài
 function getTopCardsOfDeck(amount: number) {
   // Chuyển iterator thành mảng để sort
   const mainDeckEntities = Array.from(
-    world.with("zone").where((e) => e.zone.zone === "mainDeck")
+    world.with("zone").where((e) => e.zone.zone === Zone.MAIN_DECK) // <-- Sử dụng hằng số
   );
 
   // Sắp xếp để lá bài có index cao nhất (trên cùng) lên đầu mảng
@@ -18,7 +19,7 @@ function getTopCardsOfDeck(amount: number) {
 // Helper function để cập nhật lại index của bộ bài sau khi rút
 function reindexDeck() {
   const mainDeckEntities = Array.from(
-    world.with("zone").where((e) => e.zone.zone === "mainDeck")
+    world.with("zone").where((e) => e.zone.zone === Zone.MAIN_DECK) // <-- Sử dụng hằng số
   );
   // Sắp xếp lại theo thứ tự tăng dần để gán lại index
   mainDeckEntities.sort((a, b) => a.zone.index - b.zone.index);
@@ -34,7 +35,7 @@ export function drawSystem() {
   // 1. Điều kiện để chạy System
   if (
     !globalState ||
-    globalState.phase !== "draw" ||
+    globalState.phase !== GamePhase.DRAW || // <-- Sử dụng hằng số
     globalState.actionTakenInPhase
   ) {
     return;
@@ -58,7 +59,7 @@ export function drawSystem() {
     // 4. Thực hiện logic rút bài
     cardsToDraw.forEach((entity) => {
       if (entity.zone && entity.status) {
-        entity.zone.zone = "hand";
+        entity.zone.zone = Zone.HAND; // <-- Sử dụng hằng số
         entity.status.isFaceUp = true;
         entity.zone.index = 0; // Index không quan trọng trên tay
       }

@@ -8,7 +8,7 @@ import { useStore } from "zustand";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
 // --- THAY ĐỔI LỚN ---
-import { world } from "@/logic/ecs/world.miniplex";
+import { world, globalEntity } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
 import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex";
 import { startGameLoop } from "@/logic/game.engine.miniplex";
@@ -19,6 +19,8 @@ import {
 
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 import { bootstrapGame } from "@/logic/engine.setup"; // <-- IMPORT MỚI
+// === THAY ĐỔI: Import constants ===
+import { GamePhase, Zone } from "@/logic/constants";
 
 // --- CHẠY BOOTSTRAP NGAY LẬP TỨC KHI FILE NÀY ĐƯỢC LOAD ---
 // Điều này đảm bảo nó chỉ chạy một lần duy nhất phía client.
@@ -57,7 +59,8 @@ export default function ClientOnlyLoader() {
 
   // Lấy các state cần thiết từ store
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
-  const phase = useStore(useGameStore, (state) => state.phase);
+  // === THAY ĐỔI: Lấy phase từ globalEntity ===
+  const phase = globalEntity.globalState?.phase;
   const isZoneViewerOpen = useStore(
     useGameStore,
     (state) => state.isZoneViewerOpen
@@ -110,7 +113,8 @@ export default function ClientOnlyLoader() {
 
     const lrigEntities = [];
     for (const entity of world.with("cardInfo", "status", "zone")) {
-      if (entity.zone?.zone === "lrigDeck") {
+      if (entity.zone?.zone === Zone.LRIG_DECK) {
+        // <-- Sử dụng hằng số
         lrigEntities.push(entity);
       }
     }
@@ -128,10 +132,10 @@ export default function ClientOnlyLoader() {
   // === TRUY VẤN DỮ LIỆU CHO GROW OPTIONS (VIẾT LẠI) ===
   const growOptions: CardInstance[] = useMemo(() => {
     // THÊM ĐIỀU KIỆN BẢO VỆ
-    if (!world) return [];
+    if (!world || !phase) return [];
 
     let zoneIndex: number;
-    if (phase === "grow") zoneIndex = 1;
+    if (phase === GamePhase.GROW) zoneIndex = 1; // <-- Sử dụng hằng số
     else if (viewingLrigDeckForGrow)
       zoneIndex = viewingLrigDeckForGrow.forAssistIndex!;
     else return [];
@@ -174,7 +178,7 @@ export default function ClientOnlyLoader() {
       </TomiwixossSceneLoader>
 
       <LrigSelector
-        isOpen={phase === "selecting_lrigs"}
+        isOpen={phase === GamePhase.SELECTING_LRIGS} // <-- Sử dụng hằng số
         fullLrigDeck={lrigDeckForSelector}
         onConfirm={(centerUuid, assist1Uuid, assist2Uuid) => {
           // Gọi action mới
@@ -192,7 +196,9 @@ export default function ClientOnlyLoader() {
         onOpenChange={closeZoneViewer}
         onCardClick={(card) => {
           const zoneIndex =
-            phase === "grow" ? 1 : viewingLrigDeckForGrow!.forAssistIndex!;
+            phase === GamePhase.GROW
+              ? 1
+              : viewingLrigDeckForGrow!.forAssistIndex!; // <-- Sử dụng hằng số
           // Gọi action mới
           growLrigAction(card.uuid, zoneIndex);
         }}

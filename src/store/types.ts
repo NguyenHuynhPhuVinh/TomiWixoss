@@ -1,7 +1,7 @@
 // src/store/types.ts
-import { GamePhase } from "@/types/game";
-// import { World } from "@/logic/ecs/world";
-import { PlayerAction } from "./slices/uiSlice"; // Import từ uiSlice
+// === THAY ĐỔI: Import GamePhase từ file constants mới ===
+import { GamePhase } from "@/logic/constants";
+import { PlayerAction } from "./slices/uiSlice";
 
 // Định nghĩa kiểu cho một entry trong log
 export type LogType = "info" | "action" | "system" | "cost";
@@ -22,17 +22,17 @@ export interface LogEntry {
 export interface GameState {
   worldVersion: number;
 
-  // Các state "gương" được đồng bộ từ GlobalStateComponent trong World
-  phase: GamePhase;
-  turn: number;
-  actionTakenInPhase: boolean;
+  // === THAY ĐỔI: Xóa các state không còn được quản lý bởi Zustand ===
+  // phase: GamePhase;
+  // turn: number;
+  // actionTakenInPhase: boolean;
+  // boardState: any;
 
-  // State của UI
+  // State của UI (vẫn giữ lại)
   logs: LogEntry[];
   playerAction: PlayerAction | null;
   isZoneViewerOpen: boolean;
   viewingLrigDeckForGrow: { forAssistIndex: number | null } | null;
-  boardState: any; // Sẽ được định nghĩa chi tiết hơn
   mustDiscard: boolean;
 }
 
@@ -43,7 +43,8 @@ export interface GameActions {
 
   // Game/World Actions
   initializeGame: () => void;
-  syncStateFromWorld: () => void;
+  // === THAY ĐỔI: Thay thế syncStateFromWorld bằng incrementWorldVersion ===
+  incrementWorldVersion: () => void;
 
   // UI Actions
   initiatePlaceSigni: (cardUuid: string) => void;

@@ -15,6 +15,8 @@ import {
   drawInitialHand,
   shuffleMainDeck,
 } from "./ecs/utils.miniplex"; // <-- THÊM IMPORT NÀY
+// === THAY ĐỔI: Import constants ===
+import { GamePhase, Zone, CardType } from "@/logic/constants";
 
 // --- Helper Function ---
 function findEntity(uuid: string): Entity | undefined {
@@ -29,7 +31,8 @@ function findEntity(uuid: string): Entity | undefined {
 export function chargeEnerAction(entityUuid: string) {
   const { globalState, sideEffectQueue } = globalEntity;
 
-  if (globalState?.phase !== "ener" || globalState.actionTakenInPhase) {
+  if (globalState?.phase !== GamePhase.ENER || globalState.actionTakenInPhase) {
+    // <-- Sử dụng hằng số
     sideEffectQueue?.queue.push({
       type: "LOG",
       message: "Bây giờ không thể nạp Ener.",
@@ -54,10 +57,10 @@ export function chargeEnerAction(entityUuid: string) {
     return;
   }
 
-  const source = entityToCharge.zone.zone === "hand" ? "tay" : "sân";
+  const source = entityToCharge.zone.zone === Zone.HAND ? "tay" : "sân"; // <-- Sử dụng hằng số
 
   // --- Logic từ Reducer cũ được chuyển vào đây ---
-  entityToCharge.zone.zone = "enerZone";
+  entityToCharge.zone.zone = Zone.ENER_ZONE; // <-- Sử dụng hằng số
   entityToCharge.status.isFaceUp = true;
 
   // Đánh dấu đã thực hiện hành động
@@ -95,7 +98,7 @@ export function discardCardAction(entityUuid: string) {
   }
 
   // Di chuyển lá bài vào mộ
-  entityToDiscard.zone.zone = "trash";
+  entityToDiscard.zone.zone = Zone.TRASH; // <-- Sử dụng hằng số
 
   // Log action
   sideEffectQueue?.queue.push({
@@ -114,7 +117,8 @@ export function discardCardAction(entityUuid: string) {
   const handEntities = world.with("zone");
   let handCount = 0;
   for (const e of handEntities) {
-    if (e.zone?.zone === "hand") {
+    if (e.zone?.zone === Zone.HAND) {
+      // <-- Sử dụng hằng số
       handCount++;
     }
   }
@@ -163,7 +167,8 @@ export function advancePhaseAction() {
 export function updateMulliganSelectionAction(entityUuid: string) {
   const { globalState } = globalEntity;
 
-  if (globalState?.phase !== "mulligan") {
+  if (globalState?.phase !== GamePhase.MULLIGAN) {
+    // <-- Sử dụng hằng số
     console.warn("Không thể cập nhật mulligan selection ngoài phase mulligan.");
     return;
   }
@@ -188,12 +193,13 @@ export function updateMulliganSelectionAction(entityUuid: string) {
  */
 export function startSetupAction() {
   const { globalState, sideEffectQueue } = globalEntity;
-  if (!globalState || globalState.phase !== "pre_game") {
+  if (!globalState || globalState.phase !== GamePhase.PRE_GAME) {
+    // <-- Sử dụng hằng số
     return; // Không làm gì nếu không ở đúng phase
   }
 
   // Logic từ startSetupReducer cũ
-  globalState.phase = "selecting_lrigs";
+  globalState.phase = GamePhase.SELECTING_LRIGS; // <-- Sử dụng hằng số
 
   // Gửi side effect để ghi log
   sideEffectQueue?.queue.push({
@@ -218,14 +224,14 @@ export function confirmLrigSelectionAction(
   assistUuids: string[]
 ) {
   const { globalState, sideEffectQueue } = globalEntity;
-  if (!globalState || globalState.phase !== "selecting_lrigs") return;
+  if (!globalState || globalState.phase !== GamePhase.SELECTING_LRIGS) return; // <-- Sử dụng hằng số
 
   const lrigsToPlace = [assistUuids[0], centerUuid, assistUuids[1]];
 
   lrigsToPlace.forEach((uuid, index) => {
     const entity = findEntity(uuid);
     if (entity && entity.zone && entity.status) {
-      entity.zone.zone = "lrigZone";
+      entity.zone.zone = Zone.LRIG_ZONE; // <-- Sử dụng hằng số
       entity.zone.index = index;
       entity.status.isFaceUp = true;
     }
@@ -240,7 +246,7 @@ export function confirmLrigSelectionAction(
   // Rút 5 lá bài đầu tiên (logic từ setup.reducer cũ)
   drawInitialHand(5);
 
-  globalState.phase = "mulligan";
+  globalState.phase = GamePhase.MULLIGAN; // <-- Sử dụng hằng số
   sideEffectQueue?.queue.push({
     type: "LOG",
     message: "Bắt đầu giai đoạn Mulligan.",
@@ -253,7 +259,7 @@ export function confirmLrigSelectionAction(
  */
 export function confirmMulliganAction() {
   const { globalState, sideEffectQueue } = globalEntity;
-  if (!globalState || globalState.phase !== "mulligan") return;
+  if (!globalState || globalState.phase !== GamePhase.MULLIGAN) return; // <-- Sử dụng hằng số
 
   const cardsToReturnUuids = globalState.mulliganSelection;
   const amountToRedraw = cardsToReturnUuids.length;
@@ -269,7 +275,7 @@ export function confirmMulliganAction() {
     cardsToReturnUuids.forEach((uuid) => {
       const entity = findEntity(uuid);
       if (entity && entity.zone && entity.status) {
-        entity.zone.zone = "mainDeck";
+        entity.zone.zone = Zone.MAIN_DECK; // <-- Sử dụng hằng số
         entity.status.isFaceUp = false;
       }
     });
@@ -291,7 +297,7 @@ export function confirmMulliganAction() {
   const lifeClothEntities = getTopCardsOfDeck(7);
   lifeClothEntities.forEach((entity, index) => {
     if (entity.zone) {
-      entity.zone.zone = "lifeCloth";
+      entity.zone.zone = Zone.LIFE_CLOTH; // <-- Sử dụng hằng số
       entity.zone.index = index;
     }
   });
@@ -306,7 +312,7 @@ export function confirmMulliganAction() {
   globalState.mulliganSelection = [];
 
   // Bắt đầu game
-  globalState.phase = "up";
+  globalState.phase = GamePhase.UP; // <-- Sử dụng hằng số
   globalState.turn = 1;
   sideEffectQueue?.queue.push({
     type: "LOG",
@@ -322,7 +328,8 @@ export function confirmMulliganAction() {
  */
 export function placeSigniAction(entityUuid: string, zoneIndex: number) {
   const { globalState, sideEffectQueue } = globalEntity;
-  if (globalState?.phase !== "main") {
+  if (globalState?.phase !== GamePhase.MAIN) {
+    // <-- Sử dụng hằng số
     sideEffectQueue?.queue.push({
       type: "LOG",
       message: "Chỉ có thể đặt SIGNI trong Main Phase.",
@@ -336,7 +343,7 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
 
   const lrigs = world.with("zone", "cardInfo");
   const centerLrig = Array.from(lrigs).find(
-    (e) => e.zone.zone === "lrigZone" && e.zone.index === 1
+    (e) => e.zone.zone === Zone.LRIG_ZONE && e.zone.index === 1 // <-- Sử dụng hằng số
   );
 
   if (!cardToPlay?.cardInfo || !centerLrig?.cardInfo) {
@@ -359,7 +366,7 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
   }
 
   const signiOnField = Array.from(
-    world.with("zone", "cardInfo").where((e) => e.zone.zone === "signiZone")
+    world.with("zone", "cardInfo").where((e) => e.zone.zone === Zone.SIGNI_ZONE) // <-- Sử dụng hằng số
   );
   const currentTotalLevel = signiOnField.reduce(
     (sum, entity) => sum + (entity.cardInfo!.data.level ?? 0),
@@ -376,7 +383,7 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
   }
 
   // Thực thi hành động
-  cardToPlay.zone!.zone = "signiZone";
+  cardToPlay.zone!.zone = Zone.SIGNI_ZONE; // <-- Sử dụng hằng số
   cardToPlay.zone!.index = zoneIndex;
   cardToPlay.status!.isFaceUp = true;
 
@@ -392,7 +399,7 @@ export function placeSigniAction(entityUuid: string, zoneIndex: number) {
   eventBus.dispatch(GameEvent.CARD_PLAYED, {
     entityUuid: cardToPlay.uuid, // Gửi UUID (string)
     cardId: cardToPlay.cardInfo.data.id,
-    zone: "signiZone",
+    zone: Zone.SIGNI_ZONE, // <-- Sử dụng hằng số
     zoneIndex,
   });
 }
@@ -427,7 +434,7 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   // Bây giờ chúng ta biết chắc chắn các entity này tồn tại và hợp lệ
   const targetLrig = findEntity(targetEntityUuid)!;
   const currentLrig = Array.from(world.with("zone")).find(
-    (e) => e.zone.zone === "lrigZone" && e.zone.index === zoneIndex
+    (e) => e.zone.zone === Zone.LRIG_ZONE && e.zone.index === zoneIndex // <-- Sử dụng hằng số
   )!;
 
   // Đóng modal ngay lập tức
@@ -441,7 +448,7 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   const enerZoneEntities = Array.from(
     world
       .with("zone", "cardInfo", "status", "uuid")
-      .where((e) => e.zone.zone === "enerZone")
+      .where((e) => e.zone.zone === Zone.ENER_ZONE) // <-- Sử dụng hằng số
   );
   const enerZoneCards: CardInstance[] = enerZoneEntities.map((e) => ({
     ...e.cardInfo!.data,
@@ -464,7 +471,7 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   // Trừ Ener
   paymentResult.paidEner.forEach((paidCard) => {
     const paidEntity = findEntity(paidCard.uuid);
-    if (paidEntity) paidEntity.zone!.zone = "trash";
+    if (paidEntity) paidEntity.zone!.zone = Zone.TRASH; // <-- Sử dụng hằng số
   });
   if (paymentResult.paidEner.length > 0) {
     sideEffectQueue?.queue.push({
@@ -483,11 +490,11 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
 
   // Di chuyển các lá cũ vào "underneath"
   oldCardsStack.forEach((entity) => {
-    if (entity.zone) entity.zone.zone = "underneath";
+    if (entity.zone) entity.zone.zone = Zone.UNDERNEATH; // <-- Sử dụng hằng số
   });
 
   // Đặt LRIG mới ra sân
-  targetLrig.zone!.zone = "lrigZone";
+  targetLrig.zone!.zone = Zone.LRIG_ZONE; // <-- Sử dụng hằng số
   targetLrig.zone!.index = zoneIndex;
   targetLrig.status!.isFaceUp = true;
   // Gắn các lá bài cũ vào bên dưới LRIG mới
@@ -495,7 +502,8 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
 
   // --- 5. CẬP NHẬT STATE VÀ LOG ---
   // Chỉ set cờ khi Grow Center LRIG trong Grow Phase
-  if (zoneIndex === 1 && globalState.phase === "grow") {
+  if (zoneIndex === 1 && globalState.phase === GamePhase.GROW) {
+    // <-- Sử dụng hằng số
     globalState.actionTakenInPhase = true;
   }
 

@@ -1,5 +1,5 @@
 // src/logic/ecs/selectors.miniplex.ts
-import { GamePhase } from "@/types/game";
+import { GamePhase, Zone } from "@/logic/constants";
 import { world } from "./world.miniplex";
 import { Entity } from "./types.miniplex";
 
@@ -11,7 +11,8 @@ export function getValidGrowOptions(
 
   let centerLrigEntity: Entity | undefined;
   for (const e of lrigsOnField) {
-    if (e.zone.zone === "lrigZone" && e.zone.index === 1) {
+    if (e.zone.zone === Zone.LRIG_ZONE && e.zone.index === 1) {
+      // <-- Sử dụng hằng số
       centerLrigEntity = e;
       break;
     }
@@ -20,7 +21,8 @@ export function getValidGrowOptions(
 
   let currentLrigEntity: Entity | undefined;
   for (const e of lrigsOnField) {
-    if (e.zone.zone === "lrigZone" && e.zone.index === zoneIndex) {
+    if (e.zone.zone === Zone.LRIG_ZONE && e.zone.index === zoneIndex) {
+      // <-- Sử dụng hằng số
       currentLrigEntity = e;
       break;
     }
@@ -32,7 +34,7 @@ export function getValidGrowOptions(
 
   const lrigDeckEntities = world
     .with("cardInfo", "zone")
-    .where((e) => e.zone.zone === "lrigDeck");
+    .where((e) => e.zone.zone === Zone.LRIG_DECK); // <-- Sử dụng hằng số
 
   const validEntities: Entity[] = [];
   for (const entity of lrigDeckEntities) {
@@ -41,7 +43,7 @@ export function getValidGrowOptions(
 
     // Kiểm tra timing
     if (isCenterGrow) {
-      if (phase !== "grow") continue;
+      if (phase !== GamePhase.GROW) continue; // <-- Sử dụng hằng số
     } else {
       const enterAbility = cardInfo.abilities?.find((a) => a.type === "Enter");
       if (!enterAbility?.timing?.includes(phase as any)) continue;

@@ -54,8 +54,9 @@ function gameLoop() {
     sideEffectQueue.queue = [];
   }
 
-  // 3. Đồng bộ state với Zustand để React render lại
-  useGameStore.getState().syncStateFromWorld();
+  // === THAY ĐỔI: Không đồng bộ toàn bộ state, chỉ tăng version ===
+  // 3. Thông báo cho React rằng world đã thay đổi
+  useGameStore.getState().incrementWorldVersion();
 
   // 4. Lặp lại
   animationFrameId = requestAnimationFrame(gameLoop);

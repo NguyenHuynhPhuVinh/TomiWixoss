@@ -18,20 +18,24 @@ import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
 import { CardInstance } from "@/types/game";
 
 // --- THAY ĐỔI LỚN ---
-import { world as miniplexWorld } from "@/logic/ecs/world.miniplex";
+import {
+  world as miniplexWorld,
+  globalEntity,
+} from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
 import { chargeEnerAction } from "@/logic/actions.miniplex";
 import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex"; // <-- Thêm import này
 // import { openLrigDeckViewerForAssistAction } from "@/logic/actions.miniplex"; // Sẽ tạo action này sau
+// === THAY ĐỔI: Import hook mới và constants ===
+import { useWorldQuery } from "@/hooks/useWorldQuery";
+import { GamePhase, Zone } from "@/logic/constants";
 
 export default function Scene() {
   // const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
-  const phase = useStore(useGameStore, (state) => state.phase);
-  const actionTakenInPhase = useStore(
-    useGameStore,
-    (state) => state.actionTakenInPhase
-  );
+  // === THAY ĐỔI: Lấy phase và actionTakenInPhase từ globalEntity ===
+  const phase = globalEntity.globalState?.phase;
+  const actionTakenInPhase = globalEntity.globalState?.actionTakenInPhase;
   const playerAction = useStore(useGameStore, (state) => state.playerAction); // <-- LẤY playerAction Ở ĐÂY
   const cancelPlayerAction = useStore(
     useGameStore,
@@ -43,7 +47,7 @@ export default function Scene() {
   ); // <-- LẤY openLrigDeckViewerForAssist
   const addLog = useStore(useGameStore, (state) => state.addLog); // <-- Lấy hàm addLog
 
-  const boardState = useStore(useGameStore, (state) => state.boardState); // Lấy boardState riêng
+  // === THAY ĐỔI: Loại bỏ boardState, sẽ truy vấn trực tiếp từ world ===
 
   const coords = P1_ZONE_COORDINATES;
 
@@ -69,10 +73,10 @@ export default function Scene() {
     );
   }
 
-  // === TRUY VẤN DỮ LIỆU (VIẾT LẠI) ===
-  const renderableEntities = useMemo(() => {
-    return Array.from(miniplexWorld.with("cardInfo", "zone", "status"));
-  }, [worldVersion]); // Re-query khi world thay đổi
+  // === THAY ĐỔI: Sử dụng useWorldQuery để lấy renderableEntities ===
+  const renderableEntities = useWorldQuery(() =>
+    Array.from(miniplexWorld.with("cardInfo", "zone", "status"))
+  );
 
   // Nhóm các entity theo zone để tính toán xếp chồng
   const entitiesByZone = new Map<string, Entity[]>();
@@ -126,21 +130,22 @@ export default function Scene() {
         const totalCardsInZone = entitiesByZone.get(zoneName)?.length ?? 1;
 
         switch (zoneName) {
-          case "mainDeck":
-          case "trash":
+          case Zone.MAIN_DECK: // <-- Sử dụng hằng số
+          case Zone.TRASH: // <-- Sử dụng hằng số
             position = [
               coords.MAIN_DECK.x,
               coords.MAIN_DECK.y + index * CARD_DIMENSIONS.thickness,
               coords.MAIN_DECK.z,
             ];
-            if (zoneName === "trash") {
+            if (zoneName === Zone.TRASH) {
+              // <-- Sử dụng hằng số
               position[0] = coords.TRASH.x;
               position[2] = coords.TRASH.z;
             }
             break;
 
-          case "lrigDeck":
-          case "lrigTrash":
+          case Zone.LRIG_DECK: // <-- Sử dụng hằng số
+          case Zone.LRIG_TRASH: // <-- Sử dụng hằng số
             position = [
               coords.LRIG_DECK.x,
               coords.LRIG_DECK.y + index * CARD_DIMENSIONS.thickness,
@@ -151,13 +156,14 @@ export default function Scene() {
               0,
               cardInfo.data.type === "PIECE" ? 0 : Math.PI / 2,
             ];
-            if (zoneName === "lrigTrash") {
+            if (zoneName === Zone.LRIG_TRASH) {
+              // <-- Sử dụng hằng số
               position[0] = coords.LRIG_TRASH.x;
               position[2] = coords.LRIG_TRASH.z;
             }
             break;
 
-          case "lrigZone":
+          case Zone.LRIG_ZONE: // <-- Sử dụng hằng số
             const lrigCoords = [
               coords.ASSIST_LRIG_1,
               coords.CENTER_LRIG,
@@ -166,7 +172,7 @@ export default function Scene() {
             position = [lrigCoords.x, lrigCoords.y, lrigCoords.z];
             break;
 
-          case "signiZone":
+          case Zone.SIGNI_ZONE: // <-- Sử dụng hằng số
             const signiCoords = [
               coords.SIGNI_1,
               coords.SIGNI_2,
@@ -175,7 +181,7 @@ export default function Scene() {
             position = [signiCoords.x, signiCoords.y, signiCoords.z];
             break;
 
-          case "lifeCloth":
+          case Zone.LIFE_CLOTH: // <-- Sử dụng hằng số
             position = [
               coords.LIFE_CLOTH.x + index * 0.67,
               coords.LIFE_CLOTH.y + index * CARD_DIMENSIONS.thickness,
@@ -184,9 +190,9 @@ export default function Scene() {
             rotation = [-Math.PI / 2, 0, Math.PI / 2];
             break;
 
-          case "enerZone":
+          case Zone.ENER_ZONE: // <-- Sử dụng hằng số
             // Sử dụng lại logic xếp chồng đẹp của bạn
-            const zoneEntities = entitiesByZone.get("enerZone")!;
+            const zoneEntities = entitiesByZone.get(Zone.ENER_ZONE)!; // <-- Sử dụng hằng số // <-- Sử dụng hằng số
             const realIndex = zoneEntities.findIndex((e) => e === entity);
             position = [
               coords.ENER_ZONE.x,
@@ -198,7 +204,7 @@ export default function Scene() {
             break;
 
           // Bỏ qua 'hand' vì nó được render bởi UI 2D
-          case "hand":
+          case Zone.HAND: // <-- Sử dụng hằng số
             return null;
 
           default:
@@ -214,8 +220,8 @@ export default function Scene() {
             onClick={() => {
               // Logic Charge Ener (giữ nguyên)
               if (
-                zone.zone === "signiZone" &&
-                phase === "ener" &&
+                zone.zone === Zone.SIGNI_ZONE && // <-- Sử dụng hằng số
+                phase === GamePhase.ENER && // <-- Sử dụng hằng số
                 !actionTakenInPhase
               ) {
                 chargeEnerAction(entity.uuid);
@@ -223,10 +229,12 @@ export default function Scene() {
 
               // --- THÊM LOGIC MỚI CHO ASSIST LRIG ---
               const isAssistLrig =
-                zone.zone === "lrigZone" &&
+                zone.zone === Zone.LRIG_ZONE && // <-- Sử dụng hằng số
                 (zone.index === 0 || zone.index === 2);
               const canTryGrowAssist =
-                isAssistLrig && ["main", "attack"].includes(phase);
+                isAssistLrig &&
+                phase &&
+                [GamePhase.MAIN, GamePhase.ATTACK].includes(phase as any); // <-- Cast as any
 
               if (canTryGrowAssist) {
                 // 1. Kiểm tra xem có lựa chọn nào không
@@ -248,19 +256,27 @@ export default function Scene() {
 
       {/* THÊM VÙNG TƯƠNG TÁC CHO SIGNI ZONE */}
       {[coords.SIGNI_1, coords.SIGNI_2, coords.SIGNI_3].map(
-        (signiCoords, index) => (
-          <InteractiveZone
-            key={`interactive-signi-${index}`}
-            position={[signiCoords.x, signiCoords.y, signiCoords.z]}
-            rotation={[-Math.PI / 2, 0, 0]}
-            size={[2, 2]}
-            zoneIndex={index}
-            // === TRUYỀN PROPS XUỐNG ===
-            playerAction={playerAction}
-            isSlotEmpty={boardState.player.signiZone[index] === null}
-            cancelPlayerAction={cancelPlayerAction}
-          />
-        )
+        (signiCoords, index) => {
+          // === THAY ĐỔI: Kiểm tra slot trống trực tiếp từ world ===
+          const isSlotEmpty = !renderableEntities.some(
+            (entity) =>
+              entity.zone?.zone === Zone.SIGNI_ZONE &&
+              entity.zone?.index === index
+          );
+          return (
+            <InteractiveZone
+              key={`interactive-signi-${index}`}
+              position={[signiCoords.x, signiCoords.y, signiCoords.z]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              size={[2, 2]}
+              zoneIndex={index}
+              // === TRUYỀN PROPS XUỐNG ===
+              playerAction={playerAction}
+              isSlotEmpty={isSlotEmpty}
+              cancelPlayerAction={cancelPlayerAction}
+            />
+          );
+        }
       )}
 
       <Suspense fallback={null}>

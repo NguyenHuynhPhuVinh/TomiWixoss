@@ -7,17 +7,9 @@ import { GameStore } from "./types";
 // Xóa import gameManager, chúng ta không dùng nó nữa
 
 const useGameStore = create<GameStore>((set, get) => {
-  // Không cần listener onUpdate nữa. Game engine sẽ tự gọi syncStateFromWorld.
-
   return {
-    // Các state ban đầu
-    worldVersion: 0,
-    phase: "pre_game",
-    turn: 0,
-    actionTakenInPhase: false,
-    boardState: {
-      player: { signiZone: [null, null, null], lrigZone: [null, null, null] },
-    },
+    // === THAY ĐỔI: Chỉ giữ lại các state không thuộc về game logic ===
+    worldVersion: 0, // Dùng làm "trigger" để React re-render
 
     // Kết hợp các slice
     ...createLogSlice(set, get, {} as any),

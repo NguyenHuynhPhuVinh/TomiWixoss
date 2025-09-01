@@ -4,7 +4,7 @@ import { GameStore } from "../types";
 // import { World } from "@/logic/ecs/world";
 // import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
 // XÓA: import { GameFactory } from "@/logic/ecs/game.factory";
-import { CardData, ZoneKey } from "@/types/game";
+import { CardData } from "@/types/game";
 import shuffle from "shuffle-array";
 // import {
 //   GlobalStateComponent,
@@ -20,6 +20,8 @@ import { validateDeck } from "@/logic/deckValidation";
 import { world, globalEntity } from "@/logic/ecs/world.miniplex"; // <-- Sửa import
 import { Entity } from "@/logic/ecs/types.miniplex"; // <-- Sửa import
 import { v4 as uuidv4 } from "uuid"; // <-- Thêm import để tạo UUID
+// === THAY ĐỔI: Import hằng số mới ===
+import { Zone, GamePhase } from "@/logic/constants";
 
 // Định nghĩa một kiểu đơn giản cho trạng thái bàn đấu
 export interface BoardState {
@@ -32,7 +34,7 @@ export interface BoardState {
 
 export interface GameSlice {
   initializeGame: () => void;
-  syncStateFromWorld: () => void;
+  incrementWorldVersion: () => void; // <-- THAY ĐỔI
 }
 
 export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
@@ -66,7 +68,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
     // Hàm helper để biến CardData thành Entity của Miniplex
     const createCardEntity = (
       cardData: CardData,
-      zoneName: ZoneKey,
+      zoneName: Zone, // <-- Sử dụng type mới
       index: number
     ): Entity => ({
       uuid: uuidv4(), // Mỗi lá bài trong game có một uuid duy nhất
@@ -78,66 +80,27 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
     // Nạp main deck
     shuffle(mainDeckData);
     mainDeckData.forEach((card, index) => {
-      world.add(createCardEntity(card, "mainDeck", index));
+      world.add(createCardEntity(card, Zone.MAIN_DECK, index)); // <-- Sử dụng hằng số
     });
 
     // Nạp lrig deck
     lrigDeckData.forEach((card, index) => {
-      world.add(createCardEntity(card, "lrigDeck", index));
+      world.add(createCardEntity(card, Zone.LRIG_DECK, index)); // <-- Sử dụng hằng số
     });
 
     // Thêm lại globalEntity sau khi clear
     const { globalEntity } = await import("@/logic/ecs/world.miniplex");
-    globalEntity.globalState!.phase = "pre_game"; // Reset phase
+    globalEntity.globalState!.phase = GamePhase.PRE_GAME; // <-- Sử dụng hằng số
     world.add(globalEntity);
 
     console.log(`Miniplex World hydrated with ${world.size} entities.`);
 
-    // Đồng bộ state lần đầu
-    get().syncStateFromWorld();
+    // === THAY ĐỔI: Chỉ cần tăng version một lần sau khi khởi tạo ===
+    get().incrementWorldVersion();
   },
 
-  syncStateFromWorld: () => {
-    const globalState = globalEntity.globalState;
-
-    // === TẠO VÀ CẬP NHẬT boardState ===
-    const newBoardState: BoardState = {
-      player: {
-        signiZone: [null, null, null],
-        lrigZone: [null, null, null],
-      },
-    };
-
-    const entitiesOnField = world.with("zone", "cardInfo", "status");
-    for (const entity of entitiesOnField) {
-      const zone = entity.zone!;
-      const cardInfo = entity.cardInfo!;
-      const status = entity.status!;
-
-      const cardInstance: CardInstance = {
-        ...cardInfo.data,
-        ...status,
-        uuid: entity.uuid,
-        owner: zone.owner,
-      };
-
-      if (zone.zone === "signiZone") {
-        newBoardState.player.signiZone[zone.index] = cardInstance;
-      }
-      if (zone.zone === "lrigZone") {
-        newBoardState.player.lrigZone[zone.index] = cardInstance;
-      }
-    }
-    // ===================================
-
-    set((state) => ({
-      ...state, // Giữ lại các state không thay đổi như 'logs', 'playerAction', v.v.
-      worldVersion: state.worldVersion + 1,
-      phase: globalState?.phase ?? state.phase,
-      turn: globalState?.turn ?? state.turn,
-      actionTakenInPhase:
-        globalState?.actionTakenInPhase ?? state.actionTakenInPhase,
-      boardState: newBoardState,
-    }));
+  // === THAY ĐỔI: Hàm syncStateFromWorld được thay thế hoàn toàn ===
+  incrementWorldVersion: () => {
+    set((state) => ({ worldVersion: state.worldVersion + 1 }));
   },
 });
