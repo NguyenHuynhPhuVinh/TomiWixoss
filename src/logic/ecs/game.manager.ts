@@ -37,7 +37,6 @@ export class GameManager {
   private updateListeners: UpdateListener[] = [];
   private isLooping = false;
   private animationFrameId: number = 0;
-  private justProcessedAction = false;
 
   private actionQueue: GameAction[] = [];
 
@@ -176,28 +175,29 @@ export class GameManager {
   }
 
   private loop() {
-    if (!this.world) return;
-    if (!this.isLooping) {
+    if (!this.world || !this.isLooping) {
       this.notifyUpdate();
       return;
     }
 
     let nextWorldState = this.world;
-    const effectStack = nextWorldState.getComponent<EffectStackComponent>(
-      GLOBAL_ENTITY,
-      "EffectStack"
-    )!;
 
-    // --- LOGIC VÒNG LẶP MỚI, TUẦN TỰ TUYỆT ĐỐI ---
+    // --- LOGIC VÒNG LẶP MỚI, ƯU TIÊN STACK ---
 
-    // Ưu tiên 1: Xử lý MỘT hiệu ứng từ Stack
-    if (effectStack.stack.length > 0) {
+    // 1. XỬ LÝ TOÀN BỘ EFFECT STACK TRƯỚC TIÊN
+    // Vòng lặp này đảm bảo stack được dọn sạch trong một "siêu tick"
+    while (
+      nextWorldState.getComponent<EffectStackComponent>(
+        GLOBAL_ENTITY,
+        "EffectStack"
+      )!.stack.length > 0
+    ) {
       nextWorldState = produce(nextWorldState, (draftWorld) => {
-        const stack = draftWorld.getComponent<EffectStackComponent>(
+        const effectStack = draftWorld.getComponent<EffectStackComponent>(
           GLOBAL_ENTITY,
           "EffectStack"
-        )!.stack;
-        const effectToResolve = stack.pop()!;
+        )!;
+        const effectToResolve = effectStack.stack.pop()!;
         console.log(
           `%cRESOLVING EFFECT: ${effectToResolve.type}`,
           "color: #1ABC9C",
@@ -214,9 +214,11 @@ export class GameManager {
         }
       });
     }
-    // Ưu tiên 2: (Nếu Stack rỗng) Xử lý MỘT hành động từ Queue
-    else if (this.actionQueue.length > 0) {
-      const action = this.actionQueue.shift()!;
+
+    // 2. CHỈ KHI STACK RỖNG, MỚI XÉT ĐẾN ACTION HOẶC LOOP SYSTEMS
+    const action = this.actionQueue.shift();
+    if (action) {
+      // Nếu có action, xử lý nó
       console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
 
       // 1. CHẠY REDUCER
@@ -228,32 +230,51 @@ export class GameManager {
           }
         }
       });
-      nextWorldState = worldAfterReducer;
 
-      // 2. CHẠY SAGAS
+      // 2. CHẠY SAGAS VÀ THU THẬP SIDE EFFECTS
+      const sagaSideEffects: SideEffect[] = [];
       const actionSagas = this.sagas.get(action.type);
       if (actionSagas) {
         const dependencies = this.initializeDependencies();
         for (const saga of actionSagas) {
-          (saga as Saga<any>)(action, nextWorldState, dependencies);
+          const effects = saga(action, worldAfterReducer, dependencies);
+          if (effects) {
+            sagaSideEffects.push(...effects);
+          }
         }
       }
 
-      this.justProcessedAction = true;
-    }
-    // Ưu tiên 3: (Nếu cả hai đều rỗng) Chạy các system tự động
-    else if (!this.justProcessedAction) {
+      // 3. ÁP DỤNG SIDE EFFECTS VÀO STATE MỚI
+      if (sagaSideEffects.length > 0) {
+        nextWorldState = produce(worldAfterReducer, (draftWorld) => {
+          const sideEffectComponent =
+            draftWorld.getComponent<SideEffectComponent>(
+              GLOBAL_ENTITY,
+              "SideEffect"
+            )!;
+          sideEffectComponent.queue.push(...sagaSideEffects);
+        });
+      } else {
+        nextWorldState = worldAfterReducer;
+      }
+    } else {
+      // Nếu không có action, chạy các loop systems
       nextWorldState = produce(nextWorldState, (draftWorld) => {
         for (const system of this.loopSystems) {
           system.update(draftWorld as World);
         }
       });
     }
-    // ===========================================
 
-    if (this.justProcessedAction) {
-      this.justProcessedAction = false;
-    }
+    // Dọn dẹp request sau mỗi tick
+    nextWorldState = produce(nextWorldState, (draftWorld) => {
+      const actionRequest = draftWorld.getComponent<ActionRequestComponent>(
+        GLOBAL_ENTITY,
+        "ActionRequest"
+      )!;
+      actionRequest.request = null;
+    });
+    // ===========================================
 
     this.world = nextWorldState;
     this.processSideEffects();

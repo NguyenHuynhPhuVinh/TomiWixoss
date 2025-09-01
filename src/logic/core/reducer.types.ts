@@ -2,6 +2,7 @@
 import { World } from "../ecs/world";
 import { GameAction } from "./actions.types";
 import { SystemDependencies } from "../ecs/ecs.types";
+import { SideEffect } from "../ecs/components/card.components";
 
 // Một Reducer là một hàm thay đổi draft state của Immer
 export type Reducer<T extends GameAction = GameAction> = (
@@ -14,4 +15,4 @@ export type Saga<T extends GameAction = GameAction> = (
   action: T,
   worldAfterReducer: World, // Nhận state SAU KHI đã được reducer cập nhật
   dependencies: SystemDependencies
-) => void;
+) => SideEffect[] | void;

@@ -172,12 +172,14 @@ export default function Hand({ onCardSelect }: HandProps) {
 
             const centerIndex = (numCards - 1) / 2;
             const distanceFromCenter = index - centerIndex;
-            const translateX = isNaN(distanceFromCenter)
-              ? 0
-              : distanceFromCenter * 60;
-            const rotateZ = isNaN(distanceFromCenter)
-              ? 0
-              : distanceFromCenter * 4;
+            const translateX =
+              isNaN(distanceFromCenter) || !isFinite(distanceFromCenter)
+                ? 0
+                : distanceFromCenter * 60;
+            const rotateZ =
+              isNaN(distanceFromCenter) || !isFinite(distanceFromCenter)
+                ? 0
+                : distanceFromCenter * 4;
             const transform = `translateX(${translateX}px) rotate(${rotateZ}deg)`;
 
             return (

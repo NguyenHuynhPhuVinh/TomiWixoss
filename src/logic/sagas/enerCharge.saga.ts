@@ -8,8 +8,11 @@ export const enerChargeSaga: Saga<{
   type: "ENER_CHARGE";
   payload: { amount: number; player: "player" | "ai" };
 }> = (action, world, { eventBus }) => {
-  const { amount, player } = action.payload;
-
-  // Có thể phát sự kiện nếu cần, nhưng tạm thời chỉ log
-  console.log(`Ener Charge saga: Charged ${amount} cards for ${player}`);
+  // Saga chỉ biết về ý định, không biết kết quả.
+  // Log sẽ được tạo ra bởi Reducer, nơi có kết quả thực tế.
+  // Saga này có thể không cần thiết nữa nếu nó chỉ ghi log.
+  // Hoặc nó có thể phát ra sự kiện.
+  // const { eventBus: eb } = { eventBus };
+  // eb.dispatch(GameEvent.CARD_CHARGED, { /* ... */ });
+  // Không trả về side effect nào
 };

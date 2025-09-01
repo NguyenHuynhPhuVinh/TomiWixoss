@@ -25,15 +25,14 @@ export const enerChargeReducer: Reducer<{
       return zone?.zone === "mainDeck" && zone.owner === player;
     });
 
-  if (deckEntities.length < amount) {
-    console.warn(
-      `Not enough cards in deck to charge ${amount} ener. Only ${deckEntities.length} cards available.`
-    );
-    return;
-  }
-
   // Lấy amount lá bài trên cùng của deck
   const cardsToCharge = deckEntities.slice(0, amount);
+
+  if (cardsToCharge.length < amount) {
+    console.warn(
+      `Not enough cards in deck to charge ${amount} ener. Only ${cardsToCharge.length} cards available.`
+    );
+  }
 
   // Di chuyển chúng vào enerZone
   for (const entityId of cardsToCharge) {
@@ -53,14 +52,14 @@ export const enerChargeReducer: Reducer<{
     console.log(`Charged ${cardInfo.data.name} to Ener Zone.`);
   }
 
-  // Log side effect
+  // Reducer tự ghi log với số lượng chính xác
   const sideEffects = draftWorld.getComponent<SideEffectComponent>(
     GLOBAL_ENTITY,
     "SideEffect"
   )!;
   sideEffects.queue.push({
     type: "LOG",
-    message: `Ener Charge ${amount}: Moved ${amount} cards from deck to Ener Zone.`,
+    message: `Nạp ${cardsToCharge.length} lá bài vào Ener Zone.`,
     logType: "action",
   });
 };
