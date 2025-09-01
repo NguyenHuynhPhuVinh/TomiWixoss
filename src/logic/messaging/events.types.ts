@@ -1,4 +1,4 @@
-// src/logic/events.types.ts
+// src/logic/messaging/events.types.ts
 
 export enum GameEvent {
   CARD_PLAYED = "CARD_PLAYED",

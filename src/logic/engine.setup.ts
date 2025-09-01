@@ -1,4 +1,4 @@
-// src/logic/game.bootstrap.ts
+// src/logic/engine.setup.ts
 import luaService from "./lua/lua.service";
 import { GameAPI } from "./game.api.miniplex";
 import { initializeScriptingSystem } from "./ecs/systems/scripting.system";

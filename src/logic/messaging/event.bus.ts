@@ -1,4 +1,4 @@
-// src/logic/event.bus.ts
+// src/logic/messaging/event.bus.ts
 
 import { GameEvent } from "./events.types";
 

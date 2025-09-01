@@ -5,8 +5,8 @@ import useGameStore from "@/store/gameStore";
 // --- THAY ĐỔI LỚN ---
 import { world } from "../world.miniplex";
 import { Entity } from "../types.miniplex";
-import { GameEvent, GameEventPayloads } from "../../events.types";
-import eventBus from "../../event.bus";
+import { GameEvent, GameEventPayloads } from "../../messaging/events.types";
+import eventBus from "../../messaging/event.bus";
 
 let isInitialized = false; // <-- Biến cờ
 

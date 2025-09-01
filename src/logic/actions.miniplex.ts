@@ -6,8 +6,8 @@ import { TURN_PHASES } from "@/types/game";
 import shuffle from "shuffle-array"; // Thêm import này
 import { checkCost } from "@/logic/payment"; // Thêm import này
 import { CardInstance } from "@/types/game"; // Thêm import này
-import { GameEvent } from "./events.types"; // Thêm import này
-import eventBus from "./event.bus"; // Thêm import này
+import { GameEvent } from "./messaging/events.types"; // Thêm import này
+import eventBus from "./messaging/event.bus"; // Thêm import này
 import { getValidGrowOptions } from "./ecs/selectors.miniplex"; // <-- THÊM IMPORT NÀY
 import {
   getTopCardsOfDeck,

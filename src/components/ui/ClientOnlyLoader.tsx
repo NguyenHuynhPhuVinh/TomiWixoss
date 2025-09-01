@@ -18,7 +18,7 @@ import {
 } from "@/logic/actions.miniplex";
 
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
-import { bootstrapGame } from "@/logic/game.bootstrap"; // <-- IMPORT MỚI
+import { bootstrapGame } from "@/logic/engine.setup"; // <-- IMPORT MỚI
 
 // --- CHẠY BOOTSTRAP NGAY LẬP TỨC KHI FILE NÀY ĐƯỢC LOAD ---
 // Điều này đảm bảo nó chỉ chạy một lần duy nhất phía client.
