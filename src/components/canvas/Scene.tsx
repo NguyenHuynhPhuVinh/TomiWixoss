@@ -8,6 +8,7 @@ import {
   PerspectiveCamera,
   Environment,
   Preload,
+  Stats,
 } from "@react-three/drei";
 import GameBoard from "./GameBoard";
 import Card from "./Card";
@@ -63,6 +64,7 @@ export default function Scene() {
         <OrbitControls minDistance={5} maxDistance={25} />
         <Environment preset="city" />
         <ambientLight intensity={1} />
+        <Stats />
         <GameBoard
           position={[0, 0, boardHeight / 2]}
           rotation={[-Math.PI / 2, 0, 0]}
@@ -96,6 +98,7 @@ export default function Scene() {
       <OrbitControls minDistance={5} maxDistance={25} />
       <Environment preset="city" />
       <ambientLight intensity={1} />
+      <Stats />
 
       {/* --- BÀN ĐẤU --- */}
       <GameBoard
