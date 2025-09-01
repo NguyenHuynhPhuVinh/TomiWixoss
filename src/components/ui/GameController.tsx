@@ -2,18 +2,7 @@
 "use client";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
-import { shallow } from "zustand/shallow";
 import { Button } from "./button";
-// import gameManager from "@/logic/ecs/game.manager";
-import { GamePhase } from "@/types/game";
-// import { GlobalStateComponent } from "@/logic/ecs/components/card.components";
-// import { GLOBAL_ENTITY } from "@/logic/ecs/game.factory";
-// import { ZoneComponent } from "@/logic/ecs/components/card.components"; // <-- IMPORT
-// import {
-//   dispatchAdvancePhaseAction,
-//   dispatchConfirmMulliganAction,
-// } from "@/logic/ecs/actions"; // <-- IMPORT ACTION MỚI
-// import { dispatchStartSetupAction } from "@/logic/ecs/actions";
 
 // --- THAY ĐỔI LỚN ---
 import { world, globalEntity } from "@/logic/ecs/world.miniplex";
@@ -24,32 +13,30 @@ import {
   confirmMulliganAction,
 } from "@/logic/actions.miniplex";
 // === THAY ĐỔI: Import constants ===
-import { GamePhase as GamePhaseConst, Zone } from "@/logic/constants";
+import { GamePhase, Zone } from "@/logic/constants";
 
 export default function GameController() {
-  // === THAY ĐỔI: Lấy phase, turn, actionTakenInPhase từ globalEntity ===
+  // === THAY ĐỔI: Chỉ dùng useStore để trigger re-render ===
+  // Component này sẽ render lại mỗi khi worldVersion thay đổi
+  useStore(useGameStore, (state) => state.worldVersion);
+
+  // === THAY ĐỔI: Đọc state trực tiếp từ globalEntity ===
   const phase = globalEntity.globalState?.phase;
   const turn = globalEntity.globalState?.turn;
-  const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
   const actionTakenInPhase = globalEntity.globalState?.actionTakenInPhase;
+  const mulliganSelectionCount =
+    globalEntity.globalState?.mulliganSelection.length ?? 0;
+
+  // Lấy các state/action của UI từ Zustand
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
-  const initializeGame = useGameStore((state) => state.initializeGame);
   const openZoneViewer = useGameStore((state) => state.openZoneViewer);
   const playerAction = useStore(useGameStore, (state) => state.playerAction);
   const cancelPlayerAction = useStore(
     useGameStore,
     (state) => state.cancelPlayerAction
   );
-  // const setPhase = useGameStore((state) => state.setPhase); // Không còn cần thiết
-
-  const mulliganSelectionCount =
-    globalEntity.globalState?.mulliganSelection.length ?? 0;
-
-  // Xóa hàm handleNextPhase cũ
-  // const handleNextPhase = () => { ... };
 
   const renderContent = () => {
-    // === XỬ LÝ TRẠNG THÁI HÀNH ĐỘNG ĐẶC BIỆT TRƯỚC ===
     if (playerAction?.type === "place_signi") {
       return (
         <>
@@ -67,24 +54,22 @@ export default function GameController() {
         </>
       );
     }
-    // ===============================================
 
     switch (phase) {
-      case GamePhaseConst.PRE_GAME: // <-- Sử dụng hằng số
-        // Nút này bây giờ sẽ dispatch action
+      case GamePhase.PRE_GAME:
         return <Button onClick={startSetupAction}>Chuẩn bị</Button>;
 
-      case GamePhaseConst.SELECTING_LRIGS: // <-- Sử dụng hằng số
-        // Giao diện này bây giờ sẽ được hiển thị đúng
+      case GamePhase.SELECTING_LRIGS:
         return (
           <p className="text-muted-foreground animate-pulse">
             Vui lòng chọn LRIG...
           </p>
         );
 
-      case GamePhaseConst.UP: // <-- Sử dụng hằng số
-      case GamePhaseConst.DRAW: // <-- Sử dụng hằng số
-        const phaseTextAuto = phase!.charAt(0).toUpperCase() + phase!.slice(1); // <-- Thêm ! vì đã guard
+      case GamePhase.UP:
+      case GamePhase.DRAW:
+        const phaseTextAuto = (phase.charAt(0).toUpperCase() +
+          phase.slice(1)) as string;
         return (
           <>
             <h3 className="font-bold">
@@ -96,7 +81,7 @@ export default function GameController() {
           </>
         );
 
-      case GamePhaseConst.ENER: // <-- Sử dụng hằng số
+      case GamePhase.ENER:
         return (
           <>
             <h3 className="font-bold">Turn {turn} - Ener Phase</h3>
@@ -116,7 +101,7 @@ export default function GameController() {
           </>
         );
 
-      case GamePhaseConst.MULLIGAN: // <-- Sử dụng hằng số
+      case GamePhase.MULLIGAN:
         return (
           <>
             <p className="text-muted-foreground mb-4">
@@ -132,7 +117,7 @@ export default function GameController() {
           </>
         );
 
-      case GamePhaseConst.GROW: // <-- Sử dụng hằng số
+      case GamePhase.GROW:
         return (
           <>
             <h3 className="font-bold">Turn {turn} - Grow Phase</h3>
@@ -156,14 +141,12 @@ export default function GameController() {
           </>
         );
 
-      // Tạm thời các phase khác chỉ có nút Next
-      case GamePhaseConst.END: // <-- Sử dụng hằng số
-        // THÊM ĐIỀU KIỆN BẢO VỆ
+      case GamePhase.END:
         const handSize = world
           ? Array.from(
               world
                 .with("zone")
-                .where((e: Entity) => e.zone?.zone === Zone.HAND) // <-- Sử dụng hằng số
+                .where((e: Entity) => e.zone?.zone === Zone.HAND)
             ).length
           : 0;
         return (
@@ -186,8 +169,9 @@ export default function GameController() {
           </>
         );
       default:
-        if (!phase) return null; // Guard clause
-        const phaseText = phase.charAt(0).toUpperCase() + phase.slice(1);
+        const phaseText = phase
+          ? phase.charAt(0).toUpperCase() + phase.slice(1)
+          : "Loading...";
         return (
           <>
             <h3 className="font-bold">
@@ -204,9 +188,7 @@ export default function GameController() {
     }
   };
 
-  // ... JSX render controller ...
-  if (phase === GamePhaseConst.PRE_GAME) {
-    // <-- Sử dụng hằng số
+  if (phase === GamePhase.PRE_GAME) {
     return (
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card p-6 rounded-lg shadow-lg z-10 border text-center pointer-events-auto">
         <h2 className="text-2xl font-bold mb-2 text-card-foreground">
