@@ -3,6 +3,7 @@
 
 import { Suspense, useMemo, useCallback, useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import {
   OrbitControls,
   PerspectiveCamera,
@@ -17,50 +18,37 @@ import { useStore } from "zustand";
 import useGameStore from "@/store/gameStore";
 import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
 import { CardInstance } from "@/types/game";
-
-// --- THAY ĐỔI LỚN ---
 import {
   world as miniplexWorld,
   globalEntity,
 } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
 import { chargeEnerAction } from "@/logic/actions.miniplex";
-import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex"; // <-- Thêm import này
-// import { openLrigDeckViewerForAssistAction } from "@/logic/actions.miniplex"; // Sẽ tạo action này sau
-// === THAY ĐỔI: Import hook mới và constants ===
+import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex";
 import { useWorldQuery } from "@/hooks/useWorldQuery";
 import { GamePhase, Zone } from "@/logic/constants";
-import { cancelPlayerActionInECS } from "@/logic/actions.miniplex"; // <-- Import action mới
+import { cancelPlayerActionInECS } from "@/logic/actions.miniplex";
 
-// Tạo một component nội bộ để có thể truy cập hook useThree
 function SceneContent() {
-  const { invalidate } = useThree(); // <-- 2. Lấy hàm invalidate
+  // ... (toàn bộ nội dung của SceneContent không thay đổi) ...
+  const { invalidate } = useThree();
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
-  // === THAY ĐỔI: Lấy phase và actionTakenInPhase từ globalEntity ===
   const phase = globalEntity.globalState?.phase;
   const actionTakenInPhase = globalEntity.globalState?.actionTakenInPhase;
-  const playerAction = globalEntity.globalState?.playerAction; // <-- ĐỌC TỪ ĐÂY
+  const playerAction = globalEntity.globalState?.playerAction;
   const openLrigDeckViewerForAssist = useStore(
     useGameStore,
     (state) => state.openLrigDeckViewerForAssist
-  ); // <-- LẤY openLrigDeckViewerForAssist
-  const addLog = useStore(useGameStore, (state) => state.addLog); // <-- Lấy hàm addLog
-
+  );
+  const addLog = useStore(useGameStore, (state) => state.addLog);
   const coords = P1_ZONE_COORDINATES;
-
-  // 3. Sử dụng useEffect để trigger render lại khi logic game thay đổi
   useEffect(() => {
     invalidate();
-    console.log("Logic game đã thay đổi, yêu cầu render frame mới.");
   }, [worldVersion, invalidate]);
-
-  // === TẠO HÀM ĐƯỢC GHI NHỚ ===
   const handleCardClick = useCallback(
     (entity: Entity) => {
-      const { cardInfo, status, zone } = entity;
-      if (!cardInfo || !status || !zone) return;
-
-      // Logic Charge Ener
+      const { zone } = entity;
+      if (!zone) return;
       if (
         zone.zone === Zone.SIGNI_ZONE &&
         phase === GamePhase.ENER &&
@@ -68,15 +56,12 @@ function SceneContent() {
       ) {
         chargeEnerAction(entity.uuid);
       }
-
-      // Logic Grow Assist LRIG
       const isAssistLrig =
         zone.zone === Zone.LRIG_ZONE && (zone.index === 0 || zone.index === 2);
       const canTryGrowAssist =
         isAssistLrig &&
         phase &&
         [GamePhase.MAIN, GamePhase.ATTACK].includes(phase as any);
-
       if (canTryGrowAssist) {
         const options = getValidGrowOptions(phase, zone.index);
         if (options.length > 0) {
@@ -85,40 +70,12 @@ function SceneContent() {
           addLog({ key: "logs.noGrowOptions", type: "info" });
         }
       }
-      // ... các logic click khác ...
     },
     [phase, actionTakenInPhase, openLrigDeckViewerForAssist, addLog]
   );
-
-  if (!miniplexWorld) {
-    // Render một GameBoard trống nếu world chưa được tạo
-    const boardWidth = 12;
-    const boardHeight = boardWidth / (4962 / 3509);
-    return (
-      <>
-        <PerspectiveCamera makeDefault position={[0, 18, 0.1]} fov={60} />
-        <OrbitControls minDistance={5} maxDistance={25} />
-        <Environment preset="city" />
-        <ambientLight intensity={1} />
-        <Stats />
-        <GameBoard
-          position={[0, 0, boardHeight / 2]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        />
-        <GameBoard
-          position={[0, 0, -(boardHeight / 2)]}
-          rotation={[-Math.PI / 2, 0, Math.PI]}
-        />
-      </>
-    );
-  }
-
-  // === THAY ĐỔI: Sử dụng useWorldQuery để lấy renderableEntities ===
   const renderableEntities = useWorldQuery(() =>
     Array.from(miniplexWorld.with("cardInfo", "zone", "status"))
   );
-
-  // Bọc logic nhóm entity bằng useMemo
   const entitiesByZone = useMemo(() => {
     const map = new Map<string, Entity[]>();
     for (const entity of renderableEntities) {
@@ -133,10 +90,20 @@ function SceneContent() {
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 18, 0.1]} fov={60} />
-      <OrbitControls minDistance={5} maxDistance={25} />
-      <Environment preset="city" />
-      <ambientLight intensity={1} />
+      {/* <--- CÂN BẰNG LẠI ÁNH SÁNG TẠI ĐÂY ---> */}
+      <PerspectiveCamera makeDefault position={[0, 17, 7]} fov={45} />
+      <OrbitControls
+        enableRotate={false}
+        enablePan={false}
+        minDistance={10}
+        maxDistance={30}
+      />
+      {/* Sử dụng một môi trường dịu nhẹ hơn */}
+      <Environment preset="sunset" />
+      {/* Tăng nhẹ ánh sáng nền */}
+      <ambientLight intensity={0.7} />
+      {/* Tăng nhẹ ánh sáng chính */}
+      <directionalLight position={[10, 20, 10]} intensity={1.2} castShadow />
       <Stats />
 
       {/* --- BÀN ĐẤU --- */}
@@ -149,47 +116,36 @@ function SceneContent() {
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
 
-      {/* --- RENDER CÁC LÁ BÀI TỪ MINIPLEX WORLD --- */}
+      {/* --- RENDER CÁC LÁ BÀI --- */}
       {renderableEntities.map((entity: Entity) => {
-        // Thêm type cho entity
-        // Truy cập trực tiếp, không dùng getComponent
+        // ... (phần còn lại của logic render bài không đổi) ...
         const { cardInfo, status, zone } = entity;
-
-        // Bỏ qua các lá bài không có đủ component để render
         if (!cardInfo || !status || !zone) return null;
-
         const cardInstance: CardInstance = {
           ...cardInfo.data,
           ...status,
           uuid: entity.uuid,
           owner: zone.owner,
         };
-
-        // --- LOGIC TÍNH TOÁN VỊ TRÍ VÀ XOAY BÀI ---
         let position: [number, number, number] = [0, 0, 0];
         let rotation: [number, number, number] = [-Math.PI / 2, 0, 0];
-
         const zoneName = zone.zone;
         const index = zone.index;
-        const totalCardsInZone = entitiesByZone.get(zoneName)?.length ?? 1;
-
         switch (zoneName) {
-          case Zone.MAIN_DECK: // <-- Sử dụng hằng số
-          case Zone.TRASH: // <-- Sử dụng hằng số
+          case Zone.MAIN_DECK:
+          case Zone.TRASH:
             position = [
               coords.MAIN_DECK.x,
               coords.MAIN_DECK.y + index * CARD_DIMENSIONS.thickness,
               coords.MAIN_DECK.z,
             ];
             if (zoneName === Zone.TRASH) {
-              // <-- Sử dụng hằng số
               position[0] = coords.TRASH.x;
               position[2] = coords.TRASH.z;
             }
             break;
-
-          case Zone.LRIG_DECK: // <-- Sử dụng hằng số
-          case Zone.LRIG_TRASH: // <-- Sử dụng hằng số
+          case Zone.LRIG_DECK:
+          case Zone.LRIG_TRASH:
             position = [
               coords.LRIG_DECK.x,
               coords.LRIG_DECK.y + index * CARD_DIMENSIONS.thickness,
@@ -201,13 +157,11 @@ function SceneContent() {
               cardInfo.data.type === "PIECE" ? 0 : Math.PI / 2,
             ];
             if (zoneName === Zone.LRIG_TRASH) {
-              // <-- Sử dụng hằng số
               position[0] = coords.LRIG_TRASH.x;
               position[2] = coords.LRIG_TRASH.z;
             }
             break;
-
-          case Zone.LRIG_ZONE: // <-- Sử dụng hằng số
+          case Zone.LRIG_ZONE:
             const lrigCoords = [
               coords.ASSIST_LRIG_1,
               coords.CENTER_LRIG,
@@ -215,8 +169,7 @@ function SceneContent() {
             ][index];
             position = [lrigCoords.x, lrigCoords.y, lrigCoords.z];
             break;
-
-          case Zone.SIGNI_ZONE: // <-- Sử dụng hằng số
+          case Zone.SIGNI_ZONE:
             const signiCoords = [
               coords.SIGNI_1,
               coords.SIGNI_2,
@@ -224,8 +177,7 @@ function SceneContent() {
             ][index];
             position = [signiCoords.x, signiCoords.y, signiCoords.z];
             break;
-
-          case Zone.LIFE_CLOTH: // <-- Sử dụng hằng số
+          case Zone.LIFE_CLOTH:
             position = [
               coords.LIFE_CLOTH.x + index * 0.67,
               coords.LIFE_CLOTH.y + index * CARD_DIMENSIONS.thickness,
@@ -233,31 +185,11 @@ function SceneContent() {
             ];
             rotation = [-Math.PI / 2, 0, Math.PI / 2];
             break;
-
           case Zone.ENER_ZONE: {
-            // Thêm dấu ngoặc {} để tạo block scope
-            const zoneEntities = entitiesByZone.get(Zone.ENER_ZONE); // <-- 1. BỎ DẤU CHẤM THAN (!)
-
-            // 2. THÊM ĐIỀU KIỆN BẢO VỆ
-            // Nếu không tìm thấy zone này trong map (vì nó trống),
-            // hoặc nếu có lỗi gì đó, hãy bỏ qua việc render lá bài này để tránh crash.
-            if (!zoneEntities) {
-              console.warn(
-                `Entity ${entity.uuid} is in ENER_ZONE, but the zone was not found in the map. Skipping render.`
-              );
-              return null;
-            }
-
+            const zoneEntities = entitiesByZone.get(Zone.ENER_ZONE);
+            if (!zoneEntities) return null;
             const realIndex = zoneEntities.findIndex((e) => e === entity);
-
-            // Thêm một lớp bảo vệ nữa phòng trường hợp không tìm thấy chính nó
-            if (realIndex === -1) {
-              console.warn(
-                `Could not find entity ${entity.uuid} within its own zone (ENER_ZONE).`
-              );
-              return null;
-            }
-
+            if (realIndex === -1) return null;
             position = [
               coords.ENER_ZONE.x,
               coords.ENER_ZONE.y +
@@ -268,15 +200,11 @@ function SceneContent() {
             rotation = [-Math.PI / 2, 0, Math.PI];
             break;
           }
-
-          // Bỏ qua 'hand' vì nó được render bởi UI 2D
-          case Zone.HAND: // <-- Sử dụng hằng số
+          case Zone.HAND:
             return null;
-
           default:
             return null;
         }
-
         return (
           <Card
             key={entity.uuid}
@@ -288,10 +216,9 @@ function SceneContent() {
         );
       })}
 
-      {/* THÊM VÙNG TƯƠNG TÁC CHO SIGNI ZONE */}
+      {/* VÙNG TƯƠNG TÁC CHO SIGNI ZONE */}
       {[coords.SIGNI_1, coords.SIGNI_2, coords.SIGNI_3].map(
         (signiCoords, index) => {
-          // === THAY ĐỔI: Kiểm tra slot trống trực tiếp từ world ===
           const isSlotEmpty = !renderableEntities.some(
             (entity) =>
               entity.zone?.zone === Zone.SIGNI_ZONE &&
@@ -304,7 +231,6 @@ function SceneContent() {
               rotation={[-Math.PI / 2, 0, 0]}
               size={[2, 2]}
               zoneIndex={index}
-              // === TRUYỀN PROPS XUỐNG ===
               playerAction={playerAction || null}
               isSlotEmpty={isSlotEmpty}
               cancelPlayerAction={cancelPlayerActionInECS}
@@ -317,10 +243,15 @@ function SceneContent() {
 }
 
 export default function Scene() {
-  // Component Scene bên ngoài giờ chỉ còn nhiệm vụ set up Canvas
   return (
-    // 1. THÊM frameloop="demand"
-    <Canvas frameloop="demand">
+    <Canvas
+      frameloop="demand"
+      gl={{
+        toneMapping: THREE.ACESFilmicToneMapping,
+        outputColorSpace: THREE.SRGBColorSpace,
+      }}
+    >
+      <color attach="background" args={["#1c1917"]} />
       <Suspense fallback={null}>
         <SceneContent />
         <Preload all />

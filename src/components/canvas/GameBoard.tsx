@@ -4,24 +4,19 @@
 import * as THREE from "three";
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
-import { useMemo } from "react"; // Import useMemo
+import { useMemo } from "react";
 
-// Định nghĩa kiểu cho props để tận dụng TypeScript
 interface GameBoardProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
 }
 
-// Thêm props vào component
 export default function GameBoard({
   position = [0, -0.5, 0],
   rotation = [-Math.PI / 2, 0, 0],
 }: GameBoardProps) {
-  // Phần load texture và tối ưu hóa giữ nguyên
-  // Chỉ cần đảm bảo đường dẫn đúng với file PNG mới của bạn
-  const texture = useLoader(TextureLoader, "/textures/playmat.png"); // <-- Đảm bảo tên file đúng
+  const texture = useLoader(TextureLoader, "/textures/playmat.png");
 
-  // Tương tự, bọc các thiết lập texture trong useMemo
   useMemo(() => {
     const maxAnisotropy = 16;
     texture.anisotropy = maxAnisotropy;
@@ -33,16 +28,20 @@ export default function GameBoard({
     texture.needsUpdate = true;
   }, [texture]);
 
-  // THAY ĐỔI Ở ĐÂY: Cập nhật tỉ lệ khung hình mới
-  const imageAspectRatio = 4962 / 3509; // Tỉ lệ mới ~1.41407
+  const imageAspectRatio = 4962 / 3509;
   const boardWidth = 12;
   const boardHeight = boardWidth / imageAspectRatio;
 
   return (
-    // Sử dụng props cho vị trí và góc xoay
     <mesh position={position} rotation={rotation}>
       <planeGeometry args={[boardWidth, boardHeight]} />
-      <meshStandardMaterial map={texture} roughness={0.8} />
+      {/* <--- KHÔI PHỤC LẠI VẬT LIỆU GỐC TẠI ĐÂY ---> */}
+      <meshStandardMaterial
+        map={texture}
+        roughness={
+          0.9
+        } /* Giữ độ nhám cao để giảm phản chiếu, giúp màu sắc rõ hơn */
+      />
     </mesh>
   );
 }
