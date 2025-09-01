@@ -11,7 +11,6 @@ const useGameStore = create<GameStore>((set, get) => {
 
   return {
     // Các state ban đầu
-    world: null,
     worldVersion: 0,
     phase: "pre_game",
     turn: 0,

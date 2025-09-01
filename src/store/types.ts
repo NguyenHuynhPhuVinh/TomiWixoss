@@ -20,7 +20,6 @@ export interface LogEntry {
 
 // Interface cho STATE của toàn bộ store
 export interface GameState {
-  world: any; // World from Miniplex
   worldVersion: number;
 
   // Các state "gương" được đồng bộ từ GlobalStateComponent trong World

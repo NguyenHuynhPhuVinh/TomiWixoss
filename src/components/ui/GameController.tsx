@@ -23,7 +23,6 @@ import { advancePhaseAction } from "@/logic/actions.miniplex";
 export default function GameController() {
   const phase = useStore(useGameStore, (state) => state.phase);
   const turn = useStore(useGameStore, (state) => state.turn);
-  const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
   const actionTakenInPhase = useStore(
     useGameStore,
@@ -160,9 +159,12 @@ export default function GameController() {
 
       // Tạm thời các phase khác chỉ có nút Next
       case "end":
+        // THÊM ĐIỀU KIỆN BẢO VỆ
         const handSize = world
-          .with("zone")
-          .where((e: Entity) => e.zone?.zone === "hand").length;
+          ? Array.from(
+              world.with("zone").where((e: Entity) => e.zone?.zone === "hand")
+            ).length
+          : 0;
         return (
           <>
             <h3 className="font-bold">Turn {turn} - End Phase</h3>

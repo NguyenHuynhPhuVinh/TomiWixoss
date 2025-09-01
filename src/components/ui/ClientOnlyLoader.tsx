@@ -46,7 +46,6 @@ export default function ClientOnlyLoader() {
   const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
 
   // Lấy các state cần thiết từ store
-  const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
   const phase = useStore(useGameStore, (state) => state.phase);
   const isZoneViewerOpen = useStore(
@@ -91,6 +90,9 @@ export default function ClientOnlyLoader() {
 
   // === TRUY VẤN DỮ LIỆU CHO LRIG SELECTOR (VIẾT LẠI) ===
   const lrigDeckForSelector: CardInstance[] = useMemo(() => {
+    // THÊM ĐIỀU KIỆN BẢO VỆ
+    if (!world) return [];
+
     const lrigEntities = [];
     for (const entity of world.with("cardInfo", "status", "zone")) {
       if (entity.zone?.zone === "lrigDeck") {
@@ -106,10 +108,13 @@ export default function ClientOnlyLoader() {
         owner: entity.zone!.owner,
       })
     );
-  }, [useStore(useGameStore, (s) => s.worldVersion)]); // Lắng nghe sự thay đổi của world
+  }, [world, useStore(useGameStore, (s) => s.worldVersion)]); // Thêm world vào dependency array
 
   // === TRUY VẤN DỮ LIỆU CHO GROW OPTIONS (VIẾT LẠI) ===
   const growOptions: CardInstance[] = useMemo(() => {
+    // THÊM ĐIỀU KIỆN BẢO VỆ
+    if (!world) return [];
+
     let zoneIndex: number;
     if (phase === "grow") zoneIndex = 1;
     else if (viewingLrigDeckForGrow)
@@ -127,6 +132,7 @@ export default function ClientOnlyLoader() {
       })
     );
   }, [
+    world, // Thêm world vào dependency array
     phase,
     viewingLrigDeckForGrow,
     useStore(useGameStore, (s) => s.worldVersion),

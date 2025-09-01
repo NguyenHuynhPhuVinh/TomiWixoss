@@ -27,16 +27,18 @@ const CARD_BASE_WIDTH = 120;
 const CARD_BASE_HEIGHT = 168;
 
 export default function Hand({ onCardSelect }: HandProps) {
-  const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
 
   // === TRUY VẤN DỮ LIỆU (VIẾT LẠI) ===
   const hand: CardInstance[] = useMemo(() => {
+    // THÊM ĐIỀU KIỆN BẢO VỆ
+    if (!world) return [];
+
     const handEntities = world
       .with("uuid", "cardInfo", "status", "zone")
       .where((e: Entity) => e.zone?.zone === "hand");
 
-    return handEntities.map(
+    return Array.from(handEntities).map(
       (entity: Entity): CardInstance => ({
         ...entity.cardInfo!.data,
         ...entity.status!,
@@ -44,7 +46,7 @@ export default function Hand({ onCardSelect }: HandProps) {
         owner: entity.zone!.owner,
       })
     );
-  }, [worldVersion]);
+  }, [world, worldVersion]); // Thêm world vào dependency array
 
   const phase = useStore(useGameStore, (state) => state.phase);
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
@@ -78,7 +80,8 @@ export default function Hand({ onCardSelect }: HandProps) {
   };
 
   const playableSigniUuids = useMemo(() => {
-    if (phase !== "main") return [];
+    // THÊM ĐIỀU KIỆN BẢO VỆ
+    if (!world || phase !== "main") return [];
 
     const lrigsOnField = [];
     for (const e of world.with("zone", "cardInfo")) {
@@ -112,7 +115,7 @@ export default function Hand({ onCardSelect }: HandProps) {
         );
       })
       .map((card) => card.uuid);
-  }, [worldVersion, phase, hand]);
+  }, [world, worldVersion, phase, hand]); // Thêm world vào dependency array
 
   if (numCards === 0) return null;
 
