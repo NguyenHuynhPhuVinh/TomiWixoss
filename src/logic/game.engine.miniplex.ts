@@ -3,7 +3,7 @@
 import useGameStore from "@/store/gameStore";
 import { globalEntity } from "./ecs/world.miniplex";
 import { upSystem } from "./ecs/systems/up.system.miniplex";
-import { scriptingSystem } from "./ecs/systems/scripting.system";
+import { initializeScriptingSystem } from "./ecs/systems/scripting.system";
 // import { drawSystem } from "./ecs/systems/draw.system.miniplex"; // Sẽ tạo sau
 
 let animationFrameId: number;
@@ -52,7 +52,7 @@ export function startGameLoop() {
   console.log("Starting Miniplex Game Loop...");
 
   // Khởi tạo các system một lần
-  scriptingSystem();
+  initializeScriptingSystem();
 
   cancelAnimationFrame(animationFrameId); // Đảm bảo không có vòng lặp nào chạy song song
   gameLoop();

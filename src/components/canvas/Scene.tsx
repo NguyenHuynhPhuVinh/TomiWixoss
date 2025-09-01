@@ -18,13 +18,13 @@ import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
 import { CardInstance } from "@/types/game";
 
 // --- THAY ĐỔI LỚN ---
-import { world } from "@/logic/ecs/world.miniplex";
+import { world as miniplexWorld } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
 import { chargeEnerAction } from "@/logic/actions.miniplex";
 // import { openLrigDeckViewerForAssistAction } from "@/logic/actions.miniplex"; // Sẽ tạo action này sau
 
 export default function Scene() {
-  const world = useStore(useGameStore, (state) => state.world);
+  // const world = useStore(useGameStore, (state) => state.world);
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
   const phase = useStore(useGameStore, (state) => state.phase);
   const actionTakenInPhase = useStore(
@@ -45,7 +45,7 @@ export default function Scene() {
 
   const coords = P1_ZONE_COORDINATES;
 
-  if (!world) {
+  if (!miniplexWorld) {
     // Render một GameBoard trống nếu world chưa được tạo
     const boardWidth = 12;
     const boardHeight = boardWidth / (4962 / 3509);
@@ -69,7 +69,7 @@ export default function Scene() {
 
   // === TRUY VẤN DỮ LIỆU (VIẾT LẠI) ===
   const renderableEntities = useMemo(() => {
-    return world.with("cardInfo", "zone", "status");
+    return Array.from(miniplexWorld.with("cardInfo", "zone", "status"));
   }, [worldVersion]); // Re-query khi world thay đổi
 
   // Nhóm các entity theo zone để tính toán xếp chồng

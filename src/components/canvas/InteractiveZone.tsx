@@ -7,7 +7,7 @@ import * as THREE from "three";
 // import commandService from "@/logic/core/command.service";
 // import { PlaceSigniCommand } from "@/logic/commands/placeSigni.command";
 // import { ZoneComponent } from "@/logic/ecs/components/card.components";
-import { dispatchPlaceSigniAction } from "@/logic/ecs/actions";
+import { placeSigniAction } from "@/logic/actions.miniplex";
 import { PlayerAction } from "@/store/slices/uiSlice"; // Import type từ uiSlice
 
 interface InteractiveZoneProps {
@@ -43,8 +43,7 @@ export default function InteractiveZone({
       onClick={(e) => {
         e.stopPropagation();
         if (playerAction) {
-          const entityId = parseInt(playerAction.cardUuid);
-          dispatchPlaceSigniAction(entityId, zoneIndex);
+          placeSigniAction(playerAction.cardUuid, zoneIndex);
           cancelPlayerAction();
         }
       }}

@@ -18,7 +18,11 @@ import { GamePhase } from "@/types/game";
 // --- THAY ĐỔI LỚN ---
 import { world, globalEntity } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
-import { advancePhaseAction, startSetupAction } from "@/logic/actions.miniplex";
+import {
+  advancePhaseAction,
+  startSetupAction,
+  confirmMulliganAction,
+} from "@/logic/actions.miniplex";
 
 export default function GameController() {
   const phase = useStore(useGameStore, (state) => state.phase);
@@ -122,10 +126,7 @@ export default function GameController() {
                 Đã chọn: {mulliganSelectionCount}
               </span>
             </p>
-            <Button
-              onClick={() => console.log("Confirm mulligan")}
-              className="w-full"
-            >
+            <Button onClick={confirmMulliganAction} className="w-full">
               Xác nhận đổi bài
             </Button>
           </>

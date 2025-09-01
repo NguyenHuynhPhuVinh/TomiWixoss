@@ -92,8 +92,8 @@ export default function Hand({ onCardSelect }: HandProps) {
     const centerLrig = lrigsOnField.find((e: Entity) => e.zone?.index === 1);
     if (!centerLrig) return [];
 
-    const lrigLevel = centerLrig.cardInfo!.data.level ?? 0;
-    const lrigLimit = centerLrig.cardInfo!.data.limit ?? 99;
+    const lrigLevel = Number(centerLrig.cardInfo!.data.level ?? 0);
+    const lrigLimit = Number(centerLrig.cardInfo!.data.limit ?? 99);
 
     const signiOnField = [];
     for (const e of world.with("zone", "cardInfo")) {
@@ -109,7 +109,7 @@ export default function Hand({ onCardSelect }: HandProps) {
     return hand
       .filter((card) => {
         if (card.type !== "SIGNI") return false;
-        const cardLevel = card.level ?? 0;
+        const cardLevel = Number(card.level ?? 0);
         return (
           cardLevel <= lrigLevel && currentTotalLevel + cardLevel <= lrigLimit
         );

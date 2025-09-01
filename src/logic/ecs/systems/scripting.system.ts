@@ -1,19 +1,17 @@
-// src/logic/ecs/systems/scripting.system.ts
-import { GameEvent } from "@/logic/core/events.types";
+// import { GameEvent } from "@/logic/core/events.types";
 import luaService from "@/logic/lua/lua.service";
 import useGameStore from "@/store/gameStore";
 
 // --- THAY ĐỔI LỚN ---
 import { world } from "../world.miniplex";
 import { Entity } from "../types.miniplex";
-import eventBus from "@/logic/core/event.bus";
+// import eventBus from "@/logic/core/event.bus";
 
-// System function cho scripting
-export function scriptingSystem() {
+// System bây giờ là một hàm khởi tạo
+export function initializeScriptingSystem() {
+  console.log("Initializing Scripting System...");
   // Đăng ký lắng nghe các sự kiện game
-  eventBus.on(GameEvent.CARD_PLAYED, onCardPlayed);
-  // eventBus.on(GameEvent.ATTACK_DECLARED, onAttack);
-  // ... đăng ký các event khác
+  // eventBus.on(GameEvent.CARD_PLAYED, onCardPlayed);
 }
 
 // Handler cho sự kiện card played

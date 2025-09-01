@@ -3,6 +3,9 @@
 import { world, globalEntity } from "./ecs/world.miniplex";
 import { Entity } from "./ecs/types.miniplex";
 import { TURN_PHASES } from "@/types/game";
+import shuffle from "shuffle-array"; // Thêm import này
+import { checkCost } from "@/logic/payment"; // Thêm import này
+import { CardInstance } from "@/types/game"; // Thêm import này
 
 /**
  * Hành động: Nạp một lá bài vào Ener Zone.
@@ -246,6 +249,269 @@ export function confirmLrigSelectionAction(
   });
 }
 
+/**
+ * Hành động: Xác nhận lựa chọn mulligan, đổi bài và bắt đầu game.
+ */
+export function confirmMulliganAction() {
+  const { globalState, sideEffectQueue } = globalEntity;
+  if (!globalState || globalState.phase !== "mulligan") return;
+
+  const cardsToReturnUuids = globalState.mulliganSelection;
+  const amountToRedraw = cardsToReturnUuids.length;
+
+  if (amountToRedraw > 0) {
+    sideEffectQueue?.queue.push({
+      type: "LOG",
+      message: `Đổi ${amountToRedraw} lá bài.`,
+      logType: "action",
+    });
+
+    // Trả bài về deck
+    cardsToReturnUuids.forEach((uuid) => {
+      const entities = world.with("uuid", "zone", "status");
+      let entity: Entity | undefined;
+      for (const e of entities) {
+        if (e.uuid === uuid) {
+          entity = e;
+          break;
+        }
+      }
+      if (entity && entity.zone && entity.status) {
+        entity.zone.zone = "mainDeck";
+        entity.status.isFaceUp = false;
+      }
+    });
+
+    // Xáo lại deck
+    shuffleMainDeck();
+
+    // Rút lại bài
+    drawInitialHand(amountToRedraw);
+  } else {
+    sideEffectQueue?.queue.push({
+      type: "LOG",
+      message: "Không đổi bài.",
+      logType: "info",
+    });
+  }
+
+  // Chia Life Cloth (7 lá)
+  const lifeClothEntities = getTopCardsOfDeck(7);
+  lifeClothEntities.forEach((entity, index) => {
+    if (entity.zone) {
+      entity.zone.zone = "lifeCloth";
+      entity.zone.index = index;
+    }
+  });
+  reindexDeck(); // Cập nhật lại index cho deck sau khi chia life cloth
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: "Chia 7 lá Life Cloth.",
+    logType: "system",
+  });
+
+  // Reset mulligan selection
+  globalState.mulliganSelection = [];
+
+  // Bắt đầu game
+  globalState.phase = "up";
+  globalState.turn = 1;
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: `Bắt đầu Turn 1 - Up Phase`,
+    logType: "system",
+  });
+}
+
+/**
+ * Hành động: Đặt một SIGNI từ tay ra sân.
+ * @param entityUuid UUID của lá SIGNI trên tay.
+ * @param zoneIndex Vị trí ô SIGNI (0, 1, hoặc 2).
+ */
+export function placeSigniAction(entityUuid: string, zoneIndex: number) {
+  const { globalState, sideEffectQueue } = globalEntity;
+  if (globalState?.phase !== "main") {
+    sideEffectQueue?.queue.push({
+      type: "LOG",
+      message: "Chỉ có thể đặt SIGNI trong Main Phase.",
+      logType: "info",
+    });
+    return;
+  }
+
+  const entities = world.with("uuid", "zone", "status", "cardInfo");
+  let cardToPlay: Entity | undefined;
+  for (const e of entities) {
+    if (e.uuid === entityUuid) {
+      cardToPlay = e;
+      break;
+    }
+  }
+
+  const lrigs = world.with("zone", "cardInfo");
+  let centerLrig: Entity | undefined;
+  for (const e of lrigs) {
+    if (e.zone.zone === "lrigZone" && e.zone.index === 1) {
+      centerLrig = e;
+      break;
+    }
+  }
+
+  if (!cardToPlay?.cardInfo || !centerLrig?.cardInfo) {
+    console.error("Yêu cầu đặt SIGNI không hợp lệ.");
+    return;
+  }
+
+  // Kiểm tra Level & Limit (logic từ reducer cũ)
+  const lrigLevel = centerLrig.cardInfo.data.level ?? 0;
+  const lrigLimit = centerLrig.cardInfo.data.limit ?? 99;
+  const cardLevel = cardToPlay.cardInfo.data.level ?? 0;
+
+  if (cardLevel > lrigLevel) {
+    sideEffectQueue?.queue.push({
+      type: "LOG",
+      message: `Không thể đặt SIGNI: Level quá cao (yêu cầu <= ${lrigLevel}).`,
+      logType: "info",
+    });
+    return;
+  }
+
+  const signiOnField = Array.from(
+    world.with("zone", "cardInfo").where((e) => e.zone.zone === "signiZone")
+  );
+  const currentTotalLevel = signiOnField.reduce(
+    (sum, entity) => sum + (entity.cardInfo!.data.level ?? 0),
+    0
+  );
+
+  if (currentTotalLevel + cardLevel > lrigLimit) {
+    sideEffectQueue?.queue.push({
+      type: "LOG",
+      message: `Không thể đặt SIGNI: Vượt quá giới hạn Level trên sân (Limit: ${lrigLimit}).`,
+      logType: "info",
+    });
+    return;
+  }
+
+  // Thực thi hành động
+  cardToPlay.zone!.zone = "signiZone";
+  cardToPlay.zone!.index = zoneIndex;
+  cardToPlay.status!.isFaceUp = true;
+
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: `Đặt SIGNI: ${cardToPlay.cardInfo.data.name} vào vị trí ${
+      zoneIndex + 1
+    }.`,
+    logType: "action",
+  });
+}
+
+/**
+ * Hành động: Grow một LRIG.
+ * @param targetEntityUuid UUID của lá LRIG trong LRIG Deck.
+ * @param zoneIndex Vị trí LRIG trên sân (0, 1, hoặc 2).
+ */
+export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
+  const { globalState, sideEffectQueue } = globalEntity;
+  if (!globalState) return;
+
+  const entities = world.with("uuid", "zone", "status", "cardInfo");
+  let targetLrig: Entity | undefined;
+  for (const e of entities) {
+    if (e.uuid === targetEntityUuid) {
+      targetLrig = e;
+      break;
+    }
+  }
+
+  const lrigs = world.with("zone", "cardInfo");
+  let currentLrig: Entity | undefined;
+  for (const e of lrigs) {
+    if (e.zone.zone === "lrigZone" && e.zone.index === zoneIndex) {
+      currentLrig = e;
+      break;
+    }
+  }
+
+  if (!targetLrig?.cardInfo || !currentLrig?.cardInfo) {
+    console.error("LRIG không hợp lệ để Grow.");
+    return;
+  }
+
+  // Đóng modal
+  sideEffectQueue?.queue.push({
+    type: "UPDATE_UI_FLAG",
+    flag: "isZoneViewerOpen",
+    value: false,
+  });
+
+  // Thanh toán cost
+  const enerZoneEntities = Array.from(
+    world.with("zone", "cardInfo").where((e) => e.zone.zone === "enerZone")
+  );
+  const enerZoneCards = enerZoneEntities.map((e) => ({
+    ...e.cardInfo!.data,
+    ...e.status!,
+    uuid: e.uuid,
+    owner: e.zone!.owner,
+  }));
+  const cost = targetLrig.cardInfo.data.growCost;
+  const paymentResult = checkCost(cost, enerZoneCards);
+
+  if (!paymentResult.canPay) {
+    sideEffectQueue?.queue.push({
+      type: "LOG",
+      message: "Không thể Grow: Không đủ Ener.",
+      logType: "info",
+    });
+    return;
+  }
+
+  // Trừ Ener
+  paymentResult.paidEner.forEach((paidCard) => {
+    const paidEntities = world.with("uuid", "zone");
+    let paidEntity: Entity | undefined;
+    for (const e of paidEntities) {
+      if (e.uuid === paidCard.uuid) {
+        paidEntity = e;
+        break;
+      }
+    }
+    if (paidEntity) paidEntity.zone!.zone = "trash";
+  });
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: `Trả ${paymentResult.paidEner.length} Ener.`,
+    logType: "cost",
+  });
+
+  // Thực hiện Grow
+  const oldCardsStack: Entity[] = [
+    currentLrig,
+    ...(currentLrig.underneath?.entities ?? []),
+  ];
+  oldCardsStack.forEach((entity) => {
+    entity.zone!.zone = "underneath";
+  });
+
+  targetLrig.zone!.zone = "lrigZone";
+  targetLrig.zone!.index = zoneIndex;
+  targetLrig.status!.isFaceUp = true;
+  targetLrig.underneath = { entities: oldCardsStack };
+
+  if (zoneIndex === 1) {
+    // Chỉ set cờ khi Grow Center LRIG
+    globalState.actionTakenInPhase = true;
+  }
+
+  sideEffectQueue?.queue.push({
+    type: "LOG",
+    message: `Grow LRIG thành ${targetLrig.cardInfo.data.name}!`,
+    logType: "action",
+  });
+}
+
 // --- Helper Functions (thêm vào cuối file) ---
 
 function getTopCardsOfDeck(amount: number): Entity[] {
@@ -279,4 +545,14 @@ function drawInitialHand(amount: number) {
     }
   });
   reindexDeck();
+}
+
+function shuffleMainDeck() {
+  const mainDeckEntities = Array.from(
+    world.with("zone").where((e) => e.zone.zone === "mainDeck")
+  );
+  shuffle(mainDeckEntities);
+  mainDeckEntities.forEach((entity, i) => {
+    entity.zone.index = i;
+  });
 }
