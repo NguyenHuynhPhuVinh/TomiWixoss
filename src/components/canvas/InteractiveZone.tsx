@@ -8,14 +8,14 @@ import * as THREE from "three";
 // import { PlaceSigniCommand } from "@/logic/commands/placeSigni.command";
 // import { ZoneComponent } from "@/logic/ecs/components/card.components";
 import { placeSigniAction } from "@/logic/actions.miniplex";
-import { PlayerAction } from "@/store/slices/uiSlice"; // Import type từ uiSlice
+import { PlayerActionPayload } from "@/logic/ecs/types.miniplex"; // Import type từ types.miniplex
 
 interface InteractiveZoneProps {
   position: [number, number, number];
   rotation: [number, number, number];
   size: [number, number];
   zoneIndex: number;
-  playerAction: PlayerAction | null;
+  playerAction: PlayerActionPayload | null;
   isSlotEmpty: boolean;
   cancelPlayerAction: () => void;
 }

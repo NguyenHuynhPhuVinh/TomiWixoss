@@ -15,6 +15,7 @@ import { startGameLoop } from "@/logic/game.engine.miniplex";
 import {
   confirmLrigSelectionAction,
   growLrigAction,
+  cancelPlayerActionInECS,
 } from "@/logic/actions.miniplex";
 
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
@@ -77,11 +78,11 @@ export default function ClientOnlyLoader() {
     useGameStore,
     (state) => state.closeZoneViewer
   );
-  const playerAction = useStore(useGameStore, (state) => state.playerAction);
-  const cancelPlayerAction = useStore(
-    useGameStore,
-    (state) => state.cancelPlayerAction
-  );
+  const playerAction = globalEntity.globalState?.playerAction; // <-- ĐỌC TỪ ĐÂY
+  // const cancelPlayerAction = useStore( // <-- KHÔNG CẦN NỮA
+  //   useGameStore,
+  //   (state) => state.cancelPlayerAction
+  // );
 
   // Khởi tạo game và vòng lặp
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function ClientOnlyLoader() {
     // Nếu đang có một hành động (như đặt bài) thì hủy nó đi
     if (playerAction) {
       console.log("Clicked outside, cancelling player action.");
-      cancelPlayerAction();
+      cancelPlayerActionInECS();
     }
   });
   // =====================================

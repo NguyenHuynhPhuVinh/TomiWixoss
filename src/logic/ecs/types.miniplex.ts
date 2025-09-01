@@ -22,6 +22,9 @@ export type SideEffect =
       value: boolean;
     };
 
+// Định nghĩa kiểu cho các action của người chơi
+export type PlayerActionPayload = { type: "place_signi"; cardUuid: string };
+
 // --- 2. ĐỊNH NGHĨA COMPONENT TOÀN CỤC ---
 // Dữ liệu không thuộc về lá bài nào cụ thể.
 
@@ -30,6 +33,7 @@ export type GlobalState = {
   turn: number;
   actionTakenInPhase: boolean;
   mulliganSelection: string[]; // Lưu trữ UUIDs của các lá bài được chọn để mulligan
+  playerAction: PlayerActionPayload | null; // <-- THÊM DÒNG NÀY
 };
 
 export type SideEffectQueue = {

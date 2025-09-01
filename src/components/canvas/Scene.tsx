@@ -29,6 +29,7 @@ import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex"; // <-- Th�
 // === THAY ĐỔI: Import hook mới và constants ===
 import { useWorldQuery } from "@/hooks/useWorldQuery";
 import { GamePhase, Zone } from "@/logic/constants";
+import { cancelPlayerActionInECS } from "@/logic/actions.miniplex"; // <-- Import action mới
 
 export default function Scene() {
   // const world = useStore(useGameStore, (state) => state.world);
@@ -36,11 +37,12 @@ export default function Scene() {
   // === THAY ĐỔI: Lấy phase và actionTakenInPhase từ globalEntity ===
   const phase = globalEntity.globalState?.phase;
   const actionTakenInPhase = globalEntity.globalState?.actionTakenInPhase;
-  const playerAction = useStore(useGameStore, (state) => state.playerAction); // <-- LẤY playerAction Ở ĐÂY
-  const cancelPlayerAction = useStore(
-    useGameStore,
-    (state) => state.cancelPlayerAction
-  ); // <-- LẤY cancelPlayerAction
+  const playerAction = globalEntity.globalState?.playerAction; // <-- ĐỌC TỪ ĐÂY
+  // const playerAction = useStore(useGameStore, (state) => state.playerAction); // <-- KHÔNG CẦN NỮA
+  // const cancelPlayerAction = useStore( // <-- KHÔNG CẦN NỮA
+  //   useGameStore,
+  //   (state) => state.cancelPlayerAction
+  // ); // <-- KHÔNG CẦN NỮA
   const openLrigDeckViewerForAssist = useStore(
     useGameStore,
     (state) => state.openLrigDeckViewerForAssist
@@ -271,9 +273,9 @@ export default function Scene() {
               size={[2, 2]}
               zoneIndex={index}
               // === TRUYỀN PROPS XUỐNG ===
-              playerAction={playerAction}
+              playerAction={playerAction || null}
               isSlotEmpty={isSlotEmpty}
-              cancelPlayerAction={cancelPlayerAction}
+              cancelPlayerAction={cancelPlayerActionInECS}
             />
           );
         }

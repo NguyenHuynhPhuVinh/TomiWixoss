@@ -17,6 +17,7 @@ import {
   chargeEnerAction,
   discardCardAction,
   updateMulliganSelectionAction,
+  initiatePlayerAction,
 } from "@/logic/actions.miniplex";
 // === THAY ĐỔI: Import hook mới và constants ===
 import { useWorldQuery } from "@/hooks/useWorldQuery";
@@ -54,10 +55,10 @@ export default function Hand({ onCardSelect }: HandProps) {
   // === THAY ĐỔI: Lấy state game trực tiếp từ globalEntity ===
   const phase = globalEntity.globalState?.phase;
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard); // Vẫn lấy từ store vì đây là UI state
-  const initiatePlaceSigni = useStore(
-    useGameStore,
-    (state) => state.initiatePlaceSigni
-  );
+  // const initiatePlaceSigni = useStore( // <-- KHÔNG CẦN NỮA
+  //   useGameStore,
+  //   (state) => state.initiatePlaceSigni
+  // );
   const numCards = hand.length;
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
@@ -214,7 +215,10 @@ export default function Hand({ onCardSelect }: HandProps) {
                       playableSigniUuids.includes(card.uuid)
                     }
                     onPlaySigni={() => {
-                      initiatePlaceSigni(card.uuid);
+                      initiatePlayerAction({
+                        type: "place_signi",
+                        cardUuid: card.uuid,
+                      });
                       setSelectedCardUuid(null);
                       onCardSelect(null);
                     }}

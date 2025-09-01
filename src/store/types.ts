@@ -1,7 +1,7 @@
 // src/store/types.ts
 // === THAY ĐỔI: Import GamePhase từ file constants mới ===
 import { GamePhase } from "@/logic/constants";
-import { PlayerAction } from "./slices/uiSlice";
+// import { PlayerAction } from "./slices/uiSlice";
 
 // Định nghĩa kiểu cho một entry trong log
 export type LogType = "info" | "action" | "system" | "cost";
@@ -30,7 +30,7 @@ export interface GameState {
 
   // State của UI (vẫn giữ lại)
   logs: LogEntry[];
-  playerAction: PlayerAction | null;
+  // playerAction: PlayerAction | null; // <-- XÓA
   isZoneViewerOpen: boolean;
   viewingLrigDeckForGrow: { forAssistIndex: number | null } | null;
   mustDiscard: boolean;
@@ -47,8 +47,8 @@ export interface GameActions {
   incrementWorldVersion: () => void;
 
   // UI Actions
-  initiatePlaceSigni: (cardUuid: string) => void;
-  cancelPlayerAction: () => void;
+  // initiatePlaceSigni: (cardUuid: string) => void; // <-- XÓA
+  // cancelPlayerAction: () => void; // <-- XÓA
   openZoneViewer: () => void;
   closeZoneViewer: () => void;
   openLrigDeckViewerForAssist: (zoneIndex: number) => void;

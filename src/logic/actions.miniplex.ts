@@ -17,6 +17,7 @@ import {
 } from "./ecs/utils.miniplex"; // <-- THÊM IMPORT NÀY
 // === THAY ĐỔI: Import constants ===
 import { GamePhase, Zone, CardType } from "@/logic/constants";
+import { PlayerActionPayload } from "./ecs/types.miniplex"; // <-- THÊM IMPORT
 
 // --- Helper Function ---
 function findEntity(uuid: string): Entity | undefined {
@@ -541,4 +542,23 @@ export function enerChargeAction(amount: number) {
     message: `Nạp ${cardsToCharge.length} lá bài vào Ener Zone.`,
     logType: "action",
   });
+}
+
+/**
+ * Bắt đầu một hành động của người chơi (ví dụ: chọn bài để đặt).
+ * @param action - Object hành động.
+ */
+export function initiatePlayerAction(action: PlayerActionPayload) {
+  if (globalEntity.globalState) {
+    globalEntity.globalState.playerAction = action;
+  }
+}
+
+/**
+ * Hủy bỏ hành động hiện tại của người chơi.
+ */
+export function cancelPlayerActionInECS() {
+  if (globalEntity.globalState) {
+    globalEntity.globalState.playerAction = null;
+  }
 }

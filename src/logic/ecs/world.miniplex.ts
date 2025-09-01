@@ -15,6 +15,7 @@ export const globalEntity: Entity = {
     turn: 0,
     actionTakenInPhase: false,
     mulliganSelection: [],
+    playerAction: null, // <-- THÊM DÒNG NÀY
   },
   sideEffectQueue: {
     queue: [],

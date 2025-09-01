@@ -1,18 +1,23 @@
 // src/store/slices/uiSlice.ts
 import { StateCreator } from "zustand";
 import { GameStore } from "../types";
+// === THÊM IMPORT MỚI ===
+import {
+  initiatePlayerAction,
+  cancelPlayerActionInECS,
+} from "@/logic/actions.miniplex";
 
-export type PlayerAction = {
-  type: "place_signi";
-  cardUuid: string; // Thực ra đây là Entity ID dạng string
-};
+// export type PlayerAction = {
+//   type: "place_signi";
+//   cardUuid: string; // Thực ra đây là Entity ID dạng string
+// };
 
 export interface UiSlice {
-  playerAction: GameStore["playerAction"];
+  // playerAction: GameStore["playerAction"]; // <-- XÓA
   isZoneViewerOpen: GameStore["isZoneViewerOpen"];
   viewingLrigDeckForGrow: GameStore["viewingLrigDeckForGrow"];
-  initiatePlaceSigni: GameStore["initiatePlaceSigni"];
-  cancelPlayerAction: GameStore["cancelPlayerAction"];
+  initiatePlaceSigni: (cardUuid: string) => void; // <-- THAY ĐỔI
+  cancelPlayerAction: () => void; // <-- THAY ĐỔI
   openZoneViewer: GameStore["openZoneViewer"];
   closeZoneViewer: GameStore["closeZoneViewer"];
   openLrigDeckViewerForAssist: GameStore["openLrigDeckViewerForAssist"];
@@ -23,24 +28,22 @@ export interface UiSlice {
 export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
   set
 ) => ({
-  playerAction: null,
+  // playerAction: null, // <-- XÓA
   isZoneViewerOpen: false,
   viewingLrigDeckForGrow: null,
   mustDiscard: false,
 
   initiatePlaceSigni: (cardUuid) => {
+    // === THAY ĐỔI: Gọi ECS action thay vì set state trong Zustand ===
     console.log(
-      `%c[STORE] Action: initiatePlaceSigni, cardUuid: ${cardUuid}`,
-      "color: #FFA500"
+      `[STORE->ECS] Action: initiatePlaceSigni, cardUuid: ${cardUuid}`
     );
-    set((state) => ({
-      ...state,
-      playerAction: { type: "place_signi", cardUuid },
-    }));
+    initiatePlayerAction({ type: "place_signi", cardUuid });
   },
   cancelPlayerAction: () => {
-    console.log("%c[STORE] Action: cancelPlayerAction", "color: #FFA500");
-    set((state) => ({ ...state, playerAction: null }));
+    // === THAY ĐỔI: Gọi ECS action thay vì set state trong Zustand ===
+    console.log("[STORE->ECS] Action: cancelPlayerAction");
+    cancelPlayerActionInECS();
   },
 
   openZoneViewer: () => set((state) => ({ ...state, isZoneViewerOpen: true })),

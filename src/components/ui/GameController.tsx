@@ -14,6 +14,7 @@ import {
 } from "@/logic/actions.miniplex";
 // === THAY ĐỔI: Import constants ===
 import { GamePhase, Zone } from "@/logic/constants";
+import { cancelPlayerActionInECS } from "@/logic/actions.miniplex"; // <-- Import action mới
 
 export default function GameController() {
   // === THAY ĐỔI: Chỉ dùng useStore để trigger re-render ===
@@ -26,15 +27,16 @@ export default function GameController() {
   const actionTakenInPhase = globalEntity.globalState?.actionTakenInPhase;
   const mulliganSelectionCount =
     globalEntity.globalState?.mulliganSelection.length ?? 0;
+  const playerAction = globalEntity.globalState?.playerAction; // <-- ĐỌC TỪ ĐÂY
 
   // Lấy các state/action của UI từ Zustand
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard);
   const openZoneViewer = useGameStore((state) => state.openZoneViewer);
-  const playerAction = useStore(useGameStore, (state) => state.playerAction);
-  const cancelPlayerAction = useStore(
-    useGameStore,
-    (state) => state.cancelPlayerAction
-  );
+  // const playerAction = useStore(useGameStore, (state) => state.playerAction); // <-- KHÔNG CẦN NỮA
+  // const cancelPlayerAction = useStore( // <-- KHÔNG CẦN NỮA
+  //   useGameStore,
+  //   (state) => state.cancelPlayerAction
+  // );
 
   const renderContent = () => {
     if (playerAction?.type === "place_signi") {
@@ -44,7 +46,7 @@ export default function GameController() {
             Chọn một ô SIGNI trống trên sân...
           </p>
           <Button
-            onClick={cancelPlayerAction}
+            onClick={cancelPlayerActionInECS} // <-- GỌI TRỰC TIẾP ACTION CỦA ECS
             variant="destructive"
             size="sm"
             className="w-full mt-2"
