@@ -14,6 +14,7 @@ import {
   reindexDeck,
   drawInitialHand,
   shuffleMainDeck,
+  reindexLrigDeck, // <--- THÊM IMPORT NÀY
 } from "./ecs/utils.miniplex"; // <-- THÊM IMPORT NÀY
 // === THAY ĐỔI: Import constants ===
 import { GamePhase, Zone, CardType } from "@/logic/constants";
@@ -263,6 +264,9 @@ export function confirmLrigSelectionAction(
       entity.status.isFaceUp = true;
     }
   });
+
+  // DỌN DẸP LẠI LRIG DECK SAU KHI CHỌN LRIG KHỞI ĐẦU
+  reindexLrigDeck(); // <--- THÊM DÒNG NÀY VÀO ĐÂY
 
   sideEffectQueue?.queue.push({
     type: "LOG",
@@ -532,6 +536,9 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   targetLrig.status!.isFaceUp = true;
   // Gắn các lá bài cũ vào bên dưới LRIG mới
   targetLrig.underneath = { entities: oldCardsStack };
+
+  // DỌN DẸP LẠI LRIG DECK SAU KHI RÚT BÀI
+  reindexLrigDeck(); // <--- THÊM DÒNG NÀY VÀO ĐÂY
 
   // --- 5. CẬP NHẬT STATE VÀ LOG ---
   // Chỉ set cờ khi Grow Center LRIG trong Grow Phase

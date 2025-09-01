@@ -61,3 +61,20 @@ export function shuffleMainDeck() {
     entity.zone.index = i;
   });
 }
+
+/**
+ * Cập nhật lại chỉ số index cho các lá bài trong bộ bài LRIG.
+ */
+export function reindexLrigDeck() {
+  const lrigDeckEntities = Array.from(
+    world.with("zone").where((e) => e.zone.zone === "lrigDeck")
+  );
+  // Sắp xếp lại theo thứ tự index hiện tại để đảm bảo tính nhất quán
+  lrigDeckEntities.sort((a, b) => a.zone.index - b.zone.index);
+  // Gán lại index mới tuần tự từ 0
+  lrigDeckEntities.forEach((entity, i) => {
+    if (entity.zone) {
+      entity.zone.index = i;
+    }
+  });
+}
