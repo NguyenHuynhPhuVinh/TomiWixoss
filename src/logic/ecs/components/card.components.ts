@@ -39,14 +39,6 @@ export class ZoneComponent implements Component {
 }
 
 /**
- * Component đánh dấu đây là một lá bài trên tay.
- * (Component trống dùng để đánh dấu/tagging là một kỹ thuật phổ biến trong ECS).
- */
-export class InHandComponent implements Component {
-  static [immerable] = true; // <-- ĐÁNH DẤU IMMERABLE
-}
-
-/**
  * Component chứa power hiện tại của một SIGNI.
  */
 export class PowerComponent implements Component {

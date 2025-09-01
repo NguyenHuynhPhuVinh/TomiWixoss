@@ -19,16 +19,6 @@ import { effectResolverMap } from "./effects.map";
 import { Reducer, Saga } from "../core/reducer.types";
 import { SideEffectSystem } from "./systems/sideEffect.system"; // <-- IMPORT TRỰC TIẾP
 
-// XÓA: Import tất cả các system - chúng sẽ được đăng ký từ bên ngoài
-// import { SetupSystem } from "./systems/setup.system";
-// import { EnerSystem } from "./systems/ener.system";
-// import { GrowSystem } from "./systems/grow.system";
-// import { PlaceSigniSystem } from "./systems/placeSigni.system";
-// import { DiscardSystem } from "./systems/discard.system";
-// import { UpSystem } from "./systems/up.system";
-// import { DrawSystem } from "./systems/draw.system";
-// import { PhaseSystem } from "./systems/phase.system";
-
 type UpdateListener = (world: World) => void;
 
 export class GameManager {

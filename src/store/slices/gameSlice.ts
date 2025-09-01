@@ -14,6 +14,9 @@ import {
 } from "@/logic/ecs/components/card.components";
 import gameManager from "@/logic/ecs/game.manager";
 import { CardInstance } from "@/types/game";
+// === THÊM IMPORT MỚI ===
+import { addCardImageUrlsToPreload } from "@/data/assetPreloader";
+import { validateDeck } from "@/logic/deckValidation";
 
 // Định nghĩa một kiểu đơn giản cho trạng thái bàn đấu
 export interface BoardState {
@@ -34,28 +37,44 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
   get
 ) => ({
   initializeGame: async () => {
-    // GameManager sẽ tự quản lý factory của nó
-    const newWorld = gameManager.createNewGame();
-
     // Tải dữ liệu deck từ file JSON
     const response = await fetch("/data/decks/diva-debut-deck.json");
-    const deck: CardData[] = await response.json();
+    const fullDeckData: CardData[] = await response.json();
 
-    const mainDeckData = deck
+    // === BƯỚC 1: TRÍCH XUẤT URL VÀ ĐƯA VÀO PRELOADER ===
+    const imageUrls = fullDeckData.map((card) => card.imageUrl);
+    addCardImageUrlsToPreload(imageUrls);
+    console.log(
+      `%cĐã thêm ${imageUrls.length} URL hình ảnh vào hàng đợi preload.`,
+      "color: #3498DB"
+    );
+
+    // === BƯỚC 2: TẠO DECK VÀ VALIDATE (như cũ) ===
+    const mainDeckData = fullDeckData
       .filter((c) => c.backType === "MAIN")
       .flatMap((c) => Array(4).fill(c))
       .slice(0, 40);
-    const lrigDeckData = deck.filter(
+    const lrigDeckData = fullDeckData.filter(
       (c) => c.backType === "LRIG" || c.backType === "PIECE"
     );
+
+    const validationResult = validateDeck(mainDeckData, lrigDeckData);
+
+    if (!validationResult.isValid) {
+      const errorString = validationResult.errors.join("\n- ");
+      console.error("LỖI BỘ BÀI KHÔNG HỢP LỆ:\n- " + errorString);
+      alert("Lỗi Bộ Bài Không Hợp Lệ:\n\n- " + errorString);
+      return;
+    }
+
+    console.log("%cBộ bài hợp lệ. Bắt đầu khởi tạo game...", "color: #27AE60");
+
+    // === BƯỚC 3: KHỞI TẠO GAME (như cũ) ===
+    const newWorld = gameManager.createNewGame();
     shuffle(mainDeckData);
-
-    // Nạp dữ liệu vào World
     gameManager.hydrateDeck(newWorld, mainDeckData, lrigDeckData);
-
     get().syncStateFromWorld(newWorld);
-    gameManager.world = newWorld; // Cập nhật world trong manager
-    gameManager.startLoop();
+    gameManager.world = newWorld;
   },
 
   syncStateFromWorld: (world) => {

@@ -3,13 +3,17 @@
 
 import React from "react";
 import { useProgress, Html, useTexture } from "@react-three/drei";
+// === THAY ĐỔI CÁCH IMPORT ===
 import { allTexturePaths } from "@/data/assetPreloader";
 
+// === THAY ĐỔI LOGIC PRELOAD ===
 // Dùng hook của Drei để preload tất cả các texture
 // Đây chính là "bí mật" của City Builder
-allTexturePaths.forEach((path) => {
-  useTexture.preload(path);
-});
+function Preloader() {
+  // Truy cập vào mảng paths thông qua getter
+  useTexture.preload(allTexturePaths.paths);
+  return null;
+}
 
 function Loader() {
   const { progress } = useProgress();
@@ -32,5 +36,11 @@ export const TomiwixossSceneLoader = ({
   children: React.ReactNode;
 }) => {
   // Sử dụng Suspense để chờ cho đến khi useTexture.preload hoàn tất
-  return <React.Suspense fallback={<Loader />}>{children}</React.Suspense>;
+  return (
+    <React.Suspense fallback={<Loader />}>
+      {/* Component Preloader này sẽ kích hoạt việc tải trước */}
+      <Preloader />
+      {children}
+    </React.Suspense>
+  );
 };

@@ -1,22 +1,33 @@
 // src/data/assetPreloader.ts
-// Temporarily commented out until we can load from JSON
-// import { divaDebutDeckEn } from "./decks/diva-debut-deck-en";
 
-// Lấy tất cả các URL hình ảnh duy nhất từ bộ bài
-// Temporarily use hardcoded paths until JSON loading is implemented
-const cardImageUrls: string[] = [
-  // Add card image URLs here when available
-];
-
-// Thêm các texture tĩnh khác (mặt sau lá bài, playmat)
-const otherTextureUrls = [
+// Các texture tĩnh luôn cần thiết
+const staticTextureUrls = [
   "/textures/cardback/MAIN.png",
   "/textures/cardback/LRIG.png",
   "/textures/cardback/PIECE.png",
   "/textures/playmat.png",
 ];
 
-// Xuất ra danh sách tổng hợp
-export const allTexturePaths = [
-  ...new Set([...cardImageUrls, ...otherTextureUrls]),
-];
+// Dùng Set để tự động xử lý các URL trùng lặp
+const dynamicCardImageUrls = new Set<string>();
+
+/**
+ * Thêm một danh sách các URL hình ảnh của lá bài vào hàng đợi preload.
+ * @param urls Mảng các chuỗi URL hình ảnh.
+ */
+export function addCardImageUrlsToPreload(urls: string[]): void {
+  for (const url of urls) {
+    if (url) {
+      // Đảm bảo URL không phải là null hoặc undefined
+      dynamicCardImageUrls.add(url);
+    }
+  }
+}
+
+// Mảng này sẽ được component TomiwixossSceneLoader sử dụng.
+// Nó là một getter để đảm bảo nó luôn trả về danh sách mới nhất.
+export const allTexturePaths = {
+  get paths(): string[] {
+    return [...staticTextureUrls, ...Array.from(dynamicCardImageUrls)];
+  },
+};
