@@ -30,8 +30,8 @@ export const createLogSlice: StateCreator<GameStore, [], [], LogSlice> = (
     };
 
     // Sử dụng hàm `set` được truyền vào
-    // `state => ({ logs: [newLog, ...state.logs] })`
+    // `state => ({ ...state, logs: [newLog, ...state.logs] })`
     // Nó sẽ tự động merge kết quả vào state tổng
-    set((state) => ({ logs: [newLog, ...state.logs] }));
+    set((state) => ({ ...state, logs: [newLog, ...state.logs] }));
   },
 });

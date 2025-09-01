@@ -33,25 +33,30 @@ export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
       `%c[STORE] Action: initiatePlaceSigni, cardUuid: ${cardUuid}`,
       "color: #FFA500"
     );
-    set({ playerAction: { type: "place_signi", cardUuid } });
+    set((state) => ({
+      ...state,
+      playerAction: { type: "place_signi", cardUuid },
+    }));
   },
   cancelPlayerAction: () => {
     console.log("%c[STORE] Action: cancelPlayerAction", "color: #FFA500");
-    set({ playerAction: null });
+    set((state) => ({ ...state, playerAction: null }));
   },
 
-  openZoneViewer: () => set({ isZoneViewerOpen: true }),
+  openZoneViewer: () => set((state) => ({ ...state, isZoneViewerOpen: true })),
   closeZoneViewer: () =>
-    set({
+    set((state) => ({
+      ...state,
       isZoneViewerOpen: false,
       viewingLrigDeckForGrow: null, // <-- QUAN TRỌNG: Reset state này khi đóng
-    }),
+    })),
 
   openLrigDeckViewerForAssist: (zoneIndex) => {
-    set({
+    set((state) => ({
+      ...state,
       isZoneViewerOpen: true,
       viewingLrigDeckForGrow: { forAssistIndex: zoneIndex },
-    });
+    }));
   },
-  setMustDiscard: (mustDiscard) => set({ mustDiscard }),
+  setMustDiscard: (mustDiscard) => set((state) => ({ ...state, mustDiscard })),
 });

@@ -131,7 +131,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
     // ===================================
 
     set((state) => ({
-      // world: world, // Không cần set world vì nó là global trong Miniplex
+      ...state, // Giữ lại các state không thay đổi như 'logs', 'playerAction', v.v.
       worldVersion: state.worldVersion + 1,
       phase: globalState?.phase ?? state.phase,
       turn: globalState?.turn ?? state.turn,
