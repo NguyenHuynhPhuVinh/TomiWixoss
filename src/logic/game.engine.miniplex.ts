@@ -20,6 +20,8 @@ const loopSystems = [
 ];
 
 function gameLoop() {
+  let worldHasChanged = false; // <-- 1. Thêm cờ theo dõi
+
   // 1. Chạy các system tự động
   for (const system of loopSystems) {
     system();
@@ -28,6 +30,8 @@ function gameLoop() {
   // 2. Xử lý các side effect đã được tạo ra
   const { sideEffectQueue } = globalEntity;
   if (sideEffectQueue && sideEffectQueue.queue.length > 0) {
+    worldHasChanged = true; // <-- 2. Đánh dấu có thay đổi
+
     const { addLog, setMustDiscard, openZoneViewer, closeZoneViewer } =
       useGameStore.getState();
 
@@ -58,9 +62,10 @@ function gameLoop() {
     sideEffectQueue.queue = [];
   }
 
-  // === THAY ĐỔI: Không đồng bộ toàn bộ state, chỉ tăng version ===
-  // 3. Thông báo cho React rằng world đã thay đổi
-  useGameStore.getState().incrementWorldVersion();
+  // 3. Chỉ cập nhật version nếu có thay đổi
+  if (worldHasChanged) {
+    useGameStore.getState().incrementWorldVersion();
+  }
 
   // 4. Lặp lại
   animationFrameId = requestAnimationFrame(gameLoop);

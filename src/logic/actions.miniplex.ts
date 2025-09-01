@@ -20,6 +20,7 @@ import {
 import { GamePhase, Zone, CardType } from "@/logic/constants";
 import { PlayerActionPayload } from "./ecs/types.miniplex"; // <-- THÊM IMPORT
 import i18n from "@/i18n"; // Import i18next instance để dịch các chuỗi nhỏ
+import useGameStore from "@/store/gameStore"; // <-- Add import for useGameStore
 
 // --- Helper Function ---
 function findEntity(uuid: string): Entity | undefined {
@@ -213,6 +214,9 @@ export function updateMulliganSelectionAction(entityUuid: string) {
     // Chọn thêm
     globalState.mulliganSelection = [...currentSelection, entityUuid];
   }
+
+  // Trigger re-render since UI state changed
+  useGameStore.getState().incrementWorldVersion();
 }
 
 /**
@@ -572,7 +576,7 @@ export function enerChargeAction(amount: number) {
   }
 
   cardsToCharge.forEach((entity) => {
-    entity.zone!.zone = "enerZone";
+    entity.zone!.zone = Zone.ENER_ZONE; // <-- Fix to use constant
     entity.status!.isFaceUp = true;
   });
   reindexDeck();
@@ -592,6 +596,8 @@ export function enerChargeAction(amount: number) {
 export function initiatePlayerAction(action: PlayerActionPayload) {
   if (globalEntity.globalState) {
     globalEntity.globalState.playerAction = action;
+    // Trigger re-render since UI state changed
+    useGameStore.getState().incrementWorldVersion();
   }
 }
 
@@ -601,5 +607,7 @@ export function initiatePlayerAction(action: PlayerActionPayload) {
 export function cancelPlayerActionInECS() {
   if (globalEntity.globalState) {
     globalEntity.globalState.playerAction = null;
+    // Trigger re-render since UI state changed
+    useGameStore.getState().incrementWorldVersion();
   }
 }

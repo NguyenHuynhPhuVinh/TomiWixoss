@@ -44,8 +44,14 @@ function SceneContent() {
   useEffect(() => {
     invalidate();
   }, [worldVersion, invalidate]);
+  const renderableEntities = useWorldQuery(() =>
+    Array.from(miniplexWorld.with("cardInfo", "zone", "status"))
+  );
   const handleCardClick = useCallback(
-    (entity: Entity) => {
+    (entityUuid: string) => {
+      const entity = renderableEntities.find((e) => e.uuid === entityUuid);
+      if (!entity) return;
+
       const { zone } = entity;
       if (!zone) return;
       if (
@@ -53,7 +59,7 @@ function SceneContent() {
         phase === GamePhase.ENER &&
         !actionTakenInPhase
       ) {
-        chargeEnerAction(entity.uuid);
+        chargeEnerAction(entityUuid);
       }
       const isAssistLrig =
         zone.zone === Zone.LRIG_ZONE && (zone.index === 0 || zone.index === 2);
@@ -70,10 +76,13 @@ function SceneContent() {
         }
       }
     },
-    [phase, actionTakenInPhase, openLrigDeckViewerForAssist, addLog]
-  );
-  const renderableEntities = useWorldQuery(() =>
-    Array.from(miniplexWorld.with("cardInfo", "zone", "status"))
+    [
+      phase,
+      actionTakenInPhase,
+      openLrigDeckViewerForAssist,
+      addLog,
+      renderableEntities,
+    ]
   );
   const entitiesByZone = useMemo(() => {
     const map = new Map<string, Entity[]>();
@@ -126,12 +135,7 @@ function SceneContent() {
         // ... (phần còn lại của logic render bài không đổi) ...
         const { cardInfo, status, zone } = entity;
         if (!cardInfo || !status || !zone) return null;
-        const cardInstance: CardInstance = {
-          ...cardInfo.data,
-          ...status,
-          uuid: entity.uuid,
-          owner: zone.owner,
-        };
+
         let position: [number, number, number] = [0, 0, 0];
         let rotation: [number, number, number] = [-Math.PI / 2, 0, 0];
         const zoneName = zone.zone;
@@ -224,10 +228,10 @@ function SceneContent() {
         return (
           <Card
             key={entity.uuid}
-            card={cardInstance}
+            uuid={entity.uuid}
             position={position}
             rotation={rotation}
-            onClick={() => handleCardClick(entity)}
+            onClick={handleCardClick}
           />
         );
       })}
