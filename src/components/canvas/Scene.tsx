@@ -30,7 +30,6 @@ import { GamePhase, Zone } from "@/logic/constants";
 import { cancelPlayerActionInECS } from "@/logic/actions.miniplex";
 
 function SceneContent() {
-  // ... (toàn bộ nội dung của SceneContent không thay đổi) ...
   const { invalidate } = useThree();
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
   const phase = globalEntity.globalState?.phase;
@@ -90,21 +89,27 @@ function SceneContent() {
 
   return (
     <>
-      {/* <--- CÂN BẰNG LẠI ÁNH SÁNG TẠI ĐÂY ---> */}
-      <PerspectiveCamera makeDefault position={[0, 17, 7]} fov={45} />
+      {/* <--- THIẾT LẬP CAMERA TỰ DO VÀ GIỚI HẠN GÓC NHÌN ---> */}
+      <PerspectiveCamera makeDefault position={[0, 12, 18]} fov={50} />
       <OrbitControls
-        enableRotate={false}
-        enablePan={false}
-        minDistance={10}
-        maxDistance={30}
+        enableRotate={true} /* MỞ KHÓA XOAY CAMERA */
+        enablePan={true}
+        panSpeed={0.8}
+        minDistance={5} /* Cho phép zoom gần hơn */
+        maxDistance={40} /* Cho phép zoom xa hơn */
+        /* Giới hạn góc nhìn, ngăn không cho camera đi xuống dưới mặt bàn */
+        maxPolarAngle={Math.PI / 2 - 0.05}
       />
-      {/* Sử dụng một môi trường dịu nhẹ hơn */}
+
       <Environment preset="sunset" />
-      {/* Tăng nhẹ ánh sáng nền */}
       <ambientLight intensity={0.7} />
-      {/* Tăng nhẹ ánh sáng chính */}
       <directionalLight position={[10, 20, 10]} intensity={1.2} castShadow />
       <Stats />
+
+      {/* 
+        BỎ GROUP XOAY ĐI, SÂN ĐẤU SẼ TRỞ LẠI NẰM NGANG BÌNH THƯỜNG
+        VÌ GIỜ CAMERA CÓ THỂ XOAY TỰ DO
+      */}
 
       {/* --- BÀN ĐẤU --- */}
       <GameBoard
