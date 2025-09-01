@@ -21,6 +21,7 @@ import { CardInstance } from "@/types/game";
 import { world as miniplexWorld } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
 import { chargeEnerAction } from "@/logic/actions.miniplex";
+import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex"; // <-- Thêm import này
 // import { openLrigDeckViewerForAssistAction } from "@/logic/actions.miniplex"; // Sẽ tạo action này sau
 
 export default function Scene() {
@@ -40,6 +41,7 @@ export default function Scene() {
     useGameStore,
     (state) => state.openLrigDeckViewerForAssist
   ); // <-- LẤY openLrigDeckViewerForAssist
+  const addLog = useStore(useGameStore, (state) => state.addLog); // <-- Lấy hàm addLog
 
   const boardState = useStore(useGameStore, (state) => state.boardState); // Lấy boardState riêng
 
@@ -210,12 +212,33 @@ export default function Scene() {
             position={position}
             rotation={rotation}
             onClick={() => {
+              // Logic Charge Ener (giữ nguyên)
               if (
                 zone.zone === "signiZone" &&
                 phase === "ener" &&
                 !actionTakenInPhase
               ) {
-                chargeEnerAction(entity.uuid); // Gọi action mới
+                chargeEnerAction(entity.uuid);
+              }
+
+              // --- THÊM LOGIC MỚI CHO ASSIST LRIG ---
+              const isAssistLrig =
+                zone.zone === "lrigZone" &&
+                (zone.index === 0 || zone.index === 2);
+              const canTryGrowAssist =
+                isAssistLrig && ["main", "attack"].includes(phase);
+
+              if (canTryGrowAssist) {
+                // 1. Kiểm tra xem có lựa chọn nào không
+                const options = getValidGrowOptions(phase, zone.index);
+
+                if (options.length > 0) {
+                  // 2. Nếu có, MỚI mở modal
+                  openLrigDeckViewerForAssist(zone.index);
+                } else {
+                  // 3. Nếu không, thông báo cho người chơi
+                  addLog("Không có lựa chọn Grow hợp lệ.", "info");
+                }
               }
               // ... các logic click khác ...
             }}

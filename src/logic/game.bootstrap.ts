@@ -1,18 +1,32 @@
 // src/logic/game.bootstrap.ts
-import { enableMapSet } from "immer"; // <-- IMPORT ENABLE MAPSET
-// import { registerWixossModule } from "./wixoss.module";
 import luaService from "./lua/lua.service";
-import { GameAPI } from "./game.api.miniplex"; // <-- Import API mới
+import { GameAPI } from "./game.api.miniplex";
+import { initializeScriptingSystem } from "./ecs/systems/scripting.system";
+import { startGameLoop } from "./game.engine.miniplex";
 
-export async function initializeWixossEngine() {
-  // <-- Chuyển thành async
-  // === KÍCH HOẠT IMMER PLUGIN CHO MAP/SET ===
-  enableMapSet(); // <-- BẮT BUỘC CHO IMMER XỬ LÝ Map VÀ Set
-  // ============================================
+let isInitialized = false;
 
-  // Khởi tạo Lua và expose API TRƯỚC khi đăng ký các module
+/**
+ * Khởi tạo toàn bộ game engine.
+ * Chỉ nên được gọi MỘT LẦN khi ứng dụng bắt đầu.
+ */
+export async function bootstrapGame() {
+  if (isInitialized) return;
+
+  console.log("--- Bootstrapping Game Engine ---");
+
+  // 1. Khởi tạo các dịch vụ cốt lõi (bất đồng bộ)
   await luaService.initialize();
-  luaService.expose("Game", GameAPI); // <-- Expose API mới
 
-  // registerWixossModule();
+  // 2. Expose API cho Lua
+  luaService.expose("Game", GameAPI);
+
+  // 3. Khởi tạo các system cần lắng nghe sự kiện
+  initializeScriptingSystem();
+
+  // 4. Bắt đầu vòng lặp game
+  startGameLoop();
+
+  isInitialized = true;
+  console.log("--- Game Engine Bootstrapped Successfully ---");
 }

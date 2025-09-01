@@ -18,6 +18,7 @@ import {
 } from "@/logic/actions.miniplex";
 
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
+import { bootstrapGame } from "@/logic/game.bootstrap"; // <-- IMPORT MỚI
 
 const Scene = dynamic(() => import("@/components/canvas/Scene"), {
   ssr: false,
@@ -75,9 +76,17 @@ export default function ClientOnlyLoader() {
 
   // Khởi tạo game và vòng lặp
   useEffect(() => {
-    initializeGame();
-    startGameLoop(); // Bắt đầu vòng lặp game mới
-  }, [initializeGame]);
+    // Hàm này chỉ chạy một lần khi component mount
+    const init = async () => {
+      // 1. Khởi tạo engine (Lua, systems, game loop)
+      await bootstrapGame();
+
+      // 2. Nạp dữ liệu deck vào game
+      initializeGame();
+    };
+
+    init();
+  }, [initializeGame]); // Dependency vẫn là initializeGame
 
   const gameAreaRef = useRef<HTMLDivElement>(null); // <-- Tạo ref cho toàn bộ khu vực game
 
