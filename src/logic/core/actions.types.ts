@@ -29,6 +29,11 @@ interface PlaceSigniPayload {
 interface DiscardCardPayload {
   entityId: Entity;
 }
+// THÊM PAYLOAD MỚI
+interface EnerChargePayload {
+  amount: number;
+  player: "player" | "ai";
+}
 
 // Sử dụng Discriminated Unions để tạo ra kiểu GameAction tổng hợp
 export type GameAction =
@@ -43,7 +48,9 @@ export type GameAction =
   | { type: "CHARGE_ENER"; payload: ChargeEnerPayload }
   | { type: "GROW_LRIG"; payload: GrowLrigPayload }
   | { type: "PLACE_SIGNI"; payload: PlaceSigniPayload }
-  | { type: "DISCARD_CARD"; payload: DiscardCardPayload };
+  | { type: "DISCARD_CARD"; payload: DiscardCardPayload }
+  // THÊM ACTION MỚI
+  | { type: "ENER_CHARGE"; payload: EnerChargePayload };
 
 // Helper để lấy ra kiểu Type của Action
 export type GameActionType = GameAction["type"];

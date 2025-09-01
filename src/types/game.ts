@@ -52,6 +52,9 @@ export interface CardAbility {
   turnLimit?: number; // Giới hạn mỗi lượt
 }
 
+// === THÊM ĐỊNH NGHĨA SCRIPT TRIGGER ===
+type ScriptTrigger = "onPlay" | "onVanish" | "onAttack" | "onActivate";
+
 // Cấu trúc của một lá bài (đã mở rộng)
 export interface CardData {
   id: string; // Mã định danh duy nhất, ví dụ: "WXDi-D01-001"
@@ -71,6 +74,8 @@ export interface CardData {
   imageUrl: string;
   backType: "MAIN" | "LRIG" | "PIECE";
   isHorizontal?: boolean;
+  // === THÊM THUỘC TÍNH MỚI ===
+  scripts?: Partial<Record<ScriptTrigger, string>>; // Ví dụ: { onPlay: 'WXDi-D01-013.lua' }
 }
 
 // Cấu trúc cho một lá bài trong game (có thêm trạng thái)

@@ -75,8 +75,12 @@ export default function ClientOnlyLoader() {
 
   // Khởi tạo game một lần khi component được mount
   useEffect(() => {
-    initializeWixossEngine(); // Đăng ký các system
-    initializeGame(); // Tạo world và bắt đầu game
+    // initializeWixossEngine bây giờ là async
+    const init = async () => {
+      await initializeWixossEngine();
+      initializeGame();
+    };
+    init();
   }, [initializeGame]);
 
   const gameAreaRef = useRef<HTMLDivElement>(null); // <-- Tạo ref cho toàn bộ khu vực game

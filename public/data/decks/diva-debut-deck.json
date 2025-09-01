@@ -220,7 +220,10 @@
     "hasBurstIcon": true,
     "abilities": [{ "type": "Enter", "description": "[Ener Charge 3]." }],
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-013[EN].webp",
-    "backType": "MAIN"
+    "backType": "MAIN",
+    "scripts": {
+      "onPlay": "WXDi-D01-013.lua"
+    }
   },
   {
     "id": "WXDi-D01-014",

@@ -1,28 +1,37 @@
 // src/logic/core/game.api.ts
-import useGameStore from "@/store/gameStore"; // Import Zustand store
+import gameManager from "../ecs/game.manager";
+import { GameAction } from "./actions.types";
 
 // Đây là object chứa các hàm mà chúng ta muốn expose cho Lua
 export const GameAPI = {
   /**
-   * Tăng lượt chơi hiện tại lên 1.
+   * Ghi một tin nhắn vào Log Trận Đấu.
+   * @param message - Tin nhắn cần hiển thị.
    */
-  // increaseTurn: (): void => {
-  //   // Gọi action từ Zustand store
-  //   useGameStore.getState().increaseTurn();
-  //   console.log(
-  //     "GameAPI.increaseTurn called. New turn:",
-  //     useGameStore.getState().turn
-  //   );
-  // },
+  log: (message: string): void => {
+    // Đây là một side effect, nên chúng ta có thể queue nó
+    gameManager.queueSideEffect({
+      type: "LOG",
+      message: `[LUA] ${message}`,
+      logType: "info",
+    });
+  },
+
   /**
-   * Lấy số lượt hiện tại của game.
-   * @returns Số lượt hiện tại.
+   * Ra lệnh cho engine thực hiện Ener Charge.
+   * @param amount - Số lượng lá bài cần nạp.
    */
-  // getTurn: (): number => {
-  //   return useGameStore.getState().turn;
-  // },
-  // ... Thêm các hàm khác ở đây sau này, ví dụ:
-  // drawCard(playerId, amount)
-  // getEntitiesInZone(playerId, zone)
-  // ...
+  enerCharge: (amount: number): void => {
+    const action: GameAction = {
+      type: "ENER_CHARGE",
+      payload: { amount, player: "player" }, // Tạm thời hard-code player
+    };
+    gameManager.queueAction(action);
+  },
+
+  // ... Thêm các hàm API khác ở đây sau này ...
+  // Ví dụ:
+  // getTurn: (): number => { /* ... */ },
+  // getEntitiesInZone: (zone: string): Entity[] => { /* ... */ },
+  // damagePlayer: (amount: number) => { /* ... */ },
 };

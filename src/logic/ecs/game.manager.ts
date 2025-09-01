@@ -8,6 +8,7 @@ import {
   SideEffectComponent,
   EffectStackComponent,
   GlobalStateComponent,
+  SideEffect,
 } from "./components/card.components";
 import useGameStore from "@/store/gameStore";
 import eventBus from "../core/event.bus";
@@ -39,6 +40,9 @@ export class GameManager {
   private justProcessedAction = false;
 
   private actionQueue: GameAction[] = [];
+
+  // Thêm queue cho side effects
+  private sideEffectQueue: SideEffect[] = [];
 
   // Phân loại systems
   private actionSystems: System[] = [];
@@ -162,6 +166,15 @@ export class GameManager {
     }
   }
 
+  public queueSideEffect(sideEffect: SideEffect): void {
+    console.log(
+      `%cSIDE EFFECT QUEUED: ${sideEffect.type}`,
+      "color: #9B59B6",
+      sideEffect
+    );
+    this.sideEffectQueue.push(sideEffect);
+  }
+
   private loop() {
     if (!this.world) return;
     if (!this.isLooping) {
@@ -255,7 +268,19 @@ export class GameManager {
   }
 
   private processSideEffects(): void {
-    // TODO: Implement side effects processing
+    if (!this.world) return;
+
+    const sideEffectComponent = this.world.getComponent<SideEffectComponent>(
+      GLOBAL_ENTITY,
+      "SideEffect"
+    );
+    if (!sideEffectComponent) return;
+
+    // Di chuyển tất cả side effects từ queue vào component
+    while (this.sideEffectQueue.length > 0) {
+      const sideEffect = this.sideEffectQueue.shift()!;
+      sideEffectComponent.queue.push(sideEffect);
+    }
   }
 }
 

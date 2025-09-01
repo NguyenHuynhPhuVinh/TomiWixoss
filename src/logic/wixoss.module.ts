@@ -18,6 +18,7 @@ import { UpSystem } from "./ecs/systems/up.system";
 import { DrawSystem } from "./ecs/systems/draw.system";
 import { PhaseSystem } from "./ecs/systems/phase.system";
 import { SideEffectSystem } from "./ecs/systems/sideEffect.system";
+import { ScriptingSystem } from "./ecs/systems/scripting.system"; // <-- THÊM
 
 // Import reducers và sagas
 import {
@@ -27,6 +28,7 @@ import {
   confirmMulliganReducer,
 } from "./reducers/setup.reducer";
 import { chargeEnerReducer } from "./reducers/ener.reducer";
+import { enerChargeReducer } from "./reducers/enerCharge.reducer"; // <-- THÊM
 import { growLrigReducer } from "./reducers/grow.reducer";
 import { placeSigniReducer } from "./reducers/placeSigni.reducer";
 import { discardCardReducer } from "./reducers/discard.reducer";
@@ -37,6 +39,7 @@ import {
   confirmMulliganSaga,
 } from "./sagas/setup.saga";
 import { chargeEnerSaga } from "./sagas/ener.saga";
+import { enerChargeSaga } from "./sagas/enerCharge.saga"; // <-- THÊM
 import { growLrigSaga } from "./sagas/grow.saga";
 import { placeSigniSaga } from "./sagas/placeSigni.saga";
 import { discardCardSaga } from "./sagas/discard.saga";
@@ -68,6 +71,7 @@ export function registerWixossModule() {
   );
   gameManager.registerReducer("CONFIRM_MULLIGAN", confirmMulliganReducer);
   gameManager.registerReducer("CHARGE_ENER", chargeEnerReducer);
+  gameManager.registerReducer("ENER_CHARGE", enerChargeReducer); // <-- THÊM
   gameManager.registerReducer("GROW_LRIG", growLrigReducer);
   gameManager.registerReducer("PLACE_SIGNI", placeSigniReducer);
   gameManager.registerReducer("DISCARD_CARD", discardCardReducer);
@@ -77,6 +81,7 @@ export function registerWixossModule() {
   gameManager.registerSaga("CONFIRM_LRIG_SELECTION", confirmLrigSelectionSaga);
   gameManager.registerSaga("CONFIRM_MULLIGAN", confirmMulliganSaga);
   gameManager.registerSaga("CHARGE_ENER", chargeEnerSaga);
+  gameManager.registerSaga("ENER_CHARGE", enerChargeSaga); // <-- THÊM
   gameManager.registerSaga("GROW_LRIG", growLrigSaga);
   gameManager.registerSaga("PLACE_SIGNI", placeSigniSaga);
   gameManager.registerSaga("DISCARD_CARD", discardCardSaga);
@@ -87,6 +92,7 @@ export function registerWixossModule() {
   gameManager.registerSystem(new DrawSystem(), "loop");
   gameManager.registerSystem(new PhaseSystem(), "loop");
   gameManager.registerSystem(new SideEffectSystem(), "loop");
+  gameManager.registerSystem(new ScriptingSystem(), "loop"); // <-- THÊM
 
   // Khởi tạo dependencies
   gameManager.initializeSystems();
