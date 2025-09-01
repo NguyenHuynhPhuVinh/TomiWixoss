@@ -6,6 +6,7 @@ import { upSystem } from "./ecs/systems/up.system.miniplex";
 import { initializeScriptingSystem } from "./ecs/systems/scripting.system";
 import { autoPhaseSystem } from "./ecs/systems/autoPhase.system.miniplex";
 import { drawSystem } from "./ecs/systems/draw.system.miniplex"; // <-- THÊM IMPORT
+import { endPhaseSystem } from "./ecs/systems/endPhase.system.miniplex"; // <-- THÊM IMPORT
 
 let animationFrameId: number;
 
@@ -13,6 +14,7 @@ let animationFrameId: number;
 const loopSystems = [
   upSystem,
   drawSystem, // <-- THÊM VÀO ĐÂY
+  endPhaseSystem, // <-- THÊM VÀO ĐÂY
   autoPhaseSystem,
 ];
 
