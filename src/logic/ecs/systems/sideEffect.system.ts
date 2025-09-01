@@ -45,8 +45,5 @@ export class SideEffectSystem implements System {
           break;
       }
     }
-
-    // 3. Dọn dẹp queue
-    sideEffectComponent.queue = [];
   }
 }

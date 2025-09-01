@@ -31,11 +31,6 @@ export const advancePhaseReducer: Reducer<{
 
   // Kiểm tra effect stack
   if (effectStack.stack.length > 0) {
-    sideEffects.queue.push({
-      type: "LOG",
-      message: "Không thể chuyển phase khi hiệu ứng đang chờ xử lý.",
-      logType: "system",
-    });
     return;
   }
 

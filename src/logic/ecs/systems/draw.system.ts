@@ -1,52 +1,55 @@
 // src/logic/ecs/systems/draw.system.ts
-import { System, SystemDependencies } from "../ecs.types";
+import { System } from "../ecs.types";
 import { World } from "../world";
 import {
   GlobalStateComponent,
-  EffectStackComponent,
+  EffectStackComponent, // <-- Import EffectStackComponent
 } from "../components/card.components";
 import { GLOBAL_ENTITY } from "../game.factory";
-import { produce } from "immer"; // <-- IMPORT IMMER
-import { v4 as uuidv4 } from "uuid";
 
 export class DrawSystem implements System {
-  private eventBus!: SystemDependencies["eventBus"];
-
-  // Nhận dependency
-  public setup(dependencies: SystemDependencies): void {
-    this.eventBus = dependencies.eventBus;
-  }
+  // Không cần eventBus nữa vì nó không phát sự kiện trực tiếp
+  public setup(): void {}
 
   public update(world: World): void {
     const globalState = world.getComponent<GlobalStateComponent>(
       GLOBAL_ENTITY,
       "GlobalState"
     );
-    if (!globalState) return;
 
-    // Guard Clause: Chỉ chạy trong Draw Phase và khi chưa có hành động
-    if (globalState.phase !== "draw" || globalState.actionTakenInPhase) {
+    if (
+      !globalState ||
+      globalState.phase !== "draw" ||
+      globalState.actionTakenInPhase
+    ) {
       return;
     }
 
-    console.log("--- Running DrawSystem ---");
+    console.log(
+      "--- Running DrawSystem: Pushing DRAW_CARD effect to stack ---"
+    );
 
-    // 1. Xác định số lá bài cần rút
-    const amountToDraw = globalState.turn === 1 ? 1 : 2;
-
-    // THAY VÌ TỰ RÚT BÀI
-    // Nó sẽ đẩy một hiệu ứng vào stack
+    // Lấy EffectStackComponent
     const effectStack = world.getComponent<EffectStackComponent>(
       GLOBAL_ENTITY,
       "EffectStack"
     )!;
+
+    // Xác định số lá bài cần rút
+    const amountToDraw = globalState.turn === 1 ? 1 : 2;
+
+    // ĐƯA HIỆU ỨNG VÀO STACK
     effectStack.stack.push({
-      id: uuidv4(),
-      sourceEntity: GLOBAL_ENTITY,
+      id: `draw-${Date.now()}`,
+      sourceEntity: GLOBAL_ENTITY, // Hiệu ứng từ hệ thống game
       type: "DRAW_CARD",
-      payload: { amount: amountToDraw, player: "player1" },
+      payload: {
+        amount: amountToDraw,
+        player: "player", // Tạm thời hard-code
+      },
     });
 
+    // QUAN TRỌNG: Đặt cờ để báo hiệu phase đã hoàn thành
     globalState.actionTakenInPhase = true;
   }
 }

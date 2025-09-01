@@ -17,7 +17,6 @@ import {
 import { UpSystem } from "./ecs/systems/up.system";
 import { DrawSystem } from "./ecs/systems/draw.system";
 import { PhaseSystem } from "./ecs/systems/phase.system";
-import { SideEffectSystem } from "./ecs/systems/sideEffect.system";
 import { ScriptingSystem } from "./ecs/systems/scripting.system"; // <-- THÊM
 
 // Import reducers và sagas
@@ -93,7 +92,6 @@ export function registerWixossModule() {
   gameManager.registerSystem(new UpSystem(), "loop");
   gameManager.registerSystem(new DrawSystem(), "loop");
   gameManager.registerSystem(new PhaseSystem(), "loop");
-  gameManager.registerSystem(new SideEffectSystem(), "loop");
   gameManager.registerSystem(new ScriptingSystem(), "loop"); // <-- THÊM
 
   // Khởi tạo dependencies

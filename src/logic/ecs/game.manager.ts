@@ -17,6 +17,7 @@ import { GameAction, GameActionType } from "../core/actions.types"; // <-- IMPOR
 import { produce } from "immer"; // <-- IMPORT IMMER
 import { effectResolverMap } from "./effects.map";
 import { Reducer, Saga } from "../core/reducer.types";
+import { SideEffectSystem } from "./systems/sideEffect.system"; // <-- IMPORT TRỰC TIẾP
 
 // XÓA: Import tất cả các system - chúng sẽ được đăng ký từ bên ngoài
 // import { SetupSystem } from "./systems/setup.system";
@@ -48,6 +49,9 @@ export class GameManager {
   private loopSystems: System[] = [];
   private systems: System[] = [];
 
+  // THÊM một instance của SideEffectSystem
+  private sideEffectSystem: SideEffectSystem;
+
   // Thêm reducers và sagas
   private reducers: Map<GameActionType, Reducer<any>[]> = new Map();
   private sagas: Map<GameActionType, Saga<any>[]> = new Map();
@@ -58,6 +62,8 @@ export class GameManager {
   constructor() {
     // Tự tiêm chính nó vào factory
     this.factory = new GameFactory(this);
+    // KHỞI TẠO instance
+    this.sideEffectSystem = new SideEffectSystem();
   }
 
   // === THÊM PHƯƠNG THỨC ĐĂNG KÝ COMPONENT ===
@@ -178,6 +184,7 @@ export class GameManager {
     });
   }
 
+  // THAY THẾ LẠI HÀM loop() BẰNG PHIÊN BẢN HOÀN CHỈNH NÀY
   private loop() {
     if (!this.world || !this.isLooping) {
       this.notifyUpdate();
@@ -186,10 +193,7 @@ export class GameManager {
 
     let nextWorldState = this.world;
 
-    // --- LOGIC VÒNG LẶP MỚI, ƯU TIÊN STACK ---
-
-    // 1. XỬ LÝ TOÀN BỘ EFFECT STACK TRƯỚC TIÊN
-    // Vòng lặp này đảm bảo stack được dọn sạch trong một "siêu tick"
+    // === ƯU TIÊN SỐ 1: XỬ LÝ HẾT EFFECT STACK ===
     while (
       nextWorldState.getComponent<EffectStackComponent>(
         GLOBAL_ENTITY,
@@ -210,6 +214,7 @@ export class GameManager {
 
         const resolver = effectResolverMap[effectToResolve.type];
         if (resolver) {
+          // resolver sẽ thay đổi trực tiếp draftWorld
           resolver.resolve(draftWorld as World, effectToResolve.payload);
         } else {
           console.warn(
@@ -219,50 +224,48 @@ export class GameManager {
       });
     }
 
-    // 2. CHỈ KHI STACK RỖNG, MỚI XÉT ĐẾN ACTION HOẶC LOOP SYSTEMS
-    const action = this.actionQueue.shift();
-    if (action) {
-      // Nếu có action, xử lý nó
-      console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
+    // === KHI EFFECT STACK ĐÃ RỖNG, MỚI XỬ LÝ ACTION HOẶC LOOP SYSTEMS ===
+    let workDoneInTick = false;
+    if (this.actionQueue.length > 0) {
+      workDoneInTick = true;
+      while (this.actionQueue.length > 0) {
+        const action = this.actionQueue.shift()!;
+        console.log(`%cProcessing Action: ${action.type}`, "color: #2980B9");
 
-      // 1. CHẠY REDUCER
-      let worldAfterReducer = produce(nextWorldState, (draftWorld) => {
-        const actionReducers = this.reducers.get(action.type);
-        if (actionReducers) {
-          for (const reducer of actionReducers) {
-            reducer(draftWorld as World, action.payload);
+        // Chạy Reducer...
+        let worldAfterReducer = produce(nextWorldState, (draftWorld) => {
+          const actionReducers = this.reducers.get(action.type);
+          if (actionReducers) {
+            for (const reducer of actionReducers) {
+              reducer(draftWorld as World, action.payload);
+            }
           }
-        }
-      });
-
-      // 2. CHẠY SAGAS VÀ THU THẬP SIDE EFFECTS
-      const sagaSideEffects: SideEffect[] = [];
-      const actionSagas = this.sagas.get(action.type);
-      if (actionSagas) {
-        const dependencies = this.initializeDependencies();
-        for (const saga of actionSagas) {
-          const effects = saga(action, worldAfterReducer, dependencies);
-          if (effects) {
-            sagaSideEffects.push(...effects);
-          }
-        }
-      }
-
-      // 3. ÁP DỤNG SIDE EFFECTS VÀO STATE MỚI
-      if (sagaSideEffects.length > 0) {
-        nextWorldState = produce(worldAfterReducer, (draftWorld) => {
-          const sideEffectComponent =
-            draftWorld.getComponent<SideEffectComponent>(
-              GLOBAL_ENTITY,
-              "SideEffect"
-            )!;
-          sideEffectComponent.queue.push(...sagaSideEffects);
         });
-      } else {
-        nextWorldState = worldAfterReducer;
+
+        // Chạy Sagas...
+        const sagaSideEffects: SideEffect[] = [];
+        const actionSagas = this.sagas.get(action.type);
+        if (actionSagas) {
+          const dependencies = this.initializeDependencies();
+          for (const saga of actionSagas) {
+            const effects = saga(action, worldAfterReducer, dependencies);
+            if (effects) sagaSideEffects.push(...effects);
+          }
+        }
+
+        // Áp dụng side effects từ Sagas
+        if (sagaSideEffects.length > 0) {
+          nextWorldState = produce(worldAfterReducer, (draftWorld) => {
+            draftWorld
+              .getComponent<SideEffectComponent>(GLOBAL_ENTITY, "SideEffect")!
+              .queue.push(...sagaSideEffects);
+          });
+        } else {
+          nextWorldState = worldAfterReducer;
+        }
       }
     } else {
-      // Nếu không có action, chạy các loop systems
+      // Chạy loop systems nếu không có action
       nextWorldState = produce(nextWorldState, (draftWorld) => {
         for (const system of this.loopSystems) {
           system.update(draftWorld as World);
@@ -270,20 +273,35 @@ export class GameManager {
       });
     }
 
-    // Dọn dẹp request sau mỗi tick
+    // Dọn dẹp request
     nextWorldState = produce(nextWorldState, (draftWorld) => {
-      const actionRequest = draftWorld.getComponent<ActionRequestComponent>(
+      draftWorld.getComponent<ActionRequestComponent>(
         GLOBAL_ENTITY,
         "ActionRequest"
-      )!;
-      actionRequest.request = null;
+      )!.request = null;
     });
-    // ===========================================
 
     this.world = nextWorldState;
-    // this.processSideEffects(); // <-- XÓA LỆNH GỌI HÀM NÀY
+
+    // Xử lý và dọn dẹp Side Effects
+    this.sideEffectSystem.update(this.world);
+    this.world = produce(this.world, (draftWorld) => {
+      const component = draftWorld.getComponent<SideEffectComponent>(
+        GLOBAL_ENTITY,
+        "SideEffect"
+      );
+      if (component && component.queue.length > 0) {
+        component.queue = [];
+      }
+    });
+
     this.notifyUpdate();
-    this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
+
+    if (this.isLooping) {
+      this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
+    } else {
+      console.log("%cGame loop stopped.", "color: #E67E22");
+    }
   }
 
   public notifyUpdate() {
