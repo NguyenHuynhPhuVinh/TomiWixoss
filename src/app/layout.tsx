@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+// Import Provider sẽ tạo ở bước sau
+import I18nProvider from "@/components/ui/I18nProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,11 +25,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // lang="vi" sẽ là mặc định, i18next sẽ tự cập nhật sau
     <html lang="vi">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}
       >
-        {children}
+        {/* Bọc children trong I18nProvider */}
+        <I18nProvider>{children}</I18nProvider>
       </body>
     </html>
   );

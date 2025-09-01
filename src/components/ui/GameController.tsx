@@ -3,6 +3,7 @@
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import { Button } from "./button";
+import { useTranslation } from "react-i18next";
 
 // --- THAY ĐỔI LỚN ---
 import { world, globalEntity } from "@/logic/ecs/world.miniplex";
@@ -17,6 +18,7 @@ import { GamePhase, Zone } from "@/logic/constants";
 import { cancelPlayerActionInECS } from "@/logic/actions.miniplex"; // <-- Import action mới
 
 export default function GameController() {
+  const { t } = useTranslation();
   // === THAY ĐỔI: Chỉ dùng useStore để trigger re-render ===
   // Component này sẽ render lại mỗi khi worldVersion thay đổi
   useStore(useGameStore, (state) => state.worldVersion);
@@ -194,13 +196,11 @@ export default function GameController() {
     return (
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card p-6 rounded-lg shadow-lg z-10 border text-center pointer-events-auto">
         <h2 className="text-2xl font-bold mb-2 text-card-foreground">
-          TomiWixoss
+          {t("welcome_title")}
         </h2>
-        <p className="text-muted-foreground mb-6">
-          Sẵn sàng để bắt đầu một trận đấu.
-        </p>
+        <p className="text-muted-foreground mb-6">{t("welcome_subtitle")}</p>
         <Button onClick={startSetupAction} className="w-full" size="lg">
-          Chuẩn bị
+          {t("prepare_button")}
         </Button>
       </div>
     );

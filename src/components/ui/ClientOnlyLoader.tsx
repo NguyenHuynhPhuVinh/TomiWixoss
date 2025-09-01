@@ -53,6 +53,12 @@ const LrigSelector = dynamic(() => import("@/components/ui/LrigSelector"), {
 const DeckViewer = dynamic(() => import("@/components/ui/DeckViewer"), {
   ssr: false,
 });
+const LanguageSwitcher = dynamic(
+  () => import("@/components/ui/LanguageSwitcher"),
+  {
+    ssr: false,
+  }
+);
 
 export default function ClientOnlyLoader() {
   const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
@@ -167,6 +173,7 @@ export default function ClientOnlyLoader() {
         <Hand onCardSelect={setSelectedCard} />
         <SideCardPreview card={selectedCard} />
         <GameLog />
+        <LanguageSwitcher />
       </div>
 
       {/*

@@ -5,6 +5,7 @@ import useGameStore from "@/store/gameStore";
 import { LogEntry, LogType } from "@/store/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 // Không cần useRef và useEffect nữa
 
 const logTypeClasses: Record<LogType, string> = {
@@ -16,11 +17,12 @@ const logTypeClasses: Record<LogType, string> = {
 
 export default function GameLog() {
   const logs = useStore(useGameStore, (state) => state.logs);
+  const { t } = useTranslation();
 
   return (
     <div className="absolute bottom-4 right-4 w-80 h-64 bg-card/70 backdrop-blur-sm border rounded-lg shadow-lg pointer-events-auto flex flex-col">
       <div className="p-2 border-b">
-        <h4 className="font-bold text-center text-sm">Log Trận Đấu</h4>
+        <h4 className="font-bold text-center text-sm">{t("game_log_title")}</h4>
       </div>
       {/* 
         SỬ DỤNG LẠI flex-col-reverse:
