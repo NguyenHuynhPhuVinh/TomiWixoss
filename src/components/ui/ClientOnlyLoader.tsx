@@ -12,7 +12,10 @@ import { world } from "@/logic/ecs/world.miniplex";
 import { Entity } from "@/logic/ecs/types.miniplex";
 import { getValidGrowOptions } from "@/logic/ecs/selectors.miniplex";
 import { startGameLoop } from "@/logic/game.engine.miniplex";
-import { confirmLrigSelectionAction } from "@/logic/actions.miniplex";
+import {
+  confirmLrigSelectionAction,
+  growLrigAction,
+} from "@/logic/actions.miniplex";
 
 import { TomiwixossSceneLoader } from "./TomiwixossSceneLoader";
 
@@ -179,8 +182,7 @@ export default function ClientOnlyLoader() {
           const zoneIndex =
             phase === "grow" ? 1 : viewingLrigDeckForGrow!.forAssistIndex!;
           // Gọi action mới
-          // growLrigAction(card.uuid, zoneIndex);
-          console.log("Grow LRIG:", card.uuid, zoneIndex);
+          growLrigAction(card.uuid, zoneIndex);
         }}
       />
     </div>

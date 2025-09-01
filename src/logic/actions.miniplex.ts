@@ -8,6 +8,7 @@ import { checkCost } from "@/logic/payment"; // Thêm import này
 import { CardInstance } from "@/types/game"; // Thêm import này
 import { GameEvent } from "./events.types"; // Thêm import này
 import eventBus from "./event.bus"; // Thêm import này
+import { getValidGrowOptions } from "./ecs/selectors.miniplex"; // <-- THÊM IMPORT NÀY
 
 // --- Helper Function ---
 function findEntity(uuid: string): Entity | undefined {
@@ -399,37 +400,50 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
   const { globalState, sideEffectQueue } = globalEntity;
   if (!globalState) return;
 
-  const entities = world.with("uuid", "zone", "status", "cardInfo");
-  const targetLrig = findEntity(targetEntityUuid);
-
-  const lrigs = world.with("zone", "cardInfo");
-  const currentLrig = Array.from(lrigs).find(
-    (e) => e.zone.zone === "lrigZone" && e.zone.index === zoneIndex
+  // --- 1. KIỂM TRA ĐIỀU KIỆN GROW HỢP LỆ ---
+  // Lấy danh sách các lựa chọn hợp lệ
+  const validOptions = getValidGrowOptions(globalState.phase, zoneIndex);
+  // Kiểm tra xem lá bài được click có nằm trong danh sách đó không
+  const isValidChoice = validOptions.some(
+    (entity) => entity.uuid === targetEntityUuid
   );
 
-  if (!targetLrig?.cardInfo || !currentLrig?.cardInfo) {
-    console.error("LRIG không hợp lệ để Grow.");
-    return;
+  if (!isValidChoice) {
+    sideEffectQueue?.queue.push({
+      type: "LOG",
+      message: "Mục tiêu Grow không hợp lệ.",
+      logType: "info",
+    });
+    return; // Dừng lại nếu không hợp lệ
   }
 
-  // Đóng modal
+  // --- 2. LẤY DỮ LIỆU ENTITY ---
+  // Bây giờ chúng ta biết chắc chắn các entity này tồn tại và hợp lệ
+  const targetLrig = findEntity(targetEntityUuid)!;
+  const currentLrig = Array.from(world.with("zone")).find(
+    (e) => e.zone.zone === "lrigZone" && e.zone.index === zoneIndex
+  )!;
+
+  // Đóng modal ngay lập tức
   sideEffectQueue?.queue.push({
     type: "UPDATE_UI_FLAG",
     flag: "isZoneViewerOpen",
     value: false,
   });
 
-  // Thanh toán cost
+  // --- 3. THANH TOÁN COST ---
   const enerZoneEntities = Array.from(
-    world.with("zone", "cardInfo").where((e) => e.zone.zone === "enerZone")
+    world
+      .with("zone", "cardInfo", "status", "uuid")
+      .where((e) => e.zone.zone === "enerZone")
   );
-  const enerZoneCards = enerZoneEntities.map((e) => ({
+  const enerZoneCards: CardInstance[] = enerZoneEntities.map((e) => ({
     ...e.cardInfo!.data,
     ...e.status!,
     uuid: e.uuid,
     owner: e.zone!.owner,
   }));
-  const cost = targetLrig.cardInfo.data.growCost;
+  const cost = targetLrig.cardInfo!.data.growCost;
   const paymentResult = checkCost(cost, enerZoneCards);
 
   if (!paymentResult.canPay) {
@@ -446,43 +460,47 @@ export function growLrigAction(targetEntityUuid: string, zoneIndex: number) {
     const paidEntity = findEntity(paidCard.uuid);
     if (paidEntity) paidEntity.zone!.zone = "trash";
   });
-  sideEffectQueue?.queue.push({
-    type: "LOG",
-    message: `Trả ${paymentResult.paidEner.length} Ener.`,
-    logType: "cost",
-  });
+  if (paymentResult.paidEner.length > 0) {
+    sideEffectQueue?.queue.push({
+      type: "LOG",
+      message: `Trả ${paymentResult.paidEner.length} Ener.`,
+      logType: "cost",
+    });
+  }
 
-  // Thực hiện Grow
+  // --- 4. THỰC HIỆN GROW ---
+  // Gom các lá bài cũ lại
   const oldCardsStack: Entity[] = [
     currentLrig,
     ...(currentLrig.underneath?.entities ?? []),
   ];
+
+  // Di chuyển các lá cũ vào "underneath"
   oldCardsStack.forEach((entity) => {
-    entity.zone!.zone = "underneath";
+    if (entity.zone) entity.zone.zone = "underneath";
   });
 
+  // Đặt LRIG mới ra sân
   targetLrig.zone!.zone = "lrigZone";
   targetLrig.zone!.index = zoneIndex;
   targetLrig.status!.isFaceUp = true;
+  // Gắn các lá bài cũ vào bên dưới LRIG mới
   targetLrig.underneath = { entities: oldCardsStack };
 
-  if (zoneIndex === 1) {
-    // Chỉ set cờ khi Grow Center LRIG
+  // --- 5. CẬP NHẬT STATE VÀ LOG ---
+  // Chỉ set cờ khi Grow Center LRIG trong Grow Phase
+  if (zoneIndex === 1 && globalState.phase === "grow") {
     globalState.actionTakenInPhase = true;
   }
 
   sideEffectQueue?.queue.push({
     type: "LOG",
-    message: `Grow LRIG thành ${targetLrig.cardInfo.data.name}!`,
+    message: `Grow LRIG thành ${targetLrig.cardInfo!.data.name}!`,
     logType: "action",
   });
 
-  // Phát sự kiện
-  eventBus.dispatch(GameEvent.LRIG_GROWN, {
-    entityUuid: targetLrig.uuid,
-    cardId: targetLrig.cardInfo.data.id,
-    zoneIndex,
-  });
+  // TODO: Phát sự kiện CARD_GROWN để scripting system xử lý (nếu cần)
+  // eventBus.dispatch(...)
 }
 
 // --- Helper Functions (thêm vào cuối file) ---

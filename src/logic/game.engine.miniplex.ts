@@ -34,7 +34,16 @@ function gameLoop() {
           addLog(effect.message, effect.logType);
           break;
         case "UPDATE_UI_FLAG":
-          // Xử lý cờ UI
+          if (effect.flag === "mustDiscard") {
+            setMustDiscard(effect.value);
+          }
+          if (effect.flag === "isZoneViewerOpen") {
+            if (effect.value) {
+              openZoneViewer();
+            } else {
+              closeZoneViewer();
+            }
+          }
           break;
       }
     });
