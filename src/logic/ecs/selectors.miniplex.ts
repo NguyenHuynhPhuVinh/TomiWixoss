@@ -45,11 +45,20 @@ export function getValidGrowOptions(
     if (isCenterGrow) {
       if (phase !== GamePhase.GROW) continue; // <-- Sử dụng hằng số
     } else {
-      // Assist LRIG bây giờ đọc 'timing' từ cấp cao nhất
-      // Thay vì từ bên trong một ability cụ thể
-      if (!cardInfo.timing?.includes(phase as any)) {
+      // =================== ĐOẠN CODE CẦN SỬA ===================
+
+      // Code cũ (gây lỗi):
+      // if (!cardInfo.timing?.includes(phase as any)) continue;
+
+      // Code mới (đã sửa lỗi phân biệt hoa-thường):
+      const hasValidTiming = cardInfo.timing?.some((t) =>
+        t.toLowerCase().startsWith(phase)
+      );
+      if (!hasValidTiming) {
         continue;
       }
+
+      // ==========================================================
     }
 
     // Kiểm tra level của Assist LRIG so với Center
