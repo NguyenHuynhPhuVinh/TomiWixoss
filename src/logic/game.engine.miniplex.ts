@@ -7,12 +7,13 @@ import { initializeScriptingSystem } from "./ecs/systems/scripting.system";
 import { autoPhaseSystem } from "./ecs/systems/autoPhase.system.miniplex";
 import { drawSystem } from "./ecs/systems/draw.system.miniplex"; // <-- THÊM IMPORT
 import { endPhaseSystem } from "./ecs/systems/endPhase.system.miniplex"; // <-- THÊM IMPORT
-import { LogEntry } from "@/store/types";
+import { refreshSystem } from "./ecs/systems/refresh.system.miniplex"; // <-- THÊM IMPORT MỚI
 
 let animationFrameId: number;
 
 // Các system chạy tự động mỗi frame
 const loopSystems = [
+  refreshSystem, // <-- THÊM HỆ THỐNG MỚI VÀO ĐẦU MẢNG
   upSystem,
   drawSystem, // <-- THÊM VÀO ĐÂY
   endPhaseSystem, // <-- THÊM VÀO ĐÂY

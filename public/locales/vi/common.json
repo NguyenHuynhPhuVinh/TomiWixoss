@@ -105,6 +105,11 @@
     "enerCharged": "Nạp {{count}} lá bài vào Ener Zone.",
     "invalidPhase": "Bây giờ không thể thực hiện hành động này.",
     "discardRequired": "Tay bạn có {{handSize}} lá. Hãy bỏ {{discardCount}} lá.",
-    "noGrowOptions": "Không có lựa chọn Grow hợp lệ."
+    "noGrowOptions": "Không có lựa chọn Grow hợp lệ.",
+    "refresh": {
+      "deck": "Bộ bài chính đã hết! Đang thực hiện Refresh...",
+      "penalty": "Phạt Refresh: {{cardName}} đã bị chuyển từ Life Cloth vào Mộ.",
+      "noPenalty": "Không có Life Cloth để trả Phạt Refresh."
+    }
   }
 }
