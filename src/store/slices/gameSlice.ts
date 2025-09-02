@@ -115,7 +115,18 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
       (c) => c.backType === "LRIG" || c.backType === "PIECE"
     );
 
-    // ... validation logic (giữ nguyên)
+    // 6. Xác thực bộ bài
+    const validationResult = validateDeck(mainDeckData, lrigDeckData);
+
+    if (!validationResult.isValid) {
+      console.error("================ DECK VALIDATION FAILED ================");
+      validationResult.errors.forEach((error) => console.error(`- ${error}`));
+      console.error("========================================================");
+      // Dừng việc khởi tạo game nếu bộ bài không hợp lệ
+      return;
+    }
+
+    console.log("Deck validation successful!");
 
     world.clear();
 

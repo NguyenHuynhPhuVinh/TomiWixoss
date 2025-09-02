@@ -93,6 +93,14 @@ export function validateDeck(
     );
   }
 
+  // 7. Kiểm tra số lượng Life Burst trong Main Deck (tối đa 20)
+  const lifeBurstCount = mainDeckData.filter(
+    (card) => card.hasBurstIcon
+  ).length;
+  if (lifeBurstCount > 20) {
+    errors.push(`Main Deck có ${lifeBurstCount} lá có Life Burst (tối đa 20).`);
+  }
+
   return {
     isValid: errors.length === 0,
     errors,
