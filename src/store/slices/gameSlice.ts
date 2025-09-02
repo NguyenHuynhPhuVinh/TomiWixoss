@@ -83,6 +83,20 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
                 ability.description,
             })) || [];
         }
+
+        // ==========================================================
+        // >> THÊM ĐOẠN NÀY VÀO <<
+        // Ghi đè mô tả Life Burst
+        if (translation.lifeBurstEffect && newCard.lifeBurstEffect) {
+          newCard.lifeBurstEffect = {
+            ...newCard.lifeBurstEffect,
+            description:
+              translation.lifeBurstEffect.description ||
+              newCard.lifeBurstEffect.description,
+          };
+        }
+        // ==========================================================
+
         return newCard;
       }
       return card; // Trả về card gốc nếu không có bản dịch

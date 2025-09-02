@@ -78,6 +78,18 @@ export default function SideCardPreview({ card }: SideCardPreviewProps) {
                 </div>
               ))}
             </div>
+
+            {/* Phần hiển thị Life Burst Effect */}
+            {card.lifeBurstEffect && (
+              <div className="mt-3 border-t-2 border-amber-400 pt-2">
+                <p className="font-bold text-amber-400">
+                  {t("card.lifeBurst")}
+                </p>
+                <p className="text-sm leading-snug">
+                  {card.lifeBurstEffect.description}
+                </p>
+              </div>
+            )}
           </div>
         </motion.div>
       )}

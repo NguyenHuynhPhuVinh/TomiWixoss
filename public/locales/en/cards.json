@@ -100,11 +100,10 @@
   "WXDi-D01-013": {
     "name": "Sen no Rikyu, Jade General",
     "class": "Idle Tone: Brave",
-    "abilities": [
-      {
-        "description": "[Ener Charge 3]."
-      }
-    ]
+    "abilities": [],
+    "lifeBurstEffect": {
+      "description": "[Ener Charge 3]."
+    }
   },
   "WXDi-D01-014": {
     "name": "Zwei =Slow Loris=",
@@ -127,11 +126,11 @@
       },
       {
         "description": "Discard two cards: Draw two cards."
-      },
-      {
-        "description": "Choose one - 1. Vanish target upped SIGNI on your opponent's field. 2. Draw a card."
       }
-    ]
+    ],
+    "lifeBurstEffect": {
+      "description": "Choose one - 1. Vanish target upped SIGNI on your opponent's field. 2. Draw a card."
+    }
   },
   "WXDi-D01-016": {
     "name": "Assylen, Natural Crystal",
@@ -139,11 +138,11 @@
     "abilities": [
       {
         "description": "Whenever this SIGNI attacks, if its power is 15000 or more, your opponent discards a card. If its power is 20000 or more, your opponent instead discards a card at random."
-      },
-      {
-        "description": "Down target SIGNI on your opponent's field and freeze it. Draw a card."
       }
-    ]
+    ],
+    "lifeBurstEffect": {
+      "description": "Down target SIGNI on your opponent's field and freeze it. Draw a card."
+    }
   },
   "WXDi-D01-017": {
     "name": "Atalanta, Jade Angel",
@@ -181,11 +180,11 @@
       },
       {
         "description": "[Multi Ener] (When paying costs, this card can be used as any color.)"
-      },
-      {
-        "description": "Add target SIGNI from your trash to your hand."
       }
-    ]
+    ],
+    "lifeBurstEffect": {
+      "description": "Add target SIGNI from your trash to your hand."
+    }
   },
   "WXDi-D01-021": {
     "name": "Polygenesis",
@@ -193,10 +192,10 @@
     "abilities": [
       {
         "description": "Add target green SIGNI from your Ener Zone to your hand. If there are three <Ancient Surprise> LRIG on your field, instead add target SIGNI from your Ener Zone to your hand."
-      },
-      {
-        "description": "Vanish target upped SIGNI on your opponent's field."
       }
-    ]
+    ],
+    "lifeBurstEffect": {
+      "description": "Vanish target upped SIGNI on your opponent's field."
+    }
   }
 }

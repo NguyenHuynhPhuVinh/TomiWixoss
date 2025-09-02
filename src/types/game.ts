@@ -71,6 +71,7 @@ export interface CardData {
   cost?: CardCost;
   abilities?: CardAbility[];
   hasBurstIcon?: boolean; // Biểu tượng Burst
+  lifeBurstEffect?: { description: string }; // <-- THÊM DÒNG NÀY
   imageUrl: string;
   backType: "MAIN" | "LRIG" | "PIECE";
   isHorizontal?: boolean;

@@ -218,12 +218,12 @@
     "colors": ["Green"],
     "class": "Idle Tone: Brave",
     "hasBurstIcon": true,
-    "abilities": [{ "type": "Enter", "description": "[Ener Charge 3]." }],
+    "abilities": [],
+    "lifeBurstEffect": {
+      "description": "[Ener Charge 3]."
+    },
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-013[EN].webp",
-    "backType": "MAIN",
-    "scripts": {
-      "onPlay": "WXDi-D01-013.lua"
-    }
+    "backType": "MAIN"
   },
   {
     "id": "WXDi-D01-014",
@@ -262,12 +262,11 @@
         "type": "Auto",
         "description": "Whenever this SIGNI attacks, another target SIGNI on your field gets +5000 power until end of turn."
       },
-      { "type": "Enter", "description": "Discard two cards: Draw two cards." },
-      {
-        "type": "Action",
-        "description": "Choose one - 1. Vanish target upped SIGNI on your opponent's field. 2. Draw a card."
-      }
+      { "type": "Enter", "description": "Discard two cards: Draw two cards." }
     ],
+    "lifeBurstEffect": {
+      "description": "Choose one - 1. Vanish target upped SIGNI on your opponent's field. 2. Draw a card."
+    },
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-015[EN].webp",
     "backType": "MAIN"
   },
@@ -284,12 +283,11 @@
       {
         "type": "Auto",
         "description": "Whenever this SIGNI attacks, if its power is 15000 or more, your opponent discards a card. If its power is 20000 or more, your opponent instead discards a card at random."
-      },
-      {
-        "type": "Action",
-        "description": "Down target SIGNI on your opponent's field and freeze it. Draw a card."
       }
     ],
+    "lifeBurstEffect": {
+      "description": "Down target SIGNI on your opponent's field and freeze it. Draw a card."
+    },
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-016[EN].webp",
     "backType": "MAIN"
   },
@@ -352,6 +350,7 @@
     "power": 1000,
     "colors": ["Colorless"],
     "class": "Primal Tone",
+    "hasBurstIcon": true,
     "abilities": [
       {
         "type": "Guard",
@@ -360,12 +359,11 @@
       {
         "type": "Const",
         "description": "[Multi Ener] (When paying costs, this card can be used as any color.)"
-      },
-      {
-        "type": "Action",
-        "description": "Add target SIGNI from your trash to your hand."
       }
     ],
+    "lifeBurstEffect": {
+      "description": "Add target SIGNI from your trash to your hand."
+    },
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-020[EN].webp",
     "backType": "MAIN"
   },
@@ -380,12 +378,11 @@
       {
         "type": "Action",
         "description": "Add target green SIGNI from your Ener Zone to your hand. If there are three <Ancient Surprise> LRIG on your field, instead add target SIGNI from your Ener Zone to your hand."
-      },
-      {
-        "type": "Action",
-        "description": "Vanish target upped SIGNI on your opponent's field."
       }
     ],
+    "lifeBurstEffect": {
+      "description": "Vanish target upped SIGNI on your opponent's field."
+    },
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-021[EN].webp",
     "backType": "MAIN"
   }

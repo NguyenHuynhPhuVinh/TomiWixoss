@@ -100,11 +100,10 @@
   "WXDi-D01-013": {
     "name": "Sen no Rikyu, Jade General",
     "class": "Idle Tone: Brave",
-    "abilities": [
-      {
-        "description": "[Nạp Ener 3]."
-      }
-    ]
+    "abilities": [],
+    "lifeBurstEffect": {
+      "description": "[Nạp Ener 3]."
+    }
   },
   "WXDi-D01-014": {
     "name": "Zwei =Slow Loris=",
@@ -127,11 +126,11 @@
       },
       {
         "description": "Bỏ hai lá bài: Rút hai lá bài."
-      },
-      {
-        "description": "Chọn một - 1. Vanish SIGNI upped mục tiêu trên sân đối phương. 2. Rút một lá bài."
       }
-    ]
+    ],
+    "lifeBurstEffect": {
+      "description": "Chọn một - 1. Vanish SIGNI upped mục tiêu trên sân đối phương. 2. Rút một lá bài."
+    }
   },
   "WXDi-D01-016": {
     "name": "Assylen, Natural Crystal",
@@ -139,11 +138,11 @@
     "abilities": [
       {
         "description": "Mỗi khi SIGNI này tấn công, nếu sức mạnh của nó là 15000 hoặc nhiều hơn, đối phương bỏ một lá bài. Nếu sức mạnh của nó là 20000 hoặc nhiều hơn, đối phương bỏ một lá bài ngẫu nhiên."
-      },
-      {
-        "description": "Down SIGNI mục tiêu trên sân đối phương và freeze nó. Rút một lá bài."
       }
-    ]
+    ],
+    "lifeBurstEffect": {
+      "description": "Down SIGNI mục tiêu trên sân đối phương và freeze nó. Rút một lá bài."
+    }
   },
   "WXDi-D01-017": {
     "name": "Atalanta, Jade Angel",
@@ -181,11 +180,11 @@
       },
       {
         "description": "[Multi Ener] (Khi trả chi phí, lá bài này có thể được dùng như bất kỳ màu nào.)"
-      },
-      {
-        "description": "Thêm một SIGNI mục tiêu từ mộ của bạn vào tay."
       }
-    ]
+    ],
+    "lifeBurstEffect": {
+      "description": "Thêm một SIGNI mục tiêu từ mộ của bạn vào tay."
+    }
   },
   "WXDi-D01-021": {
     "name": "Polygenesis",
@@ -193,10 +192,10 @@
     "abilities": [
       {
         "description": "Thêm một SIGNI xanh lá mục tiêu từ Ener Zone vào tay bạn. Nếu có ba LRIG <Ancient Surprise> trên sân của bạn, thay vào đó, thêm một SIGNI mục tiêu bất kỳ từ Ener Zone vào tay bạn."
-      },
-      {
-        "description": "Vanish một SIGNI đang upped mục tiêu trên sân đối phương."
       }
-    ]
+    ],
+    "lifeBurstEffect": {
+      "description": "Vanish một SIGNI đang upped mục tiêu trên sân đối phương."
+    }
   }
 }
