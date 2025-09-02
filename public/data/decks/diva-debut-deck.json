@@ -243,7 +243,7 @@
       {
         "type": "Action",
         "turnLimit": 1,
-        "cost": { "Green": 1, "Red": 1, "Blue": 1 },
+        "cost": { "Green": 2, "Colorless": 1 },
         "description": "Another target SIGNI on your field with power 15000 or more gains [Lancer] until end of turn."
       }
     ],
@@ -318,12 +318,7 @@
     "power": 5000,
     "colors": ["Blue", "Green"],
     "class": "Living Tone: Aquatic Beast",
-    "abilities": [
-      {
-        "type": "Const",
-        "description": "(When paying costs, this card can be used as blue or green.)"
-      }
-    ],
+    "abilities": [],
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-018[EN].webp",
     "backType": "MAIN"
   },
@@ -335,12 +330,7 @@
     "power": 10000,
     "colors": ["Red", "Green"],
     "class": "Living Tone: Terra Beast",
-    "abilities": [
-      {
-        "type": "Const",
-        "description": "(When paying costs, this card can be used as red or green.)"
-      }
-    ],
+    "abilities": [],
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-019[EN].webp",
     "backType": "MAIN"
   },
@@ -353,16 +343,8 @@
     "colors": ["Colorless"],
     "class": "Primal Tone",
     "hasBurstIcon": true,
-    "abilities": [
-      {
-        "type": "Guard",
-        "description": "(You may discard this card to prevent damage from a single LRIG attack.)"
-      },
-      {
-        "type": "Const",
-        "description": "[Multi Ener] (When paying costs, this card can be used as any color.)"
-      }
-    ],
+    "Guard": true,
+    "abilities": [],
     "lifeBurstEffect": {
       "description": "Add target SIGNI from your trash to your hand."
     },
@@ -378,7 +360,7 @@
     "hasBurstIcon": true,
     "abilities": [
       {
-        "type": "Action",
+        "type": "SpellEffect",
         "description": "Add target green SIGNI from your Ener Zone to your hand. If there are three <Ancient Surprise> LRIG on your field, instead add target SIGNI from your Ener Zone to your hand."
       }
     ],
