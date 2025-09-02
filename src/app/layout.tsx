@@ -17,6 +17,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TomiWixoss",
   description: "Game thẻ bài Wixoss!",
+  // === THÊM THUỘC TÍNH NÀY VÀO ĐỂ VÔ HIỆU HÓA ZOOM ===
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1, // Quan trọng: Giới hạn mức zoom tối đa là 1.0
+    userScalable: false, // Quan trọng: Không cho phép người dùng zoom
+  },
+  // ====================================================
 };
 
 export default function RootLayout({
