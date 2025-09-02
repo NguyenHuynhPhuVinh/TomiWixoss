@@ -7,7 +7,8 @@
     "limit": 0,
     "colors": ["Green"],
     "lrigType": "At",
-    "growCost": { "Colorless": 0 },
+    "team": "Ancient Surprise",
+    "growCost": { "Green": 0 },
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-001[EN].webp",
     "backType": "LRIG"
   },
@@ -34,17 +35,7 @@
     "lrigType": "At",
     "team": "Ancient Surprise",
     "growCost": { "Green": 1 },
-    "abilities": [
-      {
-        "type": "Action",
-        "turnLimit": 1,
-        "description": "Target three SIGNI on your field with different classes get +3000 power until end of turn."
-      },
-      {
-        "type": "Enter",
-        "description": "[Ener Charge 2]. If the cards put into your Ener Zone this way do not share a class, [Ener Charge 1]."
-      }
-    ],
+    "abilities": [],
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-003[EN].webp",
     "backType": "LRIG"
   },
@@ -58,10 +49,15 @@
     "lrigType": "At",
     "team": "Ancient Surprise",
     "growCost": { "Green": 2 },
+    "abilityCondition": {
+      "type": "Team",
+      "value": "Ancient Surprise"
+    },
     "abilities": [
       {
         "type": "Action",
         "turnLimit": 1,
+        "cost": { "Green": 0 },
         "description": "Target three SIGNI on your field with different classes get +3000 power until end of turn."
       },
       {
@@ -81,7 +77,7 @@
     "colors": ["Red"],
     "lrigType": "Tawil",
     "team": "Ancient Surprise",
-    "growCost": { "Colorless": 0 },
+    "growCost": { "Red": 0 },
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-005[EN].webp",
     "backType": "LRIG"
   },
@@ -94,11 +90,11 @@
     "colors": ["Red"],
     "lrigType": "Tawil",
     "team": "Ancient Surprise",
-    "growCost": { "Red": 0 },
+    "growCost": { "Colorless": 0 },
+    "timing": ["Main Phase"],
     "abilities": [
       {
         "type": "Enter",
-        "timing": ["main"],
         "description": "Vanish target SIGNI on your opponent's field with power 8000 or less. Draw a card, and discard a card."
       }
     ],
@@ -114,11 +110,11 @@
     "colors": ["Red"],
     "lrigType": "Tawil",
     "team": "Ancient Surprise",
-    "growCost": { "Red": 1 },
+    "growCost": { "Colorless": 1 },
+    "timing": ["Main Phase"],
     "abilities": [
       {
         "type": "Enter",
-        "timing": ["main"],
         "description": "If there is a red SIGNI on your field, vanish target SIGNI on your opponent's field with power 10000 or less. If there is a blue SIGNI on your field, draw two cards. If there is a green SIGNI on your field, [Ener Charge 2]."
       }
     ],
@@ -134,7 +130,7 @@
     "colors": ["Blue"],
     "lrigType": "Umr",
     "team": "Ancient Surprise",
-    "growCost": { "Colorless": 0 },
+    "growCost": { "Blue": 0 },
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-008[EN].webp",
     "backType": "LRIG"
   },
@@ -147,10 +143,9 @@
     "colors": ["Blue"],
     "lrigType": "Umr",
     "team": "Ancient Surprise",
-    "growCost": { "Blue": 0 },
-    "abilities": [
-      { "type": "Enter", "timing": ["main"], "description": "Draw two cards." }
-    ],
+    "growCost": { "Colorless": 0 },
+    "timing": ["Main Phase"],
+    "abilities": [{ "type": "Enter", "description": "Draw two cards." }],
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-009[EN].webp",
     "backType": "LRIG"
   },
@@ -163,12 +158,19 @@
     "colors": ["Blue"],
     "lrigType": "Umr",
     "team": "Ancient Surprise",
-    "growCost": { "Blue": 1 },
+    "growCost": { "Colorless": 1 },
+    "timing": ["Main Phase", "Attack Phase"],
     "abilities": [
       {
         "type": "Enter",
-        "timing": ["main", "attack"],
-        "cost": { "Blue": 1 },
+        "description": "Down target SIGNI on your opponent's field."
+      },
+      {
+        "type": "Enter",
+        "cost": {
+          "Green": 1,
+          "Colorless": 1
+        },
         "description": "Down target SIGNI on your opponent's field."
       }
     ],
@@ -181,11 +183,11 @@
     "type": "PIECE",
     "colors": ["Green", "Red", "Blue"],
     "cost": { "Colorless": 8 },
+    "timing": ["Main Phase"],
     "abilities": [
       {
         "type": "Use Conditions",
-        "timing": ["main"],
-        "description": "You have <Ancient Surprise> on your field with all members level one or more. Look at the top eight cards of your deck. Put up to one level one SIGNI, one level two SIGNI, and one level three SIGNI from among them onto your field. Put the rest on the bottom of your deck in a random order. Then, target level one SIGNI gains [Assassin], target level two SIGNI gains [Lancer], and target level three SIGNI gains [Double Crush] until end of turn."
+        "description": "You have Team <Ancient Surprise> on your field with all members level one or more. Look at the top eight cards of your deck. Put up to one level one SIGNI, one level two SIGNI, and one level three SIGNI from among them onto your field. Put the rest on the bottom of your deck in a random order. Then, target level one SIGNI gains [Assassin], target level two SIGNI gains [Lancer], and target level three SIGNI gains [Double Crush] until end of turn."
       }
     ],
     "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-011[EN].webp",
