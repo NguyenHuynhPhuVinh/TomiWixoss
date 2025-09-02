@@ -12,14 +12,7 @@
   "WXDi-D01-003": {
     "name": "At =Tva=, the Opened Gate",
     "class": null,
-    "abilities": [
-      {
-        "description": "Target three SIGNI on your field with different classes get +3000 power until end of turn."
-      },
-      {
-        "description": "[Ener Charge 2]. If the cards put into your Ener Zone this way do not share a class, [Ener Charge 1]."
-      }
-    ]
+    "abilities": []
   },
   "WXDi-D01-004": {
     "name": "At =Tre=, the Opened Gate",
@@ -76,6 +69,9 @@
     "abilities": [
       {
         "description": "Down target SIGNI on your opponent's field."
+      },
+      {
+        "description": "Down target SIGNI on your opponent's field."
       }
     ]
   },
@@ -84,7 +80,7 @@
     "class": null,
     "abilities": [
       {
-        "description": "You have <Ancient Surprise> on your field with all members level one or more. Look at the top eight cards of your deck. Put up to one level one SIGNI, one level two SIGNI, and one level three SIGNI from among them onto your field. Put the rest on the bottom of your deck in a random order. Then, target level one SIGNI gains [Assassin], target level two SIGNI gains [Lancer], and target level three SIGNI gains [Double Crush] until end of turn."
+        "description": "You have Team <Ancient Surprise> on your field with all members level one or more. Look at the top eight cards of your deck. Put up to one level one SIGNI, one level two SIGNI, and one level three SIGNI from among them onto your field. Put the rest on the bottom of your deck in a random order. Then, target level one SIGNI gains [Assassin], target level two SIGNI gains [Lancer], and target level three SIGNI gains [Double Crush] until end of turn."
       }
     ]
   },
@@ -156,32 +152,17 @@
   "WXDi-D01-018": {
     "name": "Water Buffalo, Phantom Aquatic Beast",
     "class": "Living Tone: Aquatic Beast",
-    "abilities": [
-      {
-        "description": "(When paying costs, this card can be used as blue or green.)"
-      }
-    ]
+    "abilities": []
   },
   "WXDi-D01-019": {
     "name": "Koalala, Phantom Terra Beast",
     "class": "Living Tone: Terra Beast",
-    "abilities": [
-      {
-        "description": "(When paying costs, this card can be used as red or green.)"
-      }
-    ]
+    "abilities": []
   },
   "WXDi-D01-020": {
     "name": "Servant #",
     "class": "Primal Tone",
-    "abilities": [
-      {
-        "description": "(You may discard this card to prevent damage from a single LRIG attack.)"
-      },
-      {
-        "description": "[Multi Ener] (When paying costs, this card can be used as any color.)"
-      }
-    ],
+    "abilities": [],
     "lifeBurstEffect": {
       "description": "Add target SIGNI from your trash to your hand."
     }

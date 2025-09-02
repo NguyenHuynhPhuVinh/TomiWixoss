@@ -13,10 +13,12 @@ export default function SideCardPreview({ card }: SideCardPreviewProps) {
 
   // Hàm helper để dịch loại năng lực
   const getAbilityTypeLabel = (type: string) => {
-    // Dùng key động dựa trên loại năng lực
+    // Chuyển "SpellEffect" thành "Spell Effect" cho đẹp hơn nếu cần
+    const formattedType = type.replace(/([A-Z])/g, " $1").trim();
     const key = `card.ability_${type}`;
-    // `t` sẽ tự động trả về key nếu không tìm thấy bản dịch
-    return t(key);
+    // Nếu không có bản dịch, trả về tên đã format
+    const translated = t(key);
+    return translated === key ? `[${formattedType}]` : translated;
   };
 
   return (
@@ -63,17 +65,30 @@ export default function SideCardPreview({ card }: SideCardPreviewProps) {
               </p>
             )}
 
-            {/* Phần hiển thị Abilities */}
+            {/* === THÊM HIỂN THỊ CHO GUARD VÀ TIMING === */}
+            <div className="flex gap-2 mb-3 text-xs">
+              {card.Guard && (
+                <span className="font-bold text-green-400 bg-green-900/50 px-2 py-1 rounded">
+                  {t("card.ability_Guard")}
+                </span>
+              )}
+              {card.timing && card.timing.length > 0 && (
+                <span className="font-bold text-cyan-400 bg-cyan-900/50 px-2 py-1 rounded">
+                  Timing: {card.timing.join(", ")}
+                </span>
+              )}
+            </div>
+            {/* === CHỈNH SỬA CÁCH HIỂN THỊ ABILITIES === */}
             <div className="space-y-3 text-xs text-foreground/90">
               {card.abilities?.map((ability, index) => (
                 <div key={index} className="border-t pt-2">
                   <p className="font-bold text-primary/80">
-                    {/* Dịch loại năng lực */}
-                    {getAbilityTypeLabel(ability.type)}{" "}
-                    {ability.timing?.join(", ")}
+                    {/* Bây giờ chúng ta lấy type từ object ability */}
+                    {getAbilityTypeLabel(ability.type)}
                   </p>
                   <p className="text-sm leading-snug">
-                    {ability.description} {/* Mô tả đã được dịch */}
+                    {/* Description vẫn lấy như cũ */}
+                    {ability.description}
                   </p>
                 </div>
               ))}

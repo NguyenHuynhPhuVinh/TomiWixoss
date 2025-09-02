@@ -12,24 +12,17 @@
   "WXDi-D01-003": {
     "name": "At =Tva=, the Opened Gate",
     "class": null,
-    "abilities": [
-      {
-        "description": "Chọn ba SIGNI trên sân của bạn có class khác nhau nhận +3000 sức mạnh cho đến hết lượt."
-      },
-      {
-        "description": "[Nạp Ener 2]. Nếu các lá bài đưa vào Ener Zone theo cách này không cùng class, [Nạp Ener 1]."
-      }
-    ]
+    "abilities": []
   },
   "WXDi-D01-004": {
     "name": "At =Tre=, the Opened Gate",
     "class": null,
     "abilities": [
       {
-        "description": "Chọn ba SIGNI trên sân của bạn có class khác nhau nhận +3000 sức mạnh cho đến hết lượt."
+        "description": "Chọn ba SIGNI trên sân của bạn có class khác nhau, chúng nhận +3000 sức mạnh cho đến hết lượt."
       },
       {
-        "description": "[Nạp Ener 2]. Nếu các lá bài đưa vào Ener Zone theo cách này không cùng class, [Nạp Ener 1]."
+        "description": "[Nạp Ener 2]. Nếu các lá bài được đưa vào Ener Zone theo cách này không cùng class, [Nạp Ener 1]."
       }
     ]
   },
@@ -43,7 +36,7 @@
     "class": null,
     "abilities": [
       {
-        "description": "Vanish SIGNI mục tiêu trên sân đối phương có sức mạnh 8000 hoặc ít hơn. Rút một lá bài, và bỏ một lá bài."
+        "description": "Vanish một SIGNI mục tiêu trên sân đối phương có sức mạnh 8000 hoặc thấp hơn. Rút một lá, sau đó bỏ một lá."
       }
     ]
   },
@@ -52,7 +45,7 @@
     "class": null,
     "abilities": [
       {
-        "description": "Nếu có SIGNI đỏ trên sân của bạn, vanish SIGNI mục tiêu trên sân đối phương có sức mạnh 10000 hoặc ít hơn. Nếu có SIGNI xanh dương trên sân của bạn, rút hai lá bài. Nếu có SIGNI xanh lá trên sân của bạn, [Nạp Ener 2]."
+        "description": "Nếu có SIGNI đỏ trên sân, vanish một SIGNI mục tiêu của đối phương có sức mạnh 10000 hoặc thấp hơn. Nếu có SIGNI xanh dương trên sân, rút hai lá. Nếu có SIGNI xanh lá trên sân, [Nạp Ener 2]."
       }
     ]
   },
@@ -75,7 +68,10 @@
     "class": null,
     "abilities": [
       {
-        "description": "Down SIGNI mục tiêu trên sân đối phương."
+        "description": "Down một SIGNI mục tiêu trên sân đối phương."
+      },
+      {
+        "description": "Down một SIGNI mục tiêu trên sân đối phương."
       }
     ]
   },
@@ -84,7 +80,7 @@
     "class": null,
     "abilities": [
       {
-        "description": "Bạn có <Ancient Surprise> trên sân với tất cả thành viên level một hoặc cao hơn. Xem tám lá bài trên cùng của bộ bài. Đưa tối đa một SIGNI level 1, một SIGNI level 2, và một SIGNI level 3 từ chúng lên sân. Đưa phần còn lại xuống đáy bộ bài theo thứ tự ngẫu nhiên. Sau đó, SIGNI level 1 mục tiêu nhận [Assassin], SIGNI level 2 mục tiêu nhận [Lancer], và SIGNI level 3 mục tiêu nhận [Double Crush] cho đến hết lượt."
+        "description": "Bạn có team <Ancient Surprise> trên sân với tất cả thành viên từ level 1 trở lên. Nhìn 8 lá trên cùng bộ bài. Đưa tối đa một SIGNI level 1, một SIGNI level 2, và một SIGNI level 3 từ đó lên sân. Đặt phần còn lại xuống cuối bộ bài theo thứ tự ngẫu nhiên. Sau đó, SIGNI level 1 nhận [Assassin], SIGNI level 2 nhận [Lancer], và SIGNI level 3 nhận [Double Crush] cho đến hết lượt."
       }
     ]
   },
@@ -93,7 +89,7 @@
     "class": "Nature Tone: Cosmos",
     "abilities": [
       {
-        "description": "Miễn là có ba hoặc nhiều class khác nhau giữa các SIGNI trong Ener Zone của bạn, SIGNI này nhận +4000 sức mạnh."
+        "description": "Khi có 3 hoặc nhiều class khác nhau trong Ener Zone của bạn, SIGNI này nhận +4000 sức mạnh."
       }
     ]
   },
@@ -110,10 +106,10 @@
     "class": "War Tone: Venom",
     "abilities": [
       {
-        "description": "Miễn là có ba hoặc nhiều class khác nhau giữa các SIGNI trong Ener Zone của bạn, SIGNI này nhận +5000 sức mạnh."
+        "description": "Khi có 3 hoặc nhiều class khác nhau trong Ener Zone của bạn, SIGNI này nhận +5000 sức mạnh."
       },
       {
-        "description": "SIGNI khác mục tiêu trên sân của bạn có sức mạnh 15000 hoặc nhiều hơn nhận [Lancer] cho đến hết lượt."
+        "description": "Một SIGNI mục tiêu khác trên sân có sức mạnh 15000 trở lên nhận [Lancer] cho đến hết lượt."
       }
     ]
   },
@@ -122,14 +118,14 @@
     "class": "War Tone: Armed",
     "abilities": [
       {
-        "description": "Mỗi khi SIGNI này tấn công, SIGNI khác mục tiêu trên sân của bạn nhận +5000 sức mạnh cho đến hết lượt."
+        "description": "Mỗi khi SIGNI này tấn công, một SIGNI mục tiêu khác trên sân nhận +5000 sức mạnh cho đến hết lượt."
       },
       {
         "description": "Bỏ hai lá bài: Rút hai lá bài."
       }
     ],
     "lifeBurstEffect": {
-      "description": "Chọn một - 1. Vanish SIGNI upped mục tiêu trên sân đối phương. 2. Rút một lá bài."
+      "description": "Chọn một - 1. Vanish một SIGNI đang up của đối phương. 2. Rút một lá bài."
     }
   },
   "WXDi-D01-016": {
@@ -137,11 +133,11 @@
     "class": "Nature Tone: Jewel",
     "abilities": [
       {
-        "description": "Mỗi khi SIGNI này tấn công, nếu sức mạnh của nó là 15000 hoặc nhiều hơn, đối phương bỏ một lá bài. Nếu sức mạnh của nó là 20000 hoặc nhiều hơn, đối phương bỏ một lá bài ngẫu nhiên."
+        "description": "Mỗi khi SIGNI này tấn công, nếu sức mạnh của nó từ 15000 trở lên, đối phương bỏ một lá bài. Nếu sức mạnh từ 20000 trở lên, đối phương bỏ một lá bài ngẫu nhiên."
       }
     ],
     "lifeBurstEffect": {
-      "description": "Down SIGNI mục tiêu trên sân đối phương và freeze nó. Rút một lá bài."
+      "description": "Down và đóng băng một SIGNI mục tiêu của đối phương. Rút một lá bài."
     }
   },
   "WXDi-D01-017": {
@@ -149,41 +145,26 @@
     "class": "Idle Tone: Angel",
     "abilities": [
       {
-        "description": "Đưa ba SIGNI có class khác nhau từ Ener Zone của bạn vào trash của chủ sở hữu: Vanish SIGNI mục tiêu trên sân đối phương có sức mạnh 8000 hoặc nhiều hơn."
+        "description": "Bỏ 3 SIGNI có class khác nhau từ Ener Zone vào mộ: Vanish một SIGNI mục tiêu của đối phương có sức mạnh 8000 trở lên."
       }
     ]
   },
   "WXDi-D01-018": {
     "name": "Water Buffalo, Phantom Aquatic Beast",
     "class": "Living Tone: Aquatic Beast",
-    "abilities": [
-      {
-        "description": "(Khi trả chi phí, lá bài này có thể được dùng như xanh dương hoặc xanh lá.)"
-      }
-    ]
+    "abilities": []
   },
   "WXDi-D01-019": {
     "name": "Koalala, Phantom Terra Beast",
     "class": "Living Tone: Terra Beast",
-    "abilities": [
-      {
-        "description": "(Khi trả chi phí, lá bài này có thể được dùng như đỏ hoặc xanh lá.)"
-      }
-    ]
+    "abilities": []
   },
   "WXDi-D01-020": {
     "name": "Servant #",
     "class": "Primal Tone",
-    "abilities": [
-      {
-        "description": "(Bạn có thể bỏ lá bài này để ngăn chặn sát thương từ một đòn tấn công của LRIG.)"
-      },
-      {
-        "description": "[Multi Ener] (Khi trả chi phí, lá bài này có thể được dùng như bất kỳ màu nào.)"
-      }
-    ],
+    "abilities": [],
     "lifeBurstEffect": {
-      "description": "Thêm một SIGNI mục tiêu từ mộ của bạn vào tay."
+      "description": "Thêm một SIGNI mục tiêu từ mộ vào tay."
     }
   },
   "WXDi-D01-021": {
@@ -191,7 +172,7 @@
     "class": null,
     "abilities": [
       {
-        "description": "Thêm một SIGNI xanh lá mục tiêu từ Ener Zone vào tay bạn. Nếu có ba LRIG <Ancient Surprise> trên sân của bạn, thay vào đó, thêm một SIGNI mục tiêu bất kỳ từ Ener Zone vào tay bạn."
+        "description": "Thêm một SIGNI xanh lá mục tiêu từ Ener Zone vào tay. Nếu có ba LRIG <Ancient Surprise> trên sân, thay vào đó, thêm một SIGNI bất kỳ từ Ener Zone vào tay."
       }
     ],
     "lifeBurstEffect": {

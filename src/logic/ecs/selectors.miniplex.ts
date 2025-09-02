@@ -45,8 +45,11 @@ export function getValidGrowOptions(
     if (isCenterGrow) {
       if (phase !== GamePhase.GROW) continue; // <-- Sử dụng hằng số
     } else {
-      const enterAbility = cardInfo.abilities?.find((a) => a.type === "Enter");
-      if (!enterAbility?.timing?.includes(phase as any)) continue;
+      // Assist LRIG bây giờ đọc 'timing' từ cấp cao nhất
+      // Thay vì từ bên trong một ability cụ thể
+      if (!cardInfo.timing?.includes(phase as any)) {
+        continue;
+      }
     }
 
     // Kiểm tra level của Assist LRIG so với Center

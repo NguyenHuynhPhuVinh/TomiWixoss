@@ -45,8 +45,8 @@ export interface CardCost {
 
 // Định nghĩa cấu trúc cho các kỹ năng
 export interface CardAbility {
-  type: "Action" | "Auto" | "Enter" | "Const" | "Guard" | "Use Conditions";
-  timing?: GamePhase[]; // Thời điểm sử dụng, sử dụng GamePhase để nhất quán
+  type: string; // VD: "Action", "Enter", "Const", "SpellEffect"
+  timing?: string[]; // VD: ["Main Phase", "Attack Phase"]
   cost?: CardCost;
   description: string;
   turnLimit?: number; // Giới hạn mỗi lượt
@@ -77,6 +77,13 @@ export interface CardData {
   isHorizontal?: boolean;
   // === THÊM THUỘC TÍNH MỚI ===
   scripts?: Partial<Record<ScriptTrigger, string>>; // Ví dụ: { onPlay: 'WXDi-D01-013.lua' }
+  timing?: string[]; // Dành cho Assist LRIG
+  Guard?: boolean; // Dành cho Servant
+  abilityCondition?: {
+    // Dành cho LRIG Level 3
+    type: string;
+    value: string;
+  };
 }
 
 // Cấu trúc cho một lá bài trong game (có thêm trạng thái)
