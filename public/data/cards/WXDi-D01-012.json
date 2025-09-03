@@ -1,0 +1,19 @@
+{
+  "id": "WXDi-D01-012",
+  "name": "Camelopar, Natural Planet",
+  "type": "SIGNI",
+  "level": 1,
+  "power": 3000,
+  "colors": [
+    "Green"
+  ],
+  "class": "Nature Tone: Cosmos",
+  "abilities": [
+    {
+      "type": "Const",
+      "description": "As long as there are three or more different classes among SIGNI in your Ener Zone, this SIGNI gets +4000 power."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-012[EN].webp",
+  "backType": "MAIN"
+}

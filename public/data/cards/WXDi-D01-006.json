@@ -1,0 +1,26 @@
+{
+  "id": "WXDi-D01-006",
+  "name": "Tawil =Screech=",
+  "type": "ASSIST LRIG",
+  "level": 1,
+  "limit": 0,
+  "colors": [
+    "Red"
+  ],
+  "lrigType": "Tawil",
+  "team": "Ancient Surprise",
+  "growCost": {
+    "Colorless": 0
+  },
+  "timing": [
+    "Main Phase"
+  ],
+  "abilities": [
+    {
+      "type": "Enter",
+      "description": "Vanish target SIGNI on your opponent's field with power 8000 or less. Draw a card, and discard a card."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-006[EN].webp",
+  "backType": "LRIG"
+}

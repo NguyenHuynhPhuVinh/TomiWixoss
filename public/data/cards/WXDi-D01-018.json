@@ -1,0 +1,15 @@
+{
+  "id": "WXDi-D01-018",
+  "name": "Water Buffalo, Phantom Aquatic Beast",
+  "type": "SIGNI",
+  "level": 1,
+  "power": 5000,
+  "colors": [
+    "Blue",
+    "Green"
+  ],
+  "class": "Living Tone: Aquatic Beast",
+  "abilities": [],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-018[EN].webp",
+  "backType": "MAIN"
+}

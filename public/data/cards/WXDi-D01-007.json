@@ -1,0 +1,26 @@
+{
+  "id": "WXDi-D01-007",
+  "name": "Tawil =Rainbow=",
+  "type": "ASSIST LRIG",
+  "level": 2,
+  "limit": "+1",
+  "colors": [
+    "Red"
+  ],
+  "lrigType": "Tawil",
+  "team": "Ancient Surprise",
+  "growCost": {
+    "Colorless": 1
+  },
+  "timing": [
+    "Main Phase"
+  ],
+  "abilities": [
+    {
+      "type": "Enter",
+      "description": "If there is a red SIGNI on your field, vanish target SIGNI on your opponent's field with power 10000 or less. If there is a blue SIGNI on your field, draw two cards. If there is a green SIGNI on your field, [Ener Charge 2]."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-007[EN].webp",
+  "backType": "LRIG"
+}

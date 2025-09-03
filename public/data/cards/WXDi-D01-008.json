@@ -1,0 +1,17 @@
+{
+  "id": "WXDi-D01-008",
+  "name": "Umr =Noll=, Key to Salvation",
+  "type": "LRIG",
+  "level": 0,
+  "limit": 0,
+  "colors": [
+    "Blue"
+  ],
+  "lrigType": "Umr",
+  "team": "Ancient Surprise",
+  "growCost": {
+    "Blue": 0
+  },
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-008[EN].webp",
+  "backType": "LRIG"
+}

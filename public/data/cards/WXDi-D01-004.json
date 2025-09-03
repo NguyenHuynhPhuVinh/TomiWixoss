@@ -1,0 +1,33 @@
+{
+  "id": "WXDi-D01-004",
+  "name": "At =Tre=, the Opened Gate",
+  "type": "LRIG",
+  "level": 3,
+  "limit": 6,
+  "colors": ["Green"],
+  "lrigType": "At",
+  "team": "Ancient Surprise",
+  "growCost": {
+    "Green": 2
+  },
+  "abilityCondition": {
+    "type": "Team",
+    "value": "Ancient Surprise"
+  },
+  "abilities": [
+    {
+      "type": "Action",
+      "turnLimit": 1,
+      "cost": {
+        "Green": 0
+      },
+      "description": "Target three SIGNI on your field with different classes get +3000 power until end of turn."
+    },
+    {
+      "type": "Enter",
+      "description": "[Ener Charge 2]. If the cards put into your Ener Zone this way do not share a class, [Ener Charge 1]."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-004[EN].webp",
+  "backType": "LRIG"
+}

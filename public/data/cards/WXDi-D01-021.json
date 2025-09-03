@@ -1,0 +1,23 @@
+{
+  "id": "WXDi-D01-021",
+  "name": "Polygenesis",
+  "type": "SPELL",
+  "colors": [
+    "Green"
+  ],
+  "cost": {
+    "Green": 1
+  },
+  "hasBurstIcon": true,
+  "abilities": [
+    {
+      "type": "SpellEffect",
+      "description": "Add target green SIGNI from your Ener Zone to your hand. If there are three <Ancient Surprise> LRIG on your field, instead add target SIGNI from your Ener Zone to your hand."
+    }
+  ],
+  "lifeBurstEffect": {
+    "description": "Vanish target upped SIGNI on your opponent's field."
+  },
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-021[EN].webp",
+  "backType": "MAIN"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "WXDi-D01-010",
+  "name": "Umr =Down=",
+  "type": "ASSIST LRIG",
+  "level": 2,
+  "limit": "+1",
+  "colors": [
+    "Blue"
+  ],
+  "lrigType": "Umr",
+  "team": "Ancient Surprise",
+  "growCost": {
+    "Colorless": 1
+  },
+  "timing": [
+    "Main Phase",
+    "Attack Phase"
+  ],
+  "abilities": [
+    {
+      "type": "Enter",
+      "description": "Down target SIGNI on your opponent's field."
+    },
+    {
+      "type": "Enter",
+      "cost": {
+        "Green": 1,
+        "Colorless": 1
+      },
+      "description": "Down target SIGNI on your opponent's field."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-010[EN].webp",
+  "backType": "LRIG"
+}

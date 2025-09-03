@@ -1,0 +1,19 @@
+{
+  "id": "WXDi-D01-017",
+  "name": "Atalanta, Jade Angel",
+  "type": "SIGNI",
+  "level": 3,
+  "power": 12000,
+  "colors": [
+    "Green"
+  ],
+  "class": "Idle Tone: Angel",
+  "abilities": [
+    {
+      "type": "Enter",
+      "description": "Put three SIGNI with different classes from your Ener Zone into their owner's trash: Vanish target SIGNI on your opponent's field with power 8000 or more."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-017[EN].webp",
+  "backType": "MAIN"
+}

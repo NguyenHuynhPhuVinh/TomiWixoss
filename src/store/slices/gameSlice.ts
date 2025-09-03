@@ -43,125 +43,169 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
   get
 ) => ({
   initializeGame: async () => {
-    // 1. Tải dữ liệu deck gốc (chứa thông tin không đổi và text tiếng Anh làm fallback)
-    const response = await fetch("/data/decks/diva-debut-deck.json");
-    const fullDeckData: CardData[] = await response.json();
-
-    // 2. Lấy ngôn ngữ hiện tại và tải file dịch tương ứng
-    const currentLang = i18n.language;
-    let cardTranslations: Record<string, any> = {};
     try {
-      const translationResponse = await fetch(
-        `/locales/${currentLang}/cards.json`
+      // 1. Tải file "manifest" của bộ bài
+      const manifestResponse = await fetch("/data/decks/diva-debut-deck.json");
+      const deckManifest = await manifestResponse.json();
+
+      // Tạo một danh sách các ID duy nhất cần tải
+      const mainDeckIds = deckManifest.mainDeck.map(
+        (card: { id: string; count: number }) => card.id
       );
-      if (translationResponse.ok) {
-        cardTranslations = await translationResponse.json();
+      const lrigDeckIds = deckManifest.lrigDeck.map(
+        (card: { id: string; count: number }) => card.id
+      );
+      const allUniqueCardIds = [...new Set([...mainDeckIds, ...lrigDeckIds])];
+
+      // 2. Tải song song tất cả các file JSON của từng lá bài
+      const cardDataPromises = allUniqueCardIds.map((id) =>
+        fetch(`/data/cards/${id}.json`).then((res) => res.json())
+      );
+      const cardDataArray: CardData[] = await Promise.all(cardDataPromises);
+
+      // Chuyển mảng thành một Map để tra cứu nhanh hơn
+      const cardDataMap = new Map<string, CardData>(
+        cardDataArray.map((card) => [card.id, card])
+      );
+
+      // 3. TẢI VÀ HỢP NHẤT BẢN DỊCH (ĐÂY LÀ PHẦN THAY ĐỔI)
+      const currentLang = i18n.language;
+      let finalCardDataMap = cardDataMap; // Mặc định, dữ liệu cuối cùng là dữ liệu gốc (tiếng Anh)
+
+      // Chỉ thực hiện tải và hợp nhất nếu ngôn ngữ không phải là 'en'
+      if (currentLang !== "en") {
+        console.log(
+          `Language is '${currentLang}', attempting to load translations...`
+        );
+        try {
+          const translationResponse = await fetch(
+            `/locales/${currentLang}/cards.json`
+          );
+          if (translationResponse.ok) {
+            const cardTranslations = await translationResponse.json();
+            const translatedMap = new Map<string, CardData>();
+
+            for (const [id, baseCard] of cardDataMap.entries()) {
+              const translation = cardTranslations[id];
+              if (translation) {
+                // Hợp nhất bản dịch vào dữ liệu gốc
+                const translatedCard = { ...baseCard };
+                translatedCard.name = translation.name || baseCard.name;
+                translatedCard.class = translation.class || baseCard.class;
+                if (
+                  translation.abilities &&
+                  Array.isArray(translation.abilities)
+                ) {
+                  translatedCard.abilities =
+                    baseCard.abilities?.map((ability, index) => ({
+                      ...ability,
+                      description:
+                        translation.abilities[index]?.description ||
+                        ability.description,
+                    })) || [];
+                }
+                if (
+                  translation.lifeBurstEffect &&
+                  translatedCard.lifeBurstEffect
+                ) {
+                  translatedCard.lifeBurstEffect.description =
+                    translation.lifeBurstEffect.description ||
+                    translatedCard.lifeBurstEffect.description;
+                }
+                translatedMap.set(id, translatedCard);
+              } else {
+                translatedMap.set(id, baseCard); // Giữ lại card gốc nếu không có bản dịch
+              }
+            }
+            finalCardDataMap = translatedMap; // Gán map đã được dịch làm dữ liệu cuối cùng
+          }
+        } catch (error) {
+          console.error(
+            `Could not load or parse translations for '${currentLang}'. Falling back to English.`,
+            error
+          );
+        }
       }
+
+      // 4. Xây dựng lại mảng dữ liệu deck hoàn chỉnh từ manifest và data đã tải
+      const buildDeckFromManifest = (
+        deckList: { id: string; count: number }[]
+      ) => {
+        const deck: CardData[] = [];
+        for (const item of deckList) {
+          const cardInfo = finalCardDataMap.get(item.id);
+          if (cardInfo) {
+            for (let i = 0; i < item.count; i++) {
+              deck.push(cardInfo);
+            }
+          }
+        }
+        return deck;
+      };
+
+      const mainDeckData = buildDeckFromManifest(deckManifest.mainDeck);
+      const lrigDeckData = buildDeckFromManifest(deckManifest.lrigDeck);
+
+      // 5. Preload ảnh và nạp vào World (logic không đổi)
+      const allImageUrls = [...finalCardDataMap.values()].map(
+        (c) => c.imageUrl
+      );
+      addCardImageUrlsToPreload(allImageUrls);
+
+      // 6. Xác thực bộ bài
+      const validationResult = validateDeck(mainDeckData, lrigDeckData);
+
+      if (!validationResult.isValid) {
+        console.error(
+          "================ DECK VALIDATION FAILED ================"
+        );
+        validationResult.errors.forEach((error) => console.error(`- ${error}`));
+        console.error(
+          "========================================================"
+        );
+        // Dừng việc khởi tạo game nếu bộ bài không hợp lệ
+        return;
+      }
+
+      console.log("Deck validation successful!");
+
+      world.clear();
+
+      // Hàm helper để biến CardData thành Entity của Miniplex
+      const createCardEntity = (
+        cardData: CardData,
+        zoneName: Zone,
+        index: number
+      ): Entity => ({
+        uuid: uuidv4(),
+        cardInfo: { data: cardData },
+        status: { isFaceUp: false, isDowned: false },
+        zone: { owner: "player", zone: zoneName, index: index },
+      });
+
+      // Nạp main deck
+      shuffle(mainDeckData);
+      mainDeckData.forEach((card, index) => {
+        world.add(createCardEntity(card, Zone.MAIN_DECK, index));
+      });
+
+      // Nạp lrig deck
+      lrigDeckData.forEach((card, index) => {
+        world.add(createCardEntity(card, Zone.LRIG_DECK, index));
+      });
+
+      // Thêm lại globalEntity sau khi clear
+      const { globalEntity } = await import("@/logic/ecs/world.miniplex");
+      globalEntity.globalState!.phase = GamePhase.PRE_GAME;
+      world.add(globalEntity);
+
+      console.log(
+        `Miniplex World hydrated with translated data for language: ${currentLang}`
+      );
+      get().incrementWorldVersion();
     } catch (error) {
-      console.error(
-        `Could not load card translations for ${currentLang}`,
-        error
-      );
+      console.error("Failed to initialize game with new architecture:", error);
     }
-
-    // 3. Hợp nhất dữ liệu gốc và dữ liệu dịch
-    const translatedDeckData = fullDeckData.map((card) => {
-      const translation = cardTranslations[card.id];
-      if (translation) {
-        // Tạo một bản sao của card để không thay đổi dữ liệu gốc
-        const newCard = { ...card };
-        // Ghi đè các trường văn bản
-        newCard.name = translation.name || card.name;
-        newCard.class = translation.class || card.class;
-        // Ghi đè mô tả năng lực
-        if (translation.abilities && Array.isArray(translation.abilities)) {
-          newCard.abilities =
-            card.abilities?.map((ability, index) => ({
-              ...ability,
-              description:
-                translation.abilities[index]?.description ||
-                ability.description,
-            })) || [];
-        }
-
-        // ==========================================================
-        // >> THÊM ĐOẠN NÀY VÀO <<
-        // Ghi đè mô tả Life Burst
-        if (translation.lifeBurstEffect && newCard.lifeBurstEffect) {
-          newCard.lifeBurstEffect = {
-            ...newCard.lifeBurstEffect,
-            description:
-              translation.lifeBurstEffect.description ||
-              newCard.lifeBurstEffect.description,
-          };
-        }
-        // ==========================================================
-
-        return newCard;
-      }
-      return card; // Trả về card gốc nếu không có bản dịch
-    });
-
-    // 4. Preload ảnh (giữ nguyên)
-    const imageUrls = translatedDeckData.map((card) => card.imageUrl);
-    addCardImageUrlsToPreload(imageUrls);
-
-    // 5. Tạo deck và nạp vào Miniplex World (sử dụng dữ liệu đã dịch)
-    const mainDeckData = translatedDeckData
-      .filter((c) => c.backType === "MAIN")
-      .flatMap((c) => Array(4).fill(c))
-      .slice(0, 40);
-    const lrigDeckData = translatedDeckData.filter(
-      (c) => c.backType === "LRIG" || c.backType === "PIECE"
-    );
-
-    // 6. Xác thực bộ bài
-    const validationResult = validateDeck(mainDeckData, lrigDeckData);
-
-    if (!validationResult.isValid) {
-      console.error("================ DECK VALIDATION FAILED ================");
-      validationResult.errors.forEach((error) => console.error(`- ${error}`));
-      console.error("========================================================");
-      // Dừng việc khởi tạo game nếu bộ bài không hợp lệ
-      return;
-    }
-
-    console.log("Deck validation successful!");
-
-    world.clear();
-
-    // Hàm helper để biến CardData thành Entity của Miniplex
-    const createCardEntity = (
-      cardData: CardData,
-      zoneName: Zone, // <-- Sử dụng type mới
-      index: number
-    ): Entity => ({
-      uuid: uuidv4(), // Mỗi lá bài trong game có một uuid duy nhất
-      cardInfo: { data: cardData },
-      status: { isFaceUp: false, isDowned: false },
-      zone: { owner: "player", zone: zoneName, index: index },
-    });
-
-    // Nạp main deck
-    shuffle(mainDeckData);
-    mainDeckData.forEach((card, index) => {
-      world.add(createCardEntity(card, Zone.MAIN_DECK, index)); // <-- Sử dụng hằng số
-    });
-
-    // Nạp lrig deck
-    lrigDeckData.forEach((card, index) => {
-      world.add(createCardEntity(card, Zone.LRIG_DECK, index)); // <-- Sử dụng hằng số
-    });
-
-    // Thêm lại globalEntity sau khi clear
-    const { globalEntity } = await import("@/logic/ecs/world.miniplex");
-    globalEntity.globalState!.phase = GamePhase.PRE_GAME; // <-- Sử dụng hằng số
-    world.add(globalEntity);
-
-    console.log(
-      `Miniplex World hydrated with translated data for language: ${currentLang}`
-    );
-    get().incrementWorldVersion();
   },
 
   // === THAY ĐỔI: Hàm syncStateFromWorld được thay thế hoàn toàn ===

@@ -1,0 +1,15 @@
+{
+  "id": "WXDi-D01-019",
+  "name": "Koalala, Phantom Terra Beast",
+  "type": "SIGNI",
+  "level": 2,
+  "power": 10000,
+  "colors": [
+    "Red",
+    "Green"
+  ],
+  "class": "Living Tone: Terra Beast",
+  "abilities": [],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-019[EN].webp",
+  "backType": "MAIN"
+}

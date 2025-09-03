@@ -1,0 +1,17 @@
+{
+  "id": "WXDi-D01-005",
+  "name": "Tawil =Noll=, Awakened One",
+  "type": "LRIG",
+  "level": 0,
+  "limit": 0,
+  "colors": [
+    "Red"
+  ],
+  "lrigType": "Tawil",
+  "team": "Ancient Surprise",
+  "growCost": {
+    "Red": 0
+  },
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-005[EN].webp",
+  "backType": "LRIG"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "WXDi-D01-013",
+  "name": "Sen no Rikyu, Jade General",
+  "type": "SIGNI",
+  "level": 2,
+  "power": 10000,
+  "colors": [
+    "Green"
+  ],
+  "class": "Idle Tone: Brave",
+  "hasBurstIcon": true,
+  "abilities": [],
+  "lifeBurstEffect": {
+    "description": "[Ener Charge 3]."
+  },
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-013[EN].webp",
+  "backType": "MAIN"
+}

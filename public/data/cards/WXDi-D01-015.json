@@ -1,0 +1,27 @@
+{
+  "id": "WXDi-D01-015",
+  "name": "Tobiel, Full Armed",
+  "type": "SIGNI",
+  "level": 3,
+  "power": 12000,
+  "colors": [
+    "Red"
+  ],
+  "class": "War Tone: Armed",
+  "hasBurstIcon": true,
+  "abilities": [
+    {
+      "type": "Auto",
+      "description": "Whenever this SIGNI attacks, another target SIGNI on your field gets +5000 power until end of turn."
+    },
+    {
+      "type": "Enter",
+      "description": "Discard two cards: Draw two cards."
+    }
+  ],
+  "lifeBurstEffect": {
+    "description": "Choose one - 1. Vanish target upped SIGNI on your opponent's field. 2. Draw a card."
+  },
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-015[EN].webp",
+  "backType": "MAIN"
+}

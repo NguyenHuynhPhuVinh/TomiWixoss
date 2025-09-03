@@ -1,0 +1,16 @@
+{
+  "id": "WXDi-D01-003",
+  "name": "At =Tva=, the Opened Gate",
+  "type": "LRIG",
+  "level": 2,
+  "limit": 5,
+  "colors": ["Green"],
+  "lrigType": "At",
+  "team": "Ancient Surprise",
+  "growCost": {
+    "Green": 1
+  },
+  "abilities": [],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-003[EN].webp",
+  "backType": "LRIG"
+}

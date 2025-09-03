@@ -1,0 +1,28 @@
+{
+  "id": "WXDi-D01-014",
+  "name": "Zwei =Slow Loris=",
+  "type": "SIGNI",
+  "level": 2,
+  "power": 3000,
+  "colors": [
+    "Green"
+  ],
+  "class": "War Tone: Venom",
+  "abilities": [
+    {
+      "type": "Const",
+      "description": "As long as there are three or more different classes among SIGNI in your Ener Zone, this SIGNI gets +5000 power."
+    },
+    {
+      "type": "Action",
+      "turnLimit": 1,
+      "cost": {
+        "Green": 2,
+        "Colorless": 1
+      },
+      "description": "Another target SIGNI on your field with power 15000 or more gains [Lancer] until end of turn."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-014[EN].webp",
+  "backType": "MAIN"
+}

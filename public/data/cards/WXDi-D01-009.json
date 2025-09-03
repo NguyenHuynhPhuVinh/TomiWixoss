@@ -1,0 +1,26 @@
+{
+  "id": "WXDi-D01-009",
+  "name": "Umr =Draw=",
+  "type": "ASSIST LRIG",
+  "level": 1,
+  "limit": 0,
+  "colors": [
+    "Blue"
+  ],
+  "lrigType": "Umr",
+  "team": "Ancient Surprise",
+  "growCost": {
+    "Colorless": 0
+  },
+  "timing": [
+    "Main Phase"
+  ],
+  "abilities": [
+    {
+      "type": "Enter",
+      "description": "Draw two cards."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-009[EN].webp",
+  "backType": "LRIG"
+}

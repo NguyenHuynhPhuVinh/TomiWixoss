@@ -1,0 +1,19 @@
+{
+  "id": "WXDi-D01-020",
+  "name": "Servant #",
+  "type": "SIGNI",
+  "level": 1,
+  "power": 1000,
+  "colors": [
+    "Colorless"
+  ],
+  "class": "Primal Tone",
+  "hasBurstIcon": true,
+  "Guard": true,
+  "abilities": [],
+  "lifeBurstEffect": {
+    "description": "Add target SIGNI from your trash to your hand."
+  },
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-020[EN].webp",
+  "backType": "MAIN"
+}

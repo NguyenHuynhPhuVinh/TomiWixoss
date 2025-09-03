@@ -1,0 +1,25 @@
+{
+  "id": "WXDi-D01-011",
+  "name": "Harmonic Call",
+  "type": "PIECE",
+  "colors": [
+    "Green",
+    "Red",
+    "Blue"
+  ],
+  "cost": {
+    "Colorless": 8
+  },
+  "timing": [
+    "Main Phase"
+  ],
+  "abilities": [
+    {
+      "type": "Use Conditions",
+      "description": "You have Team <Ancient Surprise> on your field with all members level one or more. Look at the top eight cards of your deck. Put up to one level one SIGNI, one level two SIGNI, and one level three SIGNI from among them onto your field. Put the rest on the bottom of your deck in a random order. Then, target level one SIGNI gains [Assassin], target level two SIGNI gains [Lancer], and target level three SIGNI gains [Double Crush] until end of turn."
+    }
+  ],
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-011[EN].webp",
+  "backType": "PIECE",
+  "isHorizontal": true
+}

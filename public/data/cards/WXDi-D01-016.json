@@ -1,0 +1,23 @@
+{
+  "id": "WXDi-D01-016",
+  "name": "Assylen, Natural Crystal",
+  "type": "SIGNI",
+  "level": 3,
+  "power": 12000,
+  "colors": [
+    "Blue"
+  ],
+  "class": "Nature Tone: Jewel",
+  "hasBurstIcon": true,
+  "abilities": [
+    {
+      "type": "Auto",
+      "description": "Whenever this SIGNI attacks, if its power is 15000 or more, your opponent discards a card. If its power is 20000 or more, your opponent instead discards a card at random."
+    }
+  ],
+  "lifeBurstEffect": {
+    "description": "Down target SIGNI on your opponent's field and freeze it. Draw a card."
+  },
+  "imageUrl": "/textures/cards/WXDi-D01/WXDi-D01-016[EN].webp",
+  "backType": "MAIN"
+}
