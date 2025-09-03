@@ -12,7 +12,7 @@ interface CardProps {
   position: [number, number, number];
   rotation: [number, number, number];
   onClick: (uuid: string, event: any) => void; // Truyền cả event object
-  shouldGlow?: boolean; // Thêm prop
+  // Bỏ prop shouldGlow
 }
 
 // 2. BỌC COMPONENT BẰNG memo()
@@ -21,7 +21,6 @@ const Card = memo(function Card({
   position,
   rotation,
   onClick,
-  shouldGlow, // Nhận prop
 }: CardProps) {
   // Fetch entity data based on uuid
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
@@ -48,8 +47,8 @@ const Card = memo(function Card({
         if (onClick) onClick(uuid, e); // Truyền cả event
       }}
     >
-      <CardModel card={cardInstance} shouldGlow={shouldGlow} />{" "}
-      {/* Truyền prop */}
+      {/* Bỏ prop shouldGlow khi truyền vào CardModel */}
+      <CardModel card={cardInstance} />
     </group>
   );
 });

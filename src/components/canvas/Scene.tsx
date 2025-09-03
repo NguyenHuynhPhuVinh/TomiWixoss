@@ -14,6 +14,7 @@ import {
 import GameBoard from "./GameBoard";
 import Card from "./Card";
 import InteractiveZone from "./InteractiveZone";
+import IndicatorArrow from "./IndicatorArrow"; // <-- THÊM IMPORT MỚI
 import { useStore } from "zustand";
 import useGameStore from "@/store/gameStore";
 import { P1_ZONE_COORDINATES, CARD_DIMENSIONS } from "@/data/zoneCoordinates";
@@ -166,6 +167,16 @@ function SceneContent() {
     return map;
   }, [renderableEntities]);
 
+  // THÊM LOGIC MỚI: Tìm vị trí của lá bài cần chỉ điểm
+  const indicatorPosition = useMemo((): [number, number, number] | null => {
+    if (!growableCenterLrigUuid) return null;
+
+    // Center LRIG luôn ở vị trí coords.CENTER_LRIG
+    const basePosition = coords.CENTER_LRIG;
+    // Đặt mũi tên cao hơn lá bài một chút
+    return [basePosition.x, basePosition.y + 0.5, basePosition.z];
+  }, [growableCenterLrigUuid, coords.CENTER_LRIG]);
+
   return (
     <>
       {/* <--- THIẾT LẬP CAMERA TỰ DO VÀ GIỚI HẠN GÓC NHÌN ---> */}
@@ -199,6 +210,10 @@ function SceneContent() {
         position={[0, 0, -(12 / (4962 / 3509) / 2)]}
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
+
+      {/* --- RENDER MŨI TÊN CHỈ ĐIỂM --- */}
+      {/* Render component mũi tên nếu có vị trí hợp lệ */}
+      {indicatorPosition && <IndicatorArrow position={indicatorPosition} />}
 
       {/* --- RENDER CÁC LÁ BÀI --- */}
       {renderableEntities.map((entity: Entity) => {
@@ -302,7 +317,7 @@ function SceneContent() {
             position={position}
             rotation={rotation}
             onClick={handleCardClick}
-            shouldGlow={entity.uuid === growableCenterLrigUuid} // Truyền prop glow
+            // Bỏ prop shouldGlow ở đây
           />
         );
       })}
