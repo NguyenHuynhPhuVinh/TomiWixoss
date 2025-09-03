@@ -2,6 +2,8 @@
 import { GamePhase, Zone } from "@/logic/constants";
 import { world } from "./world.miniplex";
 import { Entity } from "./types.miniplex";
+import { checkCost } from "@/logic/payment"; // <-- THÊM IMPORT 1
+import { CardInstance } from "@/types/game"; // <-- THÊM IMPORT 2
 
 export function getValidGrowOptions(
   phase: GamePhase,
@@ -31,6 +33,25 @@ export function getValidGrowOptions(
 
   const centerLrigLevel = centerLrigEntity.cardInfo!.data.level ?? 0;
   const currentLrigInfo = currentLrigEntity.cardInfo!.data;
+
+  // === THAY ĐỔI BẮT ĐẦU TỪ ĐÂY ===
+
+  // 1. Lấy trạng thái hiện tại của Ener Zone
+  const enerZoneEntities = world
+    .with("cardInfo", "status", "zone", "uuid")
+    .where((e) => e.zone.zone === Zone.ENER_ZONE);
+
+  // Chuyển đổi các entity thành định dạng CardInstance mà hàm checkCost cần
+  const enerZoneCards: CardInstance[] = Array.from(enerZoneEntities).map(
+    (e) => ({
+      ...e.cardInfo!.data,
+      ...e.status!,
+      uuid: e.uuid,
+      owner: e.zone!.owner,
+    })
+  );
+
+  // === KẾT THÚC THAY ĐỔI ===
 
   const lrigDeckEntities = world
     .with("cardInfo", "zone")
@@ -75,5 +96,16 @@ export function getValidGrowOptions(
     }
   }
 
-  return validEntities;
+  // === THAY ĐỔI BẮT ĐẦU TỪ ĐÂY ===
+
+  // 2. Lọc danh sách các lá bài hợp lệ dựa trên chi phí Ener có thể trả
+  const affordableEntities = validEntities.filter((entity) => {
+    const growCost = entity.cardInfo!.data.growCost;
+    // Sử dụng hàm checkCost để xem người chơi có đủ Ener không
+    return checkCost(growCost, enerZoneCards).canPay;
+  });
+
+  return affordableEntities; // Chỉ trả về những lựa chọn có thể chi trả
+
+  // === KẾT THÚC THAY ĐỔI ===
 }
