@@ -16,8 +16,8 @@ import {
   RefreshCw,
   Clock,
 } from "lucide-react";
-import useGameStore from "@/store/gameStore"; // Thêm import
-import { useStore } from "zustand"; // Thêm import
+import useGameStore from "@/store/gameStore";
+import { useStore } from "zustand";
 
 // Helper Component để hiển thị các chấm màu
 const ColorIndicator = ({ colors }: { colors: CardColor[] }) => {
@@ -44,7 +44,7 @@ const ColorIndicator = ({ colors }: { colors: CardColor[] }) => {
   );
 };
 
-// Helper Component để hiển thị chi phí Ener
+// Helper Component để hiển thị chi phí Ener (ĐÃ SỬA LỖI)
 const CostDisplay = ({
   cost,
   label = "CHI PHÍ:",
@@ -52,17 +52,29 @@ const CostDisplay = ({
   cost: CardCost;
   label?: string;
 }) => {
-  const costEntries = Object.entries(cost).filter(([, value]) => value > 0);
+  // Bỏ bộ lọc sai. Chỉ cần kiểm tra xem cost có tồn tại không.
+  const costEntries = cost ? Object.entries(cost) : [];
   if (costEntries.length === 0) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md bg-slate-800/50 p-2 text-xs">
       <span className="font-semibold text-slate-300 mr-1">{label}</span>
-      {costEntries.map(([color, value]) =>
-        Array.from({ length: value }).map((_, i) => (
-          <ColorIndicator key={`${color}-${i}`} colors={[color as CardColor]} />
-        ))
-      )}
+      {costEntries.map(([color, value]) => (
+        <div key={color} className="flex items-center gap-1">
+          {/* Vẫn hiển thị màu, ngay cả khi value là 0 */}
+          <ColorIndicator colors={[color as CardColor]} />
+          {/* Hiển thị số lượng nếu nó bằng 0 */}
+          {value === 0 && <span className="font-bold text-slate-400">0</span>}
+          {/* Hiển thị nhiều chấm màu nếu value > 1 */}
+          {value > 1 &&
+            Array.from({ length: value - 1 }).map((_, i) => (
+              <ColorIndicator
+                key={`${color}-${i}`}
+                colors={[color as CardColor]}
+              />
+            ))}
+        </div>
+      ))}
     </div>
   );
 };
@@ -74,7 +86,6 @@ interface SideCardPreviewProps {
 const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
   function SideCardPreview({ card }, ref) {
     const { t } = useTranslation();
-    // Lấy kho dịch thuật từ state
     const cardTranslations = useStore(
       useGameStore,
       (state) => state.cardTranslations
@@ -99,7 +110,6 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
             exit={{ opacity: 0, x: -50 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
           >
-            {/* Phần hình ảnh */}
             <div className="relative aspect-[0.716] w-full mb-4 shrink-0">
               <Image
                 src={card.imageUrl}
@@ -109,22 +119,19 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
                 className="object-contain rounded-md"
               />
             </div>
-
-            {/* Phần thông tin */}
             <div className="flex-grow overflow-y-auto pr-2 space-y-4 text-sm">
               {(() => {
-                // Lấy bản dịch cho lá bài hiện tại
                 const translation = cardTranslations[card.id];
                 const displayName = translation?.name || card.name;
                 const displayClass = translation?.class || card.class;
 
                 return (
                   <>
-                    {/* Header */}
+                    {/* ... Header, Stats, Keywords không đổi ... */}
                     <div>
                       <div className="flex justify-between items-start">
                         <h3 className="text-xl font-bold text-card-foreground pr-2">
-                          {displayName} {/* <-- Dùng tên đã dịch */}
+                          {displayName}
                         </h3>
                         <ColorIndicator colors={card.colors} />
                       </div>
@@ -138,8 +145,6 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
                         )}
                       </div>
                     </div>
-
-                    {/* Stats & Details */}
                     <div className="space-y-1 text-xs border-t border-b border-white/10 py-2">
                       {(card.level !== undefined ||
                         card.limit !== undefined) && (
@@ -174,18 +179,13 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
                         <div className="flex items-center gap-1">
                           <Gem className="size-4 text-pink-400" />
                           <span className="font-bold">Class:</span>
-                          <span className="italic">{displayClass}</span>{" "}
-                          {/* <-- Dùng class đã dịch */}
+                          <span className="italic">{displayClass}</span>
                         </div>
                       )}
                     </div>
-
-                    {/* Card-level Cost */}
                     {(card.growCost || card.cost) && (
                       <CostDisplay cost={(card.growCost || card.cost)!} />
                     )}
-
-                    {/* Card-level Keywords */}
                     {(card.Guard || card.timing) && (
                       <div className="flex flex-wrap gap-2 text-xs">
                         {card.Guard && (
@@ -201,8 +201,6 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
                         )}
                       </div>
                     )}
-
-                    {/* Ability Condition */}
                     {card.abilityCondition && (
                       <div className="p-2 rounded-md border border-dashed border-yellow-500/50 bg-yellow-900/20">
                         <p className="text-xs font-bold text-yellow-400">
@@ -218,7 +216,6 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
                     {/* Abilities */}
                     <div className="space-y-3 text-foreground/90">
                       {card.abilities?.map((ability, index) => {
-                        // Lấy mô tả đã dịch
                         const translatedDesc =
                           translation?.abilities?.[index]?.description ||
                           ability.description;
@@ -231,9 +228,11 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
                             <p className="font-bold text-primary/90">
                               {getAbilityTypeLabel(ability.type)}
                             </p>
+
+                            {/* Metadata của kỹ năng */}
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
-                              {/* ĐÂY LÀ PHẦN QUAN TRỌNG: ability.turnLimit giờ sẽ luôn tồn tại vì nó đến từ dữ liệu gốc */}
-                              {typeof ability.turnLimit === "number" && (
+                              {/* ĐIỀU KIỆN ĐÃ SỬA LẠI */}
+                              {ability.turnLimit !== undefined && (
                                 <span className="flex items-center gap-1">
                                   <RefreshCw className="size-3" />
                                   Mỗi lượt: {ability.turnLimit}
@@ -246,11 +245,14 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
                                 </span>
                               )}
                             </div>
+
+                            {/* Chi phí của kỹ năng */}
                             {ability.cost && (
                               <CostDisplay cost={ability.cost} label="Cost:" />
                             )}
+
                             <p className="leading-snug text-sm">
-                              {translatedDesc} {/* <-- Dùng mô tả đã dịch */}
+                              {translatedDesc}
                             </p>
                           </div>
                         );
