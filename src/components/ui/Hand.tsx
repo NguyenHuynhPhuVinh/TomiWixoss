@@ -1,6 +1,6 @@
 // src/components/ui/Hand.tsx
 "use client";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, RefObject } from "react"; // Thêm RefObject
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import Image from "next/image";
@@ -25,12 +25,13 @@ import { GamePhase, CardType, Zone } from "@/logic/constants";
 
 interface HandProps {
   onCardSelect: (card: CardInstance | null) => void;
+  previewRef: RefObject<HTMLDivElement | null>; // <-- NHẬN REF TỪ PROP
 }
 
 const CARD_BASE_WIDTH = 120;
 const CARD_BASE_HEIGHT = 168;
 
-export default function Hand({ onCardSelect }: HandProps) {
+export default function Hand({ onCardSelect, previewRef }: HandProps) {
   // === THAY ĐỔI: Sử dụng hook mới để lấy dữ liệu trực tiếp từ world ===
   const handEntities = useWorldQuery(
     () =>
@@ -71,7 +72,8 @@ export default function Hand({ onCardSelect }: HandProps) {
   const mulliganSelectionUuids =
     globalEntity.globalState?.mulliganSelection ?? [];
 
-  useOnClickOutside(handRef, () => {
+  // THAY ĐỔI: Truyền một mảng các ref vào hook
+  useOnClickOutside([handRef, previewRef], () => {
     if (phase !== GamePhase.MULLIGAN) {
       setSelectedCardUuid(null);
       onCardSelect(null);

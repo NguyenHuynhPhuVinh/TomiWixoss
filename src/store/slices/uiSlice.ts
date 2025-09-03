@@ -124,6 +124,7 @@ export const createUiSlice: StateCreator<GameStore, [], [], UiSlice> = (
       viewingLrigDeckForGrow: null, // <-- QUAN TRỌNG: Reset state này khi đóng
       viewingZone: null, // Reset state xem zone
       viewingZoneCards: [], // Xóa danh sách bài
+      previewedCard: null, // <-- THÊM DÒNG NÀY ĐỂ RESET PREVIEW
     })),
 
   openLrigDeckViewerForAssist: (zoneIndex) => {

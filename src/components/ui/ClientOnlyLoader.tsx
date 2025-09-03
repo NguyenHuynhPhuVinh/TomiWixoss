@@ -120,7 +120,8 @@ export default function ClientOnlyLoader() {
     init();
   }, [initializeGame]); // Dependency vẫn là initializeGame
 
-  const gameAreaRef = useRef<HTMLDivElement>(null); // <-- Tạo ref cho toàn bộ khu vực game
+  const gameAreaRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null); // <-- TẠO REF MỚI
 
   // === SỬ DỤNG HOOK ĐỂ HỦY BỎ HÀNH ĐỘNG ===
   useOnClickOutside(gameAreaRef, () => {
@@ -217,10 +218,10 @@ export default function ClientOnlyLoader() {
       {/* Các component UI 2D nằm ở đây */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
         <GameController />
-        {/* Truyền action mới vào Hand */}
-        <Hand onCardSelect={setPreviewedCard} />
-        {/* SideCardPreview giờ sẽ đọc state từ store */}
-        <SideCardPreview card={previewedCard} />
+        {/* TRUYỀN REF MỚI XUỐNG HAND */}
+        <Hand onCardSelect={setPreviewedCard} previewRef={previewRef} />
+        {/* TRUYỀN REF VÀO SIDE CARD PREVIEW */}
+        <SideCardPreview ref={previewRef} card={previewedCard} />
         <GameLog />
         <LanguageSwitcher />
       </div>
