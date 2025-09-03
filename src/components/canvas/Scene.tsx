@@ -61,85 +61,92 @@ function SceneContent() {
     Array.from(miniplexWorld.with("cardInfo", "zone", "status"))
   );
 
-  // Logic để xác định Center LRIG có thể Grow hay không
-  const growableCenterLrigUuid = useMemo(() => {
-    // --- THÊM ĐIỀU KIỆN KIỂM TRA actionTakenInPhase ---
-    // Nếu không phải Grow Phase HOẶC hành động Grow đã được thực hiện, thì không phát sáng
-    if (phase !== GamePhase.GROW || actionTakenInPhase) {
-      return null;
-    }
+  // === THAY ĐỔI 1: Tạo một state tổng hợp cho tất cả các LRIG có thể Grow ===
+  const growableLrigs = useMemo(() => {
+    const growable: { [key: number]: boolean } = {
+      0: false,
+      1: false,
+      2: false,
+    };
+    if (!phase) return growable;
 
-    const options = getValidGrowOptions(phase, 1);
-    if (options.length > 0) {
-      const centerLrig = renderableEntities.find(
-        (e) => e.zone?.zone === Zone.LRIG_ZONE && e.zone?.index === 1
-      );
-      return centerLrig?.uuid || null;
+    for (let i = 0; i < 3; i++) {
+      const options = getValidGrowOptions(phase, i);
+      if (options.length > 0) {
+        growable[i] = true;
+      }
     }
-    return null;
-  }, [phase, actionTakenInPhase, renderableEntities, worldVersion]); // Thêm actionTakenInPhase vào dependencies
+    return growable;
+  }, [phase, worldVersion]); // Phụ thuộc vào worldVersion để tính toán lại khi có thay đổi
+  // === THAY ĐỔI 3: Tái cấu trúc hoàn toàn logic xử lý click ===
   const handleCardClick = useCallback(
     (entityUuid: string, event: any) => {
       const entity = renderableEntities.find((e) => e.uuid === entityUuid);
-      if (!entity || !entity.zone || !entity.cardInfo) return;
+      if (!entity || !entity.zone || !entity.cardInfo || !entity.status) return;
 
-      const { zone } = entity;
+      const { zone, status } = entity;
       const cardData: CardInstance = {
         ...entity.cardInfo.data,
-        ...entity.status,
+        ...status,
         uuid: entity.uuid,
-        owner: entity.zone.owner,
+        owner: zone.owner,
       };
 
-      const isCenterLrig = zone.zone === Zone.LRIG_ZONE && zone.index === 1;
-      const isAssistLrig =
-        zone.zone === Zone.LRIG_ZONE && (zone.index === 0 || zone.index === 2);
-
-      // Logic cho Center LRIG
-      if (isCenterLrig) {
-        const menuOptions = [];
-        // Tùy chọn xem chi tiết luôn có
-        menuOptions.push({
-          label: "Xem chi tiết",
-          action: () => setPreviewedCard(cardData),
-        });
-
-        // Tùy chọn Grow chỉ có ở Grow Phase và có lựa chọn hợp lệ
-        if (phase === GamePhase.GROW && growableCenterLrigUuid) {
-          menuOptions.push({
-            label: "Grow",
-            action: () => openZoneViewer(),
-          });
-        }
-
-        openWorldContextMenu(
-          { x: event.clientX, y: event.clientY },
-          menuOptions
-        );
-        return;
-      }
-
-      // Logic cho Ener Phase
+      // Xử lý các trường hợp đặc biệt trước
+      // Ví dụ: Nạp Ener
       if (
         zone.zone === Zone.SIGNI_ZONE &&
         phase === GamePhase.ENER &&
         !actionTakenInPhase
       ) {
         chargeEnerAction(entityUuid);
-        return;
+        return; // Dừng lại sau khi thực hiện
       }
 
-      // Logic cho Assist LRIG
-      const canTryGrowAssist =
-        isAssistLrig &&
-        phase &&
-        [GamePhase.MAIN, GamePhase.ATTACK].includes(phase as any);
-      if (canTryGrowAssist) {
-        const options = getValidGrowOptions(phase, zone.index);
-        if (options.length > 0) {
-          openLrigDeckViewerForAssist(zone.index);
-        } else {
-          addLog({ key: "logs.noGrowOptions", type: "info" });
+      // Logic chính: Mở context menu cho các lá bài ngửa trên sân
+      if (
+        status.isFaceUp &&
+        (zone.zone === Zone.LRIG_ZONE || zone.zone === Zone.SIGNI_ZONE)
+      ) {
+        const menuOptions = [];
+
+        // 1. Luôn thêm tùy chọn "Xem chi tiết"
+        menuOptions.push({
+          label: "Xem chi tiết",
+          action: () => setPreviewedCard(cardData),
+        });
+
+        // 2. Thêm các tùy chọn theo ngữ cảnh
+        const isCenterLrig = zone.zone === Zone.LRIG_ZONE && zone.index === 1;
+        const isAssistLrig =
+          zone.zone === Zone.LRIG_ZONE &&
+          (zone.index === 0 || zone.index === 2);
+
+        // Thêm tùy chọn "Grow" cho Center LRIG
+        if (isCenterLrig && growableLrigs[1]) {
+          menuOptions.push({
+            label: "Grow",
+            action: () => openZoneViewer(),
+          });
+        }
+
+        // Thêm tùy chọn "Grow" cho Assist LRIG
+        if (isAssistLrig && growableLrigs[zone.index]) {
+          menuOptions.push({
+            label: "Grow",
+            action: () => openLrigDeckViewerForAssist(zone.index),
+          });
+        }
+
+        // (Trong tương lai, có thể thêm các tùy chọn khác ở đây,
+        // ví dụ: kích hoạt kỹ năng của SIGNI)
+
+        // 3. Mở context menu
+        if (menuOptions.length > 0) {
+          openWorldContextMenu(
+            { x: event.clientX, y: event.clientY },
+            menuOptions
+          );
         }
       }
     },
@@ -147,12 +154,11 @@ function SceneContent() {
       renderableEntities,
       phase,
       actionTakenInPhase,
-      openLrigDeckViewerForAssist,
-      addLog,
+      growableLrigs,
       setPreviewedCard,
       openZoneViewer,
+      openLrigDeckViewerForAssist,
       openWorldContextMenu,
-      growableCenterLrigUuid,
     ]
   );
   const entitiesByZone = useMemo(() => {
@@ -167,15 +173,24 @@ function SceneContent() {
     return map;
   }, [renderableEntities]);
 
-  // THÊM LOGIC MỚI: Tìm vị trí của lá bài cần chỉ điểm
-  const indicatorPosition = useMemo((): [number, number, number] | null => {
-    if (!growableCenterLrigUuid) return null;
+  // === THAY ĐỔI 2: Tính toán vị trí cho TẤT CẢ các mũi tên cần hiển thị ===
+  const indicatorPositions = useMemo((): [number, number, number][] => {
+    const positions: [number, number, number][] = [];
+    const lrigCoords = [
+      coords.ASSIST_LRIG_1,
+      coords.CENTER_LRIG,
+      coords.ASSIST_LRIG_2,
+    ];
 
-    // Center LRIG luôn ở vị trí coords.CENTER_LRIG
-    const basePosition = coords.CENTER_LRIG;
-    // Đặt mũi tên cao hơn lá bài một chút
-    return [basePosition.x, basePosition.y + 0.5, basePosition.z];
-  }, [growableCenterLrigUuid, coords.CENTER_LRIG]);
+    for (const indexStr in growableLrigs) {
+      const index = parseInt(indexStr, 10);
+      if (growableLrigs[index]) {
+        const basePosition = lrigCoords[index];
+        positions.push([basePosition.x, basePosition.y + 0.5, basePosition.z]);
+      }
+    }
+    return positions;
+  }, [growableLrigs, coords]);
 
   return (
     <>
@@ -211,9 +226,10 @@ function SceneContent() {
         rotation={[-Math.PI / 2, 0, Math.PI]}
       />
 
-      {/* --- RENDER MŨI TÊN CHỈ ĐIỂM --- */}
-      {/* Render component mũi tên nếu có vị trí hợp lệ */}
-      {indicatorPosition && <IndicatorArrow position={indicatorPosition} />}
+      {/* === THAY ĐỔI 4: Render nhiều mũi tên dựa trên mảng positions === */}
+      {indicatorPositions.map((pos, index) => (
+        <IndicatorArrow key={`indicator-${index}`} position={pos} />
+      ))}
 
       {/* --- RENDER CÁC LÁ BÀI --- */}
       {renderableEntities.map((entity: Entity) => {
