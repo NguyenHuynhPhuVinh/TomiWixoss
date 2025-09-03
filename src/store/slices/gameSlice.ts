@@ -179,7 +179,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
       ): Entity => ({
         uuid: uuidv4(),
         cardInfo: { data: cardData },
-        status: { isFaceUp: false, isDowned: false },
+        status: { isFaceUp: zoneName === Zone.LRIG_DECK, isDowned: false },
         zone: { owner: "player", zone: zoneName, index: index },
       });
 
