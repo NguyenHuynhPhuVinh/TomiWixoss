@@ -183,11 +183,14 @@ export default function ClientOnlyLoader() {
     useStore(useGameStore, (s) => s.worldVersion),
   ]);
 
-  // Logic quyết định xem DeckViewer hiển thị cái gì
+  // === THAY ĐỔI LOGIC TẠI ĐÂY ===
+
+  // 1. Xác định chế độ, tiêu đề, và danh sách bài cho DeckViewer
   const isViewingMode = viewingZone !== null;
+  const viewerMode = isViewingMode ? "view" : "select";
+
   const viewerTitle = useMemo(() => {
     if (isViewingMode) {
-      // Dịch tên Zone để làm tiêu đề
       return `Xem ${t(`zones.${viewingZone}`)}`;
     }
     if (viewingLrigDeckForGrow) {
@@ -198,18 +201,16 @@ export default function ClientOnlyLoader() {
 
   const viewerCards = isViewingMode ? viewingZoneCards : growOptions;
 
-  const handleViewerCardClick = (card: CardInstance) => {
-    if (isViewingMode) {
-      // Ở chế độ xem, click chỉ để xem preview, không làm gì khác
-      setPreviewedCard(card);
-    } else {
-      // Ở chế độ Grow, click để thực hiện hành động Grow
+  // 2. Tạo hàm xử lý cho nút "Xác nhận"
+  const handleViewerConfirm = (card: CardInstance) => {
+    // Hành động này chỉ được gọi ở chế độ 'select' (tức là Grow)
+    if (!isViewingMode) {
       const zoneIndex =
         phase === GamePhase.GROW ? 1 : viewingLrigDeckForGrow!.forAssistIndex!;
       growLrigAction(card.uuid, zoneIndex);
     }
+    // Ở chế độ 'view', nút xác nhận không tồn tại nên hàm này sẽ không được gọi
   };
-
   return (
     // Bọc toàn bộ game trong một div và gắn ref vào đó
     <div ref={gameAreaRef} className="w-screen h-screen">
@@ -247,9 +248,10 @@ export default function ClientOnlyLoader() {
         title={viewerTitle}
         cards={viewerCards}
         isOpen={isZoneViewerOpen}
+        mode={viewerMode} // <-- Truyền mode
         onOpenChange={closeZoneViewer}
-        onCardClick={handleViewerCardClick}
-        onCardHover={setPreviewedCard} // Luôn dùng để preview
+        onCardSelect={setPreviewedCard} // <-- Dùng để chọn và preview
+        onConfirm={handleViewerConfirm} // <-- Dùng cho nút xác nhận
       />
 
       {/* Render component context menu mới */}
