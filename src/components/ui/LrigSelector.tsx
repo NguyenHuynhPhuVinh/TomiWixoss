@@ -14,6 +14,8 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next"; // Import hook
+import { useStore } from "zustand"; // <-- THÊM IMPORT 1
+import useGameStore from "@/store/gameStore"; // <-- THÊM IMPORT 2
 
 interface LrigSelectorProps {
   isOpen: boolean;
@@ -34,6 +36,12 @@ export default function LrigSelector({
   const [selectedCenter, setSelectedCenter] = useState<string | null>(null);
   const [selectedAssists, setSelectedAssists] = useState<string[]>([]);
 
+  // <-- THÊM KẾT NỐI VỚI STORE -->
+  const setPreviewedCard = useStore(
+    useGameStore,
+    (state) => state.setPreviewedCard
+  );
+
   const { centerCandidates, assistCandidates } = useMemo(() => {
     const level0Lrigs = fullLrigDeck.filter((c) => c.level === 0);
     const centers: CardInstance[] = [];
@@ -52,18 +60,25 @@ export default function LrigSelector({
   useEffect(() => {
     if (centerCandidates.length === 1 && !selectedCenter) {
       setSelectedCenter(centerCandidates[0].uuid);
+      // Tự động preview lá được chọn
+      setPreviewedCard(centerCandidates[0]);
     }
-  }, [centerCandidates, selectedCenter]);
+  }, [centerCandidates, selectedCenter, setPreviewedCard]);
 
-  const handleAssistClick = (uuid: string) => {
+  // <-- THAY ĐỔI LOGIC CLICK ASSIST -->
+  const handleAssistClick = (card: CardInstance) => {
+    const uuid = card.uuid;
     setSelectedAssists((prev) => {
       if (prev.includes(uuid)) {
+        // Bỏ chọn -> Xóa preview
+        setPreviewedCard(null);
         return prev.filter((id) => id !== uuid);
       }
+      // Chọn -> Hiển thị preview
+      setPreviewedCard(card);
       if (prev.length < 2) {
         return [...prev, uuid];
       }
-      // Nếu đã chọn 2, thay thế lá đầu tiên
       return [prev[1], uuid];
     });
   };
@@ -94,7 +109,11 @@ export default function LrigSelector({
                 <motion.div
                   key={card.uuid}
                   className="cursor-pointer relative"
-                  onClick={() => setSelectedCenter(card.uuid)}
+                  // <-- THAY ĐỔI LOGIC CLICK CENTER -->
+                  onClick={() => {
+                    setSelectedCenter(card.uuid);
+                    setPreviewedCard(card);
+                  }}
                   animate={{
                     scale: isSelected ? 1.1 : 1,
                     opacity: isSelected || !selectedCenter ? 1 : 0.6,
@@ -127,7 +146,8 @@ export default function LrigSelector({
                 <motion.div
                   key={card.uuid}
                   className="cursor-pointer relative"
-                  onClick={() => handleAssistClick(card.uuid)}
+                  // <-- THAY ĐỔI LOGIC CLICK ASSIST -->
+                  onClick={() => handleAssistClick(card)}
                   animate={{
                     scale: isSelected ? 1.1 : 1,
                     opacity: isSelected || !isFull ? 1 : 0.6,
@@ -153,9 +173,16 @@ export default function LrigSelector({
         <DialogFooter className="mt-6">
           <Button
             disabled={!isSelectionComplete}
-            onClick={() =>
-              onConfirm(selectedCenter!, selectedAssists[0], selectedAssists[1])
-            }
+            // <-- THAY ĐỔI LOGIC CLICK CONFIRM -->
+            onClick={() => {
+              onConfirm(
+                selectedCenter!,
+                selectedAssists[0],
+                selectedAssists[1]
+              );
+              // Dọn dẹp preview khi xác nhận
+              setPreviewedCard(null);
+            }}
           >
             {t("lrigSelector.confirmButton")}
           </Button>
