@@ -8,38 +8,37 @@ import {
 } from "@/components/ui/dialog";
 import { CardInstance } from "@/types/game";
 import Image from "next/image";
-import { useTranslation } from "react-i18next"; // Import hook
+import { useTranslation } from "react-i18next";
 
 interface DeckViewerProps {
-  // title prop giờ có thể bỏ nếu muốn, vì chúng ta sẽ tự tính
+  title: string; // <-- Luôn nhận một tiêu đề tùy chỉnh
   cards: CardInstance[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onCardClick: (card: CardInstance) => void;
-  // Thêm prop để xác định context
-  context: "center_grow" | "assist_grow";
+  onCardClick: (card: CardInstance) => void; // <-- Prop này giờ sẽ luôn dùng để thực hiện hành động chính (như Grow)
+  onCardHover: (card: CardInstance | null) => void; // <-- Prop mới để xem trước bài khi hover
 }
 
 export default function DeckViewer({
+  title,
   cards,
   isOpen,
   onOpenChange,
   onCardClick,
-  context,
+  onCardHover,
 }: DeckViewerProps) {
-  const { t } = useTranslation(); // Sử dụng hook
-
-  const dialogTitle =
-    context === "center_grow"
-      ? t("deckViewer.title_center")
-      : t("deckViewer.title_assist");
+  const { t } = useTranslation();
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+      <DialogContent
+        className="max-w-4xl h-[80vh] flex flex-col"
+        // Thêm onMouseLeave để xóa preview khi chuột rời khỏi dialog
+        onMouseLeave={() => onCardHover(null)}
+      >
         <DialogHeader>
           <DialogTitle>
-            {dialogTitle} ({t("deckViewer.cardCount", { count: cards.length })})
+            {title} ({t("deckViewer.cardCount", { count: cards.length })})
           </DialogTitle>
           <DialogDescription>{t("deckViewer.description")}</DialogDescription>
         </DialogHeader>
@@ -50,6 +49,8 @@ export default function DeckViewer({
                 key={card.uuid}
                 className="relative aspect-[0.7] cursor-pointer"
                 onClick={() => onCardClick(card)}
+                // Thêm onMouseEnter để kích hoạt preview
+                onMouseEnter={() => onCardHover(card)}
               >
                 <Image
                   src={card.imageUrl}

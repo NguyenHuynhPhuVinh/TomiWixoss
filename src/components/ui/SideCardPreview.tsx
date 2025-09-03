@@ -26,7 +26,7 @@ export default function SideCardPreview({ card }: SideCardPreviewProps) {
       {card && (
         <motion.div
           // === THAY ĐỔI VỊ TRÍ VÀ KÍCH THƯỚC ===
-          className="absolute top-4 left-4 z-30 w-[300px] h-[calc(100vh-2rem)] p-4 bg-card/80 backdrop-blur-sm border rounded-lg shadow-2xl pointer-events-none flex flex-col"
+          className="absolute top-4 left-4 z-[100] w-[300px] h-[calc(100vh-2rem)] p-4 bg-card/80 backdrop-blur-sm border rounded-lg shadow-2xl pointer-events-none flex flex-col"
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -50 }}

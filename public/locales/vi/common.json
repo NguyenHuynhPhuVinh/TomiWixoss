@@ -111,5 +111,11 @@
       "penalty": "Phạt Refresh: {{cardName}} đã bị chuyển từ Life Cloth vào Mộ.",
       "noPenalty": "Không có Life Cloth để trả Phạt Refresh."
     }
+  },
+  "zones": {
+    "enerZone": "Ener Zone",
+    "lrigDeck": "LRIG Deck",
+    "trash": "Mộ Chính",
+    "lrigTrash": "Mộ LRIG"
   }
 }

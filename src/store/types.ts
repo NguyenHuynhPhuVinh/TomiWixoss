@@ -2,6 +2,7 @@
 // === THAY ĐỔI: Import GamePhase từ file constants mới ===
 import { GamePhase } from "@/logic/constants";
 import { CardInstance } from "@/types/game"; // Thêm import này
+import { Zone } from "@/logic/constants"; // Thêm import Zone
 // import { PlayerAction } from "./slices/uiSlice";
 
 // Định nghĩa kiểu cho một entry trong log
@@ -45,6 +46,10 @@ export interface GameState {
   isWorldContextMenuOpen: boolean;
   worldContextMenuPosition: { x: number; y: number };
   worldContextMenuOptions: { label: string; action: () => void }[];
+
+  // State mới để quản lý việc xem zone
+  viewingZone: Zone | null;
+  viewingZoneCards: CardInstance[];
 }
 
 // Interface cho ACTIONS của toàn bộ store
@@ -74,6 +79,9 @@ export interface GameActions {
     options: { label: string; action: () => void }[]
   ) => void;
   closeWorldContextMenu: () => void;
+
+  // Action mới để mở viewer và xem bài
+  openZoneForViewing: (zone: Zone) => void;
 }
 
 // Interface tổng hợp

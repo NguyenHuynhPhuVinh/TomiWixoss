@@ -112,5 +112,11 @@
       "penalty": "Refresh Penalty: {{cardName}} was moved from Life Cloth to Trash.",
       "noPenalty": "No Life Cloth to pay for Refresh Penalty."
     }
+  },
+  "zones": {
+    "enerZone": "Ener Zone",
+    "lrigDeck": "LRIG Deck",
+    "trash": "Trash",
+    "lrigTrash": "LRIG Trash"
   }
 }

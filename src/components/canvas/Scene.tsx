@@ -10,6 +10,7 @@ import {
   Environment,
   Preload,
   Stats,
+  Box, // Thêm import Box
 } from "@react-three/drei";
 import GameBoard from "./GameBoard";
 import Card from "./Card";
@@ -54,6 +55,9 @@ function SceneContent() {
   );
   const addLog = useStore(useGameStore, (state) => state.addLog);
   const coords = P1_ZONE_COORDINATES;
+
+  // Action mới để mở viewer
+  const openZoneForViewing = useGameStore((state) => state.openZoneForViewing);
   useEffect(() => {
     invalidate();
   }, [worldVersion, invalidate]);
@@ -180,6 +184,16 @@ function SceneContent() {
     }
     return map;
   }, [renderableEntities]);
+
+  // Tạo một hàm xử lý click chung cho các khu vực
+  const handleZoneClick = (zone: Zone, event: any) => {
+    openWorldContextMenu({ x: event.clientX, y: event.clientY }, [
+      {
+        label: "Xem bài",
+        action: () => openZoneForViewing(zone),
+      },
+    ]);
+  };
 
   // === THAY ĐỔI 2: Tính toán vị trí cho TẤT CẢ các mũi tên cần hiển thị ===
   const indicatorPositions = useMemo((): [number, number, number][] => {
@@ -387,6 +401,56 @@ function SceneContent() {
           );
         }
       )}
+
+      {/* --- CÁC VÙNG TƯƠNG TÁC MỚI CHO CÁC KHU VỰC --- */}
+
+      {/* Vùng click cho Ener Zone */}
+      <Box
+        args={[2.5, 5, 0.1]} // Kích thước (width, height, depth)
+        position={[
+          coords.ENER_ZONE.x,
+          coords.ENER_ZONE.y + 0.05,
+          coords.ENER_ZONE.z + 1.5,
+        ]}
+        onClick={(e) => handleZoneClick(Zone.ENER_ZONE, e)}
+      >
+        <meshBasicMaterial visible={false} />
+      </Box>
+
+      {/* Vùng click cho LRIG Deck */}
+      <Box
+        args={[2.5, 2.5, 0.1]}
+        position={[
+          coords.LRIG_DECK.x,
+          coords.LRIG_DECK.y + 0.05,
+          coords.LRIG_DECK.z,
+        ]}
+        onClick={(e) => handleZoneClick(Zone.LRIG_DECK, e)}
+      >
+        <meshBasicMaterial visible={false} />
+      </Box>
+
+      {/* Vùng click cho Main Trash */}
+      <Box
+        args={[2, 2.5, 0.1]}
+        position={[coords.TRASH.x, coords.TRASH.y + 0.05, coords.TRASH.z]}
+        onClick={(e) => handleZoneClick(Zone.TRASH, e)}
+      >
+        <meshBasicMaterial visible={false} />
+      </Box>
+
+      {/* Vùng click cho LRIG Trash */}
+      <Box
+        args={[2.5, 2.5, 0.1]}
+        position={[
+          coords.LRIG_TRASH.x,
+          coords.LRIG_TRASH.y + 0.05,
+          coords.LRIG_TRASH.z,
+        ]}
+        onClick={(e) => handleZoneClick(Zone.LRIG_TRASH, e)}
+      >
+        <meshBasicMaterial visible={false} />
+      </Box>
     </>
   );
 }

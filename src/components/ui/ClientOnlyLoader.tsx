@@ -6,6 +6,7 @@ import { CardInstance } from "@/types/game";
 import useGameStore from "@/store/gameStore";
 import { useStore } from "zustand";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { useTranslation } from "react-i18next"; // Thêm import
 
 // --- THAY ĐỔI LỚN ---
 import { world, globalEntity } from "@/logic/ecs/world.miniplex";
@@ -67,6 +68,7 @@ const WorldContextMenu = dynamic(
 );
 
 export default function ClientOnlyLoader() {
+  const { t } = useTranslation(); // Thêm hook
   // Bỏ state local này
   // const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
   // const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
@@ -95,6 +97,11 @@ export default function ClientOnlyLoader() {
   const closeZoneViewer = useStore(
     useGameStore,
     (state) => state.closeZoneViewer
+  );
+  const viewingZone = useStore(useGameStore, (state) => state.viewingZone);
+  const viewingZoneCards = useStore(
+    useGameStore,
+    (state) => state.viewingZoneCards
   );
   const playerAction = globalEntity.globalState?.playerAction; // <-- ĐỌC TỪ ĐÂY
   // const cancelPlayerAction = useStore( // <-- KHÔNG CẦN NỮA
@@ -176,6 +183,33 @@ export default function ClientOnlyLoader() {
     useStore(useGameStore, (s) => s.worldVersion),
   ]);
 
+  // Logic quyết định xem DeckViewer hiển thị cái gì
+  const isViewingMode = viewingZone !== null;
+  const viewerTitle = useMemo(() => {
+    if (isViewingMode) {
+      // Dịch tên Zone để làm tiêu đề
+      return `Xem ${t(`zones.${viewingZone}`)}`;
+    }
+    if (viewingLrigDeckForGrow) {
+      return t("deckViewer.title_assist");
+    }
+    return t("deckViewer.title_center");
+  }, [isViewingMode, viewingZone, viewingLrigDeckForGrow, t]);
+
+  const viewerCards = isViewingMode ? viewingZoneCards : growOptions;
+
+  const handleViewerCardClick = (card: CardInstance) => {
+    if (isViewingMode) {
+      // Ở chế độ xem, click chỉ để xem preview, không làm gì khác
+      setPreviewedCard(card);
+    } else {
+      // Ở chế độ Grow, click để thực hiện hành động Grow
+      const zoneIndex =
+        phase === GamePhase.GROW ? 1 : viewingLrigDeckForGrow!.forAssistIndex!;
+      growLrigAction(card.uuid, zoneIndex);
+    }
+  };
+
   return (
     // Bọc toàn bộ game trong một div và gắn ref vào đó
     <div ref={gameAreaRef} className="w-screen h-screen">
@@ -210,17 +244,12 @@ export default function ClientOnlyLoader() {
         }}
       />
       <DeckViewer
-        context={viewingLrigDeckForGrow ? "assist_grow" : "center_grow"}
-        cards={growOptions}
+        title={viewerTitle}
+        cards={viewerCards}
         isOpen={isZoneViewerOpen}
         onOpenChange={closeZoneViewer}
-        onCardClick={(card) => {
-          const zoneIndex =
-            phase === GamePhase.GROW
-              ? 1
-              : viewingLrigDeckForGrow!.forAssistIndex!;
-          growLrigAction(card.uuid, zoneIndex);
-        }}
+        onCardClick={handleViewerCardClick}
+        onCardHover={setPreviewedCard} // Luôn dùng để preview
       />
 
       {/* Render component context menu mới */}
