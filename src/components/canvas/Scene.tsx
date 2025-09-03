@@ -62,8 +62,13 @@ function SceneContent() {
 
   // Logic để xác định Center LRIG có thể Grow hay không
   const growableCenterLrigUuid = useMemo(() => {
-    if (phase !== GamePhase.GROW) return null;
-    const options = getValidGrowOptions(phase, 1); // 1 là index của Center LRIG
+    // --- THÊM ĐIỀU KIỆN KIỂM TRA actionTakenInPhase ---
+    // Nếu không phải Grow Phase HOẶC hành động Grow đã được thực hiện, thì không phát sáng
+    if (phase !== GamePhase.GROW || actionTakenInPhase) {
+      return null;
+    }
+
+    const options = getValidGrowOptions(phase, 1);
     if (options.length > 0) {
       const centerLrig = renderableEntities.find(
         (e) => e.zone?.zone === Zone.LRIG_ZONE && e.zone?.index === 1
@@ -71,7 +76,7 @@ function SceneContent() {
       return centerLrig?.uuid || null;
     }
     return null;
-  }, [phase, renderableEntities, worldVersion]);
+  }, [phase, actionTakenInPhase, renderableEntities, worldVersion]); // Thêm actionTakenInPhase vào dependencies
   const handleCardClick = useCallback(
     (entityUuid: string, event: any) => {
       const entity = renderableEntities.find((e) => e.uuid === entityUuid);
