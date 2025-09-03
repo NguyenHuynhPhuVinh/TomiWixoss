@@ -55,6 +55,7 @@ export default function Hand({ onCardSelect, previewRef }: HandProps) {
 
   // === THAY ĐỔI: Lấy state game trực tiếp từ globalEntity ===
   const phase = globalEntity.globalState?.phase;
+  const actionTakenInPhase = globalEntity.globalState?.actionTakenInPhase; // Thêm state này
   const mustDiscard = useStore(useGameStore, (state) => state.mustDiscard); // Vẫn lấy từ store vì đây là UI state
   // const initiatePlaceSigni = useStore( // <-- KHÔNG CẦN NỮA
   //   useGameStore,
@@ -203,35 +204,50 @@ export default function Hand({ onCardSelect, previewRef }: HandProps) {
                 }}
                 onClick={() => handleCardClick(card)}
               >
-                {isSelectedForPreview && (
-                  <ContextMenu
-                    showChargeEner={phase === GamePhase.ENER} // <-- Sử dụng hằng số
-                    onChargeEner={() => {
-                      chargeEnerAction(card.uuid); // Gọi action mới
-                      setSelectedCardUuid(null);
-                      onCardSelect(null);
-                    }}
-                    showDiscard={phase === GamePhase.END && mustDiscard} // <-- Sử dụng hằng số
-                    onDiscard={() => {
-                      discardCardAction(card.uuid); // Gọi action mới
-                      setSelectedCardUuid(null);
-                      onCardSelect(null);
-                    }}
-                    showPlaySigni={
-                      phase === GamePhase.MAIN && // <-- Sử dụng hằng số
-                      card.type === CardType.SIGNI && // <-- Sử dụng hằng số
-                      playableSigniUuids.includes(card.uuid)
-                    }
-                    onPlaySigni={() => {
-                      initiatePlayerAction({
-                        type: "place_signi",
-                        cardUuid: card.uuid,
-                      });
-                      setSelectedCardUuid(null);
-                      onCardSelect(null);
-                    }}
-                  />
-                )}
+                {/* 1. TÍNH TOÁN XEM CÓ HÀNH ĐỘNG NÀO KHẢ DỤNG KHÔNG */}
+                {(() => {
+                  const canChargeEner =
+                    phase === GamePhase.ENER && !actionTakenInPhase;
+                  const canDiscard = phase === GamePhase.END && mustDiscard;
+                  const canPlaySigni =
+                    phase === GamePhase.MAIN &&
+                    card.type === CardType.SIGNI &&
+                    playableSigniUuids.includes(card.uuid);
+
+                  const areActionsAvailable =
+                    canChargeEner || canDiscard || canPlaySigni;
+
+                  return (
+                    <>
+                      {/* 2. THAY ĐỔI: Chỉ render ContextMenu nếu có hành động khả dụng */}
+                      {isSelectedForPreview && areActionsAvailable && (
+                        <ContextMenu
+                          showChargeEner={canChargeEner}
+                          onChargeEner={() => {
+                            chargeEnerAction(card.uuid);
+                            setSelectedCardUuid(null);
+                            onCardSelect(null);
+                          }}
+                          showDiscard={canDiscard}
+                          onDiscard={() => {
+                            discardCardAction(card.uuid);
+                            setSelectedCardUuid(null);
+                            onCardSelect(null);
+                          }}
+                          showPlaySigni={canPlaySigni}
+                          onPlaySigni={() => {
+                            initiatePlayerAction({
+                              type: "place_signi",
+                              cardUuid: card.uuid,
+                            });
+                            setSelectedCardUuid(null);
+                            onCardSelect(null);
+                          }}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
                 <div
                   className={cn(
                     "relative transition-all duration-300",
