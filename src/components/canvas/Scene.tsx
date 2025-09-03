@@ -338,7 +338,7 @@ function SceneContent() {
         );
       })}
 
-      {/* VÙNG TƯƠNG TÁC CHO SIGNI ZONE */}
+      {/* --- VÙNG TƯƠNG TÁC VÀ CHỈ BÁO CHO SIGNI ZONE --- */}
       {[coords.SIGNI_1, coords.SIGNI_2, coords.SIGNI_3].map(
         (signiCoords, index) => {
           const isSlotEmpty = !renderableEntities.some(
@@ -346,17 +346,36 @@ function SceneContent() {
               entity.zone?.zone === Zone.SIGNI_ZONE &&
               entity.zone?.index === index
           );
+
+          // Xác định xem có nên hiển thị chỉ báo tại ô này không
+          const shouldShowIndicator =
+            isSlotEmpty && playerAction?.type === "place_signi";
+
           return (
-            <InteractiveZone
-              key={`interactive-signi-${index}`}
-              position={[signiCoords.x, signiCoords.y, signiCoords.z]}
-              rotation={[-Math.PI / 2, 0, 0]}
-              size={[2, 2]}
-              zoneIndex={index}
-              playerAction={playerAction || null}
-              isSlotEmpty={isSlotEmpty}
-              cancelPlayerAction={cancelPlayerActionInECS}
-            />
+            // Sử dụng Fragment để nhóm các component lại mà không tạo thêm node DOM
+            <group key={`signi-interactive-area-${index}`}>
+              {/* 1. Vùng click vô hình (luôn được render khi có action) */}
+              <InteractiveZone
+                position={[signiCoords.x, signiCoords.y, signiCoords.z]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                size={[2, 2]}
+                zoneIndex={index}
+                playerAction={playerAction || null}
+                isSlotEmpty={isSlotEmpty}
+                cancelPlayerAction={cancelPlayerActionInECS}
+              />
+
+              {/* 2. Mũi tên chỉ điểm (chỉ hiển thị khi cần) */}
+              {shouldShowIndicator && (
+                <IndicatorArrow
+                  position={[
+                    signiCoords.x,
+                    signiCoords.y + 0.5, // Đặt mũi tên lơ lửng phía trên
+                    signiCoords.z,
+                  ]}
+                />
+              )}
+            </group>
           );
         }
       )}

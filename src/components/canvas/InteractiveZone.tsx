@@ -29,13 +29,16 @@ export default function InteractiveZone({
   isSlotEmpty,
   cancelPlayerAction,
 }: InteractiveZoneProps) {
-  // Logic tính toán giờ chỉ dựa vào props
-  const isPlacingSigni = playerAction?.type === "place_signi";
-  const shouldHighlight = isSlotEmpty && isPlacingSigni;
+  // Điều kiện để vùng này có thể được click
+  const isActionActive = playerAction?.type === "place_signi" && isSlotEmpty;
 
-  if (!shouldHighlight) return null;
+  // Nếu không trong trạng thái đặt bài hoặc ô không trống, không render gì cả
+  if (!isActionActive) {
+    return null;
+  }
 
   return (
+    // Plane vẫn được render để bắt sự kiện raycast (click)
     <Plane
       args={size}
       position={position}
@@ -48,12 +51,12 @@ export default function InteractiveZone({
         }
       }}
     >
-      <meshStandardMaterial
-        color="#00ff00"
-        opacity={0.3}
-        transparent
-        side={THREE.DoubleSide}
-      />
+      {/* 
+        Sử dụng một vật liệu cơ bản và đặt thuộc tính `visible` thành `false`.
+        Điều này làm cho mặt phẳng hoàn toàn vô hình với người chơi,
+        nhưng vẫn tồn tại trong scene để nhận sự kiện click.
+      */}
+      <meshBasicMaterial visible={false} />
     </Plane>
   );
 }
