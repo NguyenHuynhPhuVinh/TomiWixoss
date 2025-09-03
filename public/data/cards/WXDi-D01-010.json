@@ -4,18 +4,13 @@
   "type": "ASSIST LRIG",
   "level": 2,
   "limit": "+1",
-  "colors": [
-    "Blue"
-  ],
+  "colors": ["Blue"],
   "lrigType": "Umr",
   "team": "Ancient Surprise",
   "growCost": {
     "Colorless": 1
   },
-  "timing": [
-    "Main Phase",
-    "Attack Phase"
-  ],
+  "timing": ["Main Phase", "Attack Phase"],
   "abilities": [
     {
       "type": "Enter",
@@ -24,7 +19,7 @@
     {
       "type": "Enter",
       "cost": {
-        "Green": 1,
+        "Blue": 1,
         "Colorless": 1
       },
       "description": "Down target SIGNI on your opponent's field."

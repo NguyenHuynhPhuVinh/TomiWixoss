@@ -5,7 +5,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
-import { Shield, Gem, Swords, Star, Users, BookOpen, Atom } from "lucide-react"; // Cần cài đặt lucide-react nếu chưa có
+import {
+  Shield,
+  Gem,
+  Swords,
+  Star,
+  Users,
+  BookOpen,
+  Atom,
+  RefreshCw,
+  Clock,
+} from "lucide-react";
 
 // Helper Component để hiển thị các chấm màu
 const ColorIndicator = ({ colors }: { colors: CardColor[] }) => {
@@ -33,15 +43,19 @@ const ColorIndicator = ({ colors }: { colors: CardColor[] }) => {
 };
 
 // Helper Component để hiển thị chi phí Ener
-const CostDisplay = ({ cost }: { cost: CardCost }) => {
+const CostDisplay = ({
+  cost,
+  label = "CHI PHÍ:",
+}: {
+  cost: CardCost;
+  label?: string;
+}) => {
   const costEntries = Object.entries(cost).filter(([, value]) => value > 0);
   if (costEntries.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md bg-slate-800/50 p-2">
-      <span className="text-xs font-semibold text-slate-300 mr-2">
-        CHI PHÍ:
-      </span>
+    <div className="flex flex-wrap items-center gap-2 rounded-md bg-slate-800/50 p-2 text-xs">
+      <span className="font-semibold text-slate-300 mr-1">{label}</span>
       {costEntries.map(([color, value]) =>
         Array.from({ length: value }).map((_, i) => (
           <ColorIndicator key={`${color}-${i}`} colors={[color as CardColor]} />
@@ -149,12 +163,12 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
                 )}
               </div>
 
-              {/* Cost */}
+              {/* Card-level Cost */}
               {(card.growCost || card.cost) && (
                 <CostDisplay cost={(card.growCost || card.cost)!} />
               )}
 
-              {/* Keywords (Guard, Timing) */}
+              {/* Card-level Keywords */}
               {(card.Guard || card.timing) && (
                 <div className="flex flex-wrap gap-2 text-xs">
                   {card.Guard && (
@@ -186,10 +200,37 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
               {/* Abilities */}
               <div className="space-y-3 text-foreground/90">
                 {card.abilities?.map((ability, index) => (
-                  <div key={index} className="border-t border-white/10 pt-2">
+                  <div
+                    key={index}
+                    className="border-t border-white/10 pt-2 space-y-1.5"
+                  >
                     <p className="font-bold text-primary/90">
                       {getAbilityTypeLabel(ability.type)}
                     </p>
+
+                    {/* === SỬA LỖI VÀ HOÀN THIỆN PHẦN METADATA CỦA KỸ NĂNG === */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
+                      {/* Sử dụng `typeof` để kiểm tra chắc chắn là số, bao gồm cả 0 */}
+                      {typeof ability.turnLimit === "number" && (
+                        <span className="flex items-center gap-1">
+                          <RefreshCw className="size-3" />
+                          Mỗi lượt: {ability.turnLimit}
+                        </span>
+                      )}
+                      {ability.timing && ability.timing.length > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="size-3" />
+                          Timing: {ability.timing.join(", ")}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Chi phí của kỹ năng */}
+                    {ability.cost && (
+                      <CostDisplay cost={ability.cost} label="Cost:" />
+                    )}
+
+                    {/* Mô tả kỹ năng */}
                     <p className="leading-snug text-sm">
                       {ability.description}
                     </p>

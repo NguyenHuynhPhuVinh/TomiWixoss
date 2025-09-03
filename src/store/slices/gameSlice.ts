@@ -92,18 +92,28 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
                 const translatedCard = { ...baseCard };
                 translatedCard.name = translation.name || baseCard.name;
                 translatedCard.class = translation.class || baseCard.class;
+                // === SỬA LỖI LOGIC HỢP NHẤT TẠI ĐÂY ===
                 if (
+                  baseCard.abilities &&
+                  Array.isArray(baseCard.abilities) &&
                   translation.abilities &&
                   Array.isArray(translation.abilities)
                 ) {
-                  translatedCard.abilities =
-                    baseCard.abilities?.map((ability, index) => ({
-                      ...ability,
-                      description:
-                        translation.abilities[index]?.description ||
-                        ability.description,
-                    })) || [];
+                  translatedCard.abilities = baseCard.abilities.map(
+                    (ability, index) => {
+                      // Lấy bản dịch cho kỹ năng cụ thể này
+                      const abilityTranslation = translation.abilities[index];
+                      return {
+                        ...ability, // Giữ lại toàn bộ thuộc tính gốc (bao gồm turnLimit, cost, etc.)
+                        // Chỉ ghi đè description nếu có bản dịch
+                        description:
+                          abilityTranslation?.description ||
+                          ability.description,
+                      };
+                    }
+                  );
                 }
+                // === KẾT THÚC SỬA LỖI ===
                 if (
                   translation.lifeBurstEffect &&
                   translatedCard.lifeBurstEffect

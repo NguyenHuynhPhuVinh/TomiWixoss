@@ -60,10 +60,11 @@ export default function LrigSelector({
   useEffect(() => {
     if (centerCandidates.length === 1 && !selectedCenter) {
       setSelectedCenter(centerCandidates[0].uuid);
-      // Tự động preview lá được chọn
-      setPreviewedCard(centerCandidates[0]);
+      // THAY ĐỔI: Xóa dòng lệnh này để không tự động hiện preview
+      // setPreviewedCard(centerCandidates[0]);
     }
-  }, [centerCandidates, selectedCenter, setPreviewedCard]);
+    // Chúng ta cũng có thể xóa setPreviewedCard khỏi dependency array vì không dùng nữa
+  }, [centerCandidates, selectedCenter]);
 
   // <-- THAY ĐỔI LOGIC CLICK ASSIST -->
   const handleAssistClick = (card: CardInstance) => {
