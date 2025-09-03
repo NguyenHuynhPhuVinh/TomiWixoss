@@ -1,27 +1,27 @@
 "use client";
-import { useState } from "react"; // Thêm import useState
+import { useState, useEffect } from "react"; // Thêm useEffect
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter, // Thêm import DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button"; // Thêm import Button
+import { Button } from "@/components/ui/button";
 import { CardInstance } from "@/types/game";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils"; // Thêm import cn
+import { cn } from "@/lib/utils";
 
 interface DeckViewerProps {
   title: string;
   cards: CardInstance[];
   isOpen: boolean;
-  mode: "view" | "select"; // Prop mới để xác định chế độ
+  mode: "view" | "select";
   onOpenChange: (isOpen: boolean) => void;
-  onCardSelect: (card: CardInstance | null) => void; // Prop này giờ chỉ dùng để preview
-  onConfirm: (card: CardInstance) => void; // Prop mới cho hành động xác nhận
+  onCardSelect: (card: CardInstance | null) => void;
+  onConfirm: (card: CardInstance) => void;
 }
 
 export default function DeckViewer({
@@ -36,8 +36,15 @@ export default function DeckViewer({
   const { t } = useTranslation();
   const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
 
+  // Sử dụng useEffect để reset state khi dialog được mở
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedCard(null);
+      onCardSelect(null);
+    }
+  }, [isOpen, onCardSelect]);
+
   const handleCardClick = (card: CardInstance) => {
-    // Nếu click lại lá đã chọn, bỏ chọn nó
     if (selectedCard?.uuid === card.uuid) {
       setSelectedCard(null);
       onCardSelect(null);
@@ -53,20 +60,15 @@ export default function DeckViewer({
     }
   };
 
-  // Reset state khi dialog đóng/mở
-  if (!isOpen && selectedCard) {
-    setSelectedCard(null);
-    onCardSelect(null);
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl h-[80vh] flex flex-col"
-        onMouseLeave={() => {
-          // Khi ở chế độ view, di chuột ra ngoài sẽ tắt preview
-          if (mode === "view") onCardSelect(null);
-        }}
+        className={cn(
+          "max-w-4xl h-[80vh] flex flex-col",
+          // THAY ĐỔI 1: Thêm hiệu ứng mờ nền trực tiếp vào đây
+          "bg-card/80 backdrop-blur-sm"
+        )}
+        // THAY ĐỔI 2: Xóa hoàn toàn onMouseLeave
       >
         <DialogHeader>
           <DialogTitle>
@@ -93,7 +95,6 @@ export default function DeckViewer({
                   sizes="150px"
                   className={cn(
                     "object-contain rounded-lg transition-all duration-200",
-                    // Thêm hiệu ứng viền sáng khi được chọn
                     selectedCard?.uuid === card.uuid &&
                       "ring-4 ring-offset-2 ring-blue-500 ring-offset-background"
                   )}
@@ -103,7 +104,6 @@ export default function DeckViewer({
           </div>
         </div>
 
-        {/* Chỉ hiển thị footer và nút Xác nhận ở chế độ 'select' */}
         {mode === "select" && (
           <DialogFooter className="mt-4">
             <Button onClick={handleConfirm} disabled={!selectedCard}>
