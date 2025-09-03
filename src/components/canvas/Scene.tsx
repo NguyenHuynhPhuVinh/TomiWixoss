@@ -72,12 +72,20 @@ function SceneContent() {
 
     for (let i = 0; i < 3; i++) {
       const options = getValidGrowOptions(phase, i);
-      if (options.length > 0) {
+      let canGrow = options.length > 0;
+
+      // THÊM ĐIỀU KIỆN KIỂM TRA ĐẶC BIỆT CHO CENTER LRIG (index = 1)
+      // Chỉ có thể Grow Center LRIG trong Grow Phase VÀ khi chưa thực hiện hành động nào.
+      if (i === 1 && phase === GamePhase.GROW && actionTakenInPhase) {
+        canGrow = false;
+      }
+
+      if (canGrow) {
         growable[i] = true;
       }
     }
     return growable;
-  }, [phase, worldVersion]); // Phụ thuộc vào worldVersion để tính toán lại khi có thay đổi
+  }, [phase, worldVersion, actionTakenInPhase]); // <-- THÊM actionTakenInPhase VÀO DEPENDENCY ARRAY
   // === THAY ĐỔI 3: Tái cấu trúc hoàn toàn logic xử lý click ===
   const handleCardClick = useCallback(
     (entityUuid: string, event: any) => {
