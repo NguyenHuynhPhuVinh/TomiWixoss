@@ -16,6 +16,8 @@ import {
   RefreshCw,
   Clock,
 } from "lucide-react";
+import useGameStore from "@/store/gameStore"; // Thêm import
+import { useStore } from "zustand"; // Thêm import
 
 // Helper Component để hiển thị các chấm màu
 const ColorIndicator = ({ colors }: { colors: CardColor[] }) => {
@@ -72,6 +74,11 @@ interface SideCardPreviewProps {
 const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
   function SideCardPreview({ card }, ref) {
     const { t } = useTranslation();
+    // Lấy kho dịch thuật từ state
+    const cardTranslations = useStore(
+      useGameStore,
+      (state) => state.cardTranslations
+    );
 
     const getAbilityTypeLabel = (type: string) => {
       const formattedType = type.replace(/([A-Z])/g, " $1").trim();
@@ -105,150 +112,166 @@ const SideCardPreview = forwardRef<HTMLDivElement, SideCardPreviewProps>(
 
             {/* Phần thông tin */}
             <div className="flex-grow overflow-y-auto pr-2 space-y-4 text-sm">
-              {/* Header */}
-              <div>
-                <div className="flex justify-between items-start">
-                  <h3 className="text-xl font-bold text-card-foreground pr-2">
-                    {card.name}
-                  </h3>
-                  <ColorIndicator colors={card.colors} />
-                </div>
-                <div className="flex justify-between items-center text-muted-foreground mt-1">
-                  <span className="font-semibold">{card.type}</span>
-                  {card.power !== undefined && (
-                    <div className="flex items-center gap-1 font-bold text-lg text-foreground">
-                      <Swords className="size-4" />
-                      {card.power}
+              {(() => {
+                // Lấy bản dịch cho lá bài hiện tại
+                const translation = cardTranslations[card.id];
+                const displayName = translation?.name || card.name;
+                const displayClass = translation?.class || card.class;
+
+                return (
+                  <>
+                    {/* Header */}
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-xl font-bold text-card-foreground pr-2">
+                          {displayName} {/* <-- Dùng tên đã dịch */}
+                        </h3>
+                        <ColorIndicator colors={card.colors} />
+                      </div>
+                      <div className="flex justify-between items-center text-muted-foreground mt-1">
+                        <span className="font-semibold">{card.type}</span>
+                        {card.power !== undefined && (
+                          <div className="flex items-center gap-1 font-bold text-lg text-foreground">
+                            <Swords className="size-4" />
+                            {card.power}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
 
-              {/* Stats & Details */}
-              <div className="space-y-1 text-xs border-t border-b border-white/10 py-2">
-                {(card.level !== undefined || card.limit !== undefined) && (
-                  <div className="flex items-center gap-1">
-                    <Atom className="size-4 text-cyan-400" />
-                    <span className="font-bold">Level:</span>
-                    <span>{card.level}</span>
-                    {card.limit !== undefined && (
-                      <>
-                        <span className="mx-1">/</span>
-                        <span className="font-bold">Limit:</span>
-                        <span>{card.limit}</span>
-                      </>
-                    )}
-                  </div>
-                )}
-                {card.lrigType && (
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="size-4 text-purple-400" />
-                    <span className="font-bold">LRIG Type:</span>
-                    <span>{card.lrigType}</span>
-                  </div>
-                )}
-                {card.team && (
-                  <div className="flex items-center gap-1">
-                    <Users className="size-4 text-orange-400" />
-                    <span className="font-bold">Team:</span>
-                    <span>{card.team}</span>
-                  </div>
-                )}
-                {card.class && (
-                  <div className="flex items-center gap-1">
-                    <Gem className="size-4 text-pink-400" />
-                    <span className="font-bold">Class:</span>
-                    <span className="italic">{card.class}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Card-level Cost */}
-              {(card.growCost || card.cost) && (
-                <CostDisplay cost={(card.growCost || card.cost)!} />
-              )}
-
-              {/* Card-level Keywords */}
-              {(card.Guard || card.timing) && (
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {card.Guard && (
-                    <span className="flex items-center gap-1 font-bold text-green-300 bg-green-900/50 px-2 py-1 rounded">
-                      <Shield className="size-3" /> {t("card.ability_Guard")}
-                    </span>
-                  )}
-                  {card.timing && card.timing.length > 0 && (
-                    <span className="font-bold text-cyan-300 bg-cyan-900/50 px-2 py-1 rounded">
-                      Timing: {card.timing.join(", ")}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Ability Condition */}
-              {card.abilityCondition && (
-                <div className="p-2 rounded-md border border-dashed border-yellow-500/50 bg-yellow-900/20">
-                  <p className="text-xs font-bold text-yellow-400">
-                    Điều kiện Team:
-                  </p>
-                  <p className="text-xs text-yellow-200">
-                    Phải có Team &lt;{card.abilityCondition.value}&gt; trên sân
-                    để sử dụng các kỹ năng bên dưới.
-                  </p>
-                </div>
-              )}
-
-              {/* Abilities */}
-              <div className="space-y-3 text-foreground/90">
-                {card.abilities?.map((ability, index) => (
-                  <div
-                    key={index}
-                    className="border-t border-white/10 pt-2 space-y-1.5"
-                  >
-                    <p className="font-bold text-primary/90">
-                      {getAbilityTypeLabel(ability.type)}
-                    </p>
-
-                    {/* === SỬA LỖI VÀ HOÀN THIỆN PHẦN METADATA CỦA KỸ NĂNG === */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
-                      {/* Sử dụng `typeof` để kiểm tra chắc chắn là số, bao gồm cả 0 */}
-                      {typeof ability.turnLimit === "number" && (
-                        <span className="flex items-center gap-1">
-                          <RefreshCw className="size-3" />
-                          Mỗi lượt: {ability.turnLimit}
-                        </span>
+                    {/* Stats & Details */}
+                    <div className="space-y-1 text-xs border-t border-b border-white/10 py-2">
+                      {(card.level !== undefined ||
+                        card.limit !== undefined) && (
+                        <div className="flex items-center gap-1">
+                          <Atom className="size-4 text-cyan-400" />
+                          <span className="font-bold">Level:</span>
+                          <span>{card.level}</span>
+                          {card.limit !== undefined && (
+                            <>
+                              <span className="mx-1">/</span>
+                              <span className="font-bold">Limit:</span>
+                              <span>{card.limit}</span>
+                            </>
+                          )}
+                        </div>
                       )}
-                      {ability.timing && ability.timing.length > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="size-3" />
-                          Timing: {ability.timing.join(", ")}
-                        </span>
+                      {card.lrigType && (
+                        <div className="flex items-center gap-1">
+                          <BookOpen className="size-4 text-purple-400" />
+                          <span className="font-bold">LRIG Type:</span>
+                          <span>{card.lrigType}</span>
+                        </div>
+                      )}
+                      {card.team && (
+                        <div className="flex items-center gap-1">
+                          <Users className="size-4 text-orange-400" />
+                          <span className="font-bold">Team:</span>
+                          <span>{card.team}</span>
+                        </div>
+                      )}
+                      {card.class && (
+                        <div className="flex items-center gap-1">
+                          <Gem className="size-4 text-pink-400" />
+                          <span className="font-bold">Class:</span>
+                          <span className="italic">{displayClass}</span>{" "}
+                          {/* <-- Dùng class đã dịch */}
+                        </div>
                       )}
                     </div>
 
-                    {/* Chi phí của kỹ năng */}
-                    {ability.cost && (
-                      <CostDisplay cost={ability.cost} label="Cost:" />
+                    {/* Card-level Cost */}
+                    {(card.growCost || card.cost) && (
+                      <CostDisplay cost={(card.growCost || card.cost)!} />
                     )}
 
-                    {/* Mô tả kỹ năng */}
-                    <p className="leading-snug text-sm">
-                      {ability.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                    {/* Card-level Keywords */}
+                    {(card.Guard || card.timing) && (
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        {card.Guard && (
+                          <span className="flex items-center gap-1 font-bold text-green-300 bg-green-900/50 px-2 py-1 rounded">
+                            <Shield className="size-3" />{" "}
+                            {t("card.ability_Guard")}
+                          </span>
+                        )}
+                        {card.timing && card.timing.length > 0 && (
+                          <span className="font-bold text-cyan-300 bg-cyan-900/50 px-2 py-1 rounded">
+                            Timing: {card.timing.join(", ")}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
-              {/* Life Burst */}
-              {card.lifeBurstEffect && (
-                <div className="mt-3 border-t-2 border-amber-400/50 pt-2">
-                  <p className="flex items-center gap-1 font-bold text-amber-400">
-                    <Star className="size-4" /> {t("card.lifeBurst")}
-                  </p>
-                  <p className="leading-snug text-sm">
-                    {card.lifeBurstEffect.description}
-                  </p>
-                </div>
-              )}
+                    {/* Ability Condition */}
+                    {card.abilityCondition && (
+                      <div className="p-2 rounded-md border border-dashed border-yellow-500/50 bg-yellow-900/20">
+                        <p className="text-xs font-bold text-yellow-400">
+                          Điều kiện Team:
+                        </p>
+                        <p className="text-xs text-yellow-200">
+                          Phải có Team &lt;{card.abilityCondition.value}&gt;
+                          trên sân để sử dụng các kỹ năng bên dưới.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Abilities */}
+                    <div className="space-y-3 text-foreground/90">
+                      {card.abilities?.map((ability, index) => {
+                        // Lấy mô tả đã dịch
+                        const translatedDesc =
+                          translation?.abilities?.[index]?.description ||
+                          ability.description;
+
+                        return (
+                          <div
+                            key={index}
+                            className="border-t border-white/10 pt-2 space-y-1.5"
+                          >
+                            <p className="font-bold text-primary/90">
+                              {getAbilityTypeLabel(ability.type)}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
+                              {/* ĐÂY LÀ PHẦN QUAN TRỌNG: ability.turnLimit giờ sẽ luôn tồn tại vì nó đến từ dữ liệu gốc */}
+                              {typeof ability.turnLimit === "number" && (
+                                <span className="flex items-center gap-1">
+                                  <RefreshCw className="size-3" />
+                                  Mỗi lượt: {ability.turnLimit}
+                                </span>
+                              )}
+                              {ability.timing && ability.timing.length > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="size-3" />
+                                  Timing: {ability.timing.join(", ")}
+                                </span>
+                              )}
+                            </div>
+                            {ability.cost && (
+                              <CostDisplay cost={ability.cost} label="Cost:" />
+                            )}
+                            <p className="leading-snug text-sm">
+                              {translatedDesc} {/* <-- Dùng mô tả đã dịch */}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Life Burst */}
+                    {card.lifeBurstEffect && (
+                      <div className="mt-3 border-t-2 border-amber-400/50 pt-2">
+                        <p className="flex items-center gap-1 font-bold text-amber-400">
+                          <Star className="size-4" /> {t("card.lifeBurst")}
+                        </p>
+                        <p className="leading-snug text-sm">
+                          {translation?.lifeBurstEffect?.description ||
+                            card.lifeBurstEffect.description}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </motion.div>
         )}

@@ -50,6 +50,9 @@ export interface GameState {
   // State mới để quản lý việc xem zone
   viewingZone: Zone | null;
   viewingZoneCards: CardInstance[];
+
+  // Thêm state mới để lưu trữ dữ liệu dịch thuật
+  cardTranslations: Record<string, any>;
 }
 
 // Interface cho ACTIONS của toàn bộ store

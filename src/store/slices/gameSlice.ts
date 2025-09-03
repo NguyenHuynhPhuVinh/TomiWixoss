@@ -36,12 +36,14 @@ export interface BoardState {
 export interface GameSlice {
   initializeGame: () => void;
   incrementWorldVersion: () => void; // <-- THAY ĐỔI
+  cardTranslations: Record<string, any>; // Thêm state
 }
 
 export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
   set,
   get
 ) => ({
+  cardTranslations: {}, // Giá trị khởi tạo
   initializeGame: async () => {
     try {
       // 1. Tải file "manifest" của bộ bài
@@ -68,82 +70,35 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
         cardDataArray.map((card) => [card.id, card])
       );
 
-      // 3. TẢI VÀ HỢP NHẤT BẢN DỊCH (ĐÂY LÀ PHẦN THAY ĐỔI)
+      // 3. TẢI VÀ LƯU TRỮ TỆP DỊCH THUẬT (KHÔNG HỢP NHẤT)
       const currentLang = i18n.language;
-      let finalCardDataMap = cardDataMap; // Mặc định, dữ liệu cuối cùng là dữ liệu gốc (tiếng Anh)
-
-      // Chỉ thực hiện tải và hợp nhất nếu ngôn ngữ không phải là 'en'
       if (currentLang !== "en") {
-        console.log(
-          `Language is '${currentLang}', attempting to load translations...`
-        );
+        console.log(`Loading translations for '${currentLang}'...`);
         try {
           const translationResponse = await fetch(
             `/locales/${currentLang}/cards.json`
           );
           if (translationResponse.ok) {
-            const cardTranslations = await translationResponse.json();
-            const translatedMap = new Map<string, CardData>();
-
-            for (const [id, baseCard] of cardDataMap.entries()) {
-              const translation = cardTranslations[id];
-              if (translation) {
-                // Hợp nhất bản dịch vào dữ liệu gốc
-                const translatedCard = { ...baseCard };
-                translatedCard.name = translation.name || baseCard.name;
-                translatedCard.class = translation.class || baseCard.class;
-                // === SỬA LỖI LOGIC HỢP NHẤT TẠI ĐÂY ===
-                if (
-                  baseCard.abilities &&
-                  Array.isArray(baseCard.abilities) &&
-                  translation.abilities &&
-                  Array.isArray(translation.abilities)
-                ) {
-                  translatedCard.abilities = baseCard.abilities.map(
-                    (ability, index) => {
-                      // Lấy bản dịch cho kỹ năng cụ thể này
-                      const abilityTranslation = translation.abilities[index];
-                      return {
-                        ...ability, // Giữ lại toàn bộ thuộc tính gốc (bao gồm turnLimit, cost, etc.)
-                        // Chỉ ghi đè description nếu có bản dịch
-                        description:
-                          abilityTranslation?.description ||
-                          ability.description,
-                      };
-                    }
-                  );
-                }
-                // === KẾT THÚC SỬA LỖI ===
-                if (
-                  translation.lifeBurstEffect &&
-                  translatedCard.lifeBurstEffect
-                ) {
-                  translatedCard.lifeBurstEffect.description =
-                    translation.lifeBurstEffect.description ||
-                    translatedCard.lifeBurstEffect.description;
-                }
-                translatedMap.set(id, translatedCard);
-              } else {
-                translatedMap.set(id, baseCard); // Giữ lại card gốc nếu không có bản dịch
-              }
-            }
-            finalCardDataMap = translatedMap; // Gán map đã được dịch làm dữ liệu cuối cùng
+            const translations = await translationResponse.json();
+            set({ cardTranslations: translations }); // <-- LƯU VÀO STATE
+          } else {
+            set({ cardTranslations: {} });
           }
         } catch (error) {
-          console.error(
-            `Could not load or parse translations for '${currentLang}'. Falling back to English.`,
-            error
-          );
+          console.error(`Could not load translations for '${currentLang}'.`);
+          set({ cardTranslations: {} });
         }
+      } else {
+        set({ cardTranslations: {} }); // Reset nếu là tiếng Anh
       }
 
-      // 4. Xây dựng lại mảng dữ liệu deck hoàn chỉnh từ manifest và data đã tải
+      // 4. Xây dựng deck từ DỮ LIỆU GỐC (cardDataMap)
       const buildDeckFromManifest = (
         deckList: { id: string; count: number }[]
       ) => {
         const deck: CardData[] = [];
         for (const item of deckList) {
-          const cardInfo = finalCardDataMap.get(item.id);
+          const cardInfo = cardDataMap.get(item.id); // Luôn lấy từ map gốc
           if (cardInfo) {
             for (let i = 0; i < item.count; i++) {
               deck.push(cardInfo);
@@ -157,9 +112,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
       const lrigDeckData = buildDeckFromManifest(deckManifest.lrigDeck);
 
       // 5. Preload ảnh và nạp vào World (logic không đổi)
-      const allImageUrls = [...finalCardDataMap.values()].map(
-        (c) => c.imageUrl
-      );
+      const allImageUrls = [...cardDataMap.values()].map((c) => c.imageUrl);
       addCardImageUrlsToPreload(allImageUrls);
 
       // 6. Xác thực bộ bài
@@ -210,7 +163,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (
       world.add(globalEntity);
 
       console.log(
-        `Miniplex World hydrated with translated data for language: ${currentLang}`
+        `Miniplex World hydrated with original data. Translations stored separately.`
       );
       get().incrementWorldVersion();
     } catch (error) {
