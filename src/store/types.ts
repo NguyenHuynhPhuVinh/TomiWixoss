@@ -1,6 +1,7 @@
 // src/store/types.ts
 // === THAY ĐỔI: Import GamePhase từ file constants mới ===
 import { GamePhase } from "@/logic/constants";
+import { CardInstance } from "@/types/game"; // Thêm import này
 // import { PlayerAction } from "./slices/uiSlice";
 
 // Định nghĩa kiểu cho một entry trong log
@@ -36,6 +37,14 @@ export interface GameState {
   isZoneViewerOpen: boolean;
   viewingLrigDeckForGrow: { forAssistIndex: number | null } | null;
   mustDiscard: boolean;
+
+  // State cho card preview chung
+  previewedCard: CardInstance | null;
+
+  // State cho context menu trong thế giới 3D
+  isWorldContextMenuOpen: boolean;
+  worldContextMenuPosition: { x: number; y: number };
+  worldContextMenuOptions: { label: string; action: () => void }[];
 }
 
 // Interface cho ACTIONS của toàn bộ store
@@ -55,6 +64,16 @@ export interface GameActions {
   closeZoneViewer: () => void;
   openLrigDeckViewerForAssist: (zoneIndex: number) => void;
   setMustDiscard: (mustDiscard: boolean) => void;
+
+  // Actions cho card preview chung
+  setPreviewedCard: (card: CardInstance | null) => void;
+
+  // Actions cho context menu
+  openWorldContextMenu: (
+    position: { x: number; y: number },
+    options: { label: string; action: () => void }[]
+  ) => void;
+  closeWorldContextMenu: () => void;
 }
 
 // Interface tổng hợp

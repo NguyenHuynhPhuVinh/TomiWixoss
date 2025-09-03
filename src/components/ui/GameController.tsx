@@ -129,13 +129,10 @@ export default function GameController() {
                 {t("gameController.growDone")}
               </p>
             ) : (
-              <Button
-                onClick={openZoneViewer}
-                className="w-full mt-2"
-                variant="secondary"
-              >
-                {t("gameController.viewLrigDeck")}
-              </Button>
+              // Thay thế nút bằng dòng chữ hướng dẫn
+              <p className="text-sm text-muted-foreground my-2">
+                Nhấn vào Center LRIG của bạn để Grow hoặc xem chi tiết.
+              </p>
             )}
             <Button
               onClick={() => advancePhaseAction()}

@@ -63,16 +63,22 @@ export default function Hand({ onCardSelect }: HandProps) {
 
   const [selectedCardUuid, setSelectedCardUuid] = useState<string | null>(null);
   const handRef = useRef<HTMLDivElement>(null);
+  const setPreviewedCard = useStore(
+    useGameStore,
+    (state) => state.setPreviewedCard
+  ); // Lấy action từ store
 
   const mulliganSelectionUuids =
     globalEntity.globalState?.mulliganSelection ?? [];
 
   useOnClickOutside(handRef, () => {
     if (phase !== GamePhase.MULLIGAN) {
-      // <-- Sử dụng hằng số
       setSelectedCardUuid(null);
       onCardSelect(null);
     }
+    // Khi click ra ngoài, cũng nên đóng context menu
+    const closeMenu = useGameStore.getState().closeWorldContextMenu;
+    closeMenu();
   });
 
   const handleCardClick = (card: CardInstance) => {

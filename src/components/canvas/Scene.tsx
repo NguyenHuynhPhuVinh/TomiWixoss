@@ -39,6 +39,18 @@ function SceneContent() {
     useGameStore,
     (state) => state.openLrigDeckViewerForAssist
   );
+  const openZoneViewer = useStore(
+    useGameStore,
+    (state) => state.openZoneViewer
+  );
+  const openWorldContextMenu = useStore(
+    useGameStore,
+    (state) => state.openWorldContextMenu
+  );
+  const setPreviewedCard = useStore(
+    useGameStore,
+    (state) => state.setPreviewedCard
+  );
   const addLog = useStore(useGameStore, (state) => state.addLog);
   const coords = P1_ZONE_COORDINATES;
   useEffect(() => {
@@ -47,22 +59,71 @@ function SceneContent() {
   const renderableEntities = useWorldQuery(() =>
     Array.from(miniplexWorld.with("cardInfo", "zone", "status"))
   );
+
+  // Logic để xác định Center LRIG có thể Grow hay không
+  const growableCenterLrigUuid = useMemo(() => {
+    if (phase !== GamePhase.GROW) return null;
+    const options = getValidGrowOptions(phase, 1); // 1 là index của Center LRIG
+    if (options.length > 0) {
+      const centerLrig = renderableEntities.find(
+        (e) => e.zone?.zone === Zone.LRIG_ZONE && e.zone?.index === 1
+      );
+      return centerLrig?.uuid || null;
+    }
+    return null;
+  }, [phase, renderableEntities, worldVersion]);
   const handleCardClick = useCallback(
-    (entityUuid: string) => {
+    (entityUuid: string, event: any) => {
       const entity = renderableEntities.find((e) => e.uuid === entityUuid);
-      if (!entity) return;
+      if (!entity || !entity.zone || !entity.cardInfo) return;
 
       const { zone } = entity;
-      if (!zone) return;
+      const cardData: CardInstance = {
+        ...entity.cardInfo.data,
+        ...entity.status,
+        uuid: entity.uuid,
+        owner: entity.zone.owner,
+      };
+
+      const isCenterLrig = zone.zone === Zone.LRIG_ZONE && zone.index === 1;
+      const isAssistLrig =
+        zone.zone === Zone.LRIG_ZONE && (zone.index === 0 || zone.index === 2);
+
+      // Logic cho Center LRIG
+      if (isCenterLrig) {
+        const menuOptions = [];
+        // Tùy chọn xem chi tiết luôn có
+        menuOptions.push({
+          label: "Xem chi tiết",
+          action: () => setPreviewedCard(cardData),
+        });
+
+        // Tùy chọn Grow chỉ có ở Grow Phase và có lựa chọn hợp lệ
+        if (phase === GamePhase.GROW && growableCenterLrigUuid) {
+          menuOptions.push({
+            label: "Grow",
+            action: () => openZoneViewer(),
+          });
+        }
+
+        openWorldContextMenu(
+          { x: event.clientX, y: event.clientY },
+          menuOptions
+        );
+        return;
+      }
+
+      // Logic cho Ener Phase
       if (
         zone.zone === Zone.SIGNI_ZONE &&
         phase === GamePhase.ENER &&
         !actionTakenInPhase
       ) {
         chargeEnerAction(entityUuid);
+        return;
       }
-      const isAssistLrig =
-        zone.zone === Zone.LRIG_ZONE && (zone.index === 0 || zone.index === 2);
+
+      // Logic cho Assist LRIG
       const canTryGrowAssist =
         isAssistLrig &&
         phase &&
@@ -77,11 +138,15 @@ function SceneContent() {
       }
     },
     [
+      renderableEntities,
       phase,
       actionTakenInPhase,
       openLrigDeckViewerForAssist,
       addLog,
-      renderableEntities,
+      setPreviewedCard,
+      openZoneViewer,
+      openWorldContextMenu,
+      growableCenterLrigUuid,
     ]
   );
   const entitiesByZone = useMemo(() => {
@@ -232,6 +297,7 @@ function SceneContent() {
             position={position}
             rotation={rotation}
             onClick={handleCardClick}
+            shouldGlow={entity.uuid === growableCenterLrigUuid} // Truyền prop glow
           />
         );
       })}

@@ -13,9 +13,13 @@ export const CARD_THICKNESS = 0.03; // Tăng nhẹ để cân đối hơn
 
 interface CardModelProps {
   card: CardInstance;
+  shouldGlow?: boolean; // Thêm prop mới
 }
 
-const CardModel = memo(function CardModel({ card }: CardModelProps) {
+const CardModel = memo(function CardModel({
+  card,
+  shouldGlow,
+}: CardModelProps) {
   const frontTexture = useLoader(TextureLoader, card.imageUrl);
   const mainBackTexture = useLoader(
     TextureLoader,
@@ -51,7 +55,11 @@ const CardModel = memo(function CardModel({ card }: CardModelProps) {
   }, [frontTexture, backTexture]);
 
   const materials = useMemo(() => {
-    const frontMat = new THREE.MeshStandardMaterial({ map: frontTexture });
+    const frontMat = new THREE.MeshStandardMaterial({
+      map: frontTexture,
+      emissive: shouldGlow ? "#FFFF99" : "#000000", // Màu phát sáng
+      emissiveIntensity: shouldGlow ? 0.7 : 0, // Cường độ sáng
+    });
     const backMat = new THREE.MeshStandardMaterial({ map: backTexture });
     const edgeMat = new THREE.MeshStandardMaterial({ color: "#1a1a1a" }); // Màu cạnh tối hơn
 
@@ -65,7 +73,7 @@ const CardModel = memo(function CardModel({ card }: CardModelProps) {
       card.isFaceUp ? frontMat : backMat, // front face of the box
       card.isFaceUp ? backMat : frontMat, // back face of the box
     ];
-  }, [frontTexture, backTexture, card.isFaceUp]);
+  }, [frontTexture, backTexture, card.isFaceUp, shouldGlow]);
 
   const width = card.isHorizontal ? CARD_HEIGHT : CARD_WIDTH;
   const height = card.isHorizontal ? CARD_WIDTH : CARD_HEIGHT;

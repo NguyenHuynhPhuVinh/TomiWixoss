@@ -59,12 +59,24 @@ const LanguageSwitcher = dynamic(
     ssr: false,
   }
 );
+const WorldContextMenu = dynamic(
+  () => import("@/components/ui/WorldContextMenu"),
+  {
+    ssr: false,
+  }
+);
 
 export default function ClientOnlyLoader() {
-  const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
-  const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
+  // Bỏ state local này
+  // const [selectedCard, setSelectedCard] = useState<CardInstance | null>(null);
+  // const [mulliganSelection, setMulliganSelection] = useState<string[]>([]);
 
-  // Lấy các state cần thiết từ store
+  // Lấy state và action mới từ store
+  const previewedCard = useStore(useGameStore, (state) => state.previewedCard);
+  const setPreviewedCard = useStore(
+    useGameStore,
+    (state) => state.setPreviewedCard
+  );
   const worldVersion = useStore(useGameStore, (state) => state.worldVersion);
   // === THAY ĐỔI: Lấy phase từ globalEntity ===
   const phase = globalEntity.globalState?.phase;
@@ -170,8 +182,10 @@ export default function ClientOnlyLoader() {
       {/* Các component UI 2D nằm ở đây */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
         <GameController />
-        <Hand onCardSelect={setSelectedCard} />
-        <SideCardPreview card={selectedCard} />
+        {/* Truyền action mới vào Hand */}
+        <Hand onCardSelect={setPreviewedCard} />
+        {/* SideCardPreview giờ sẽ đọc state từ store */}
+        <SideCardPreview card={previewedCard} />
         <GameLog />
         <LanguageSwitcher />
       </div>
@@ -184,6 +198,8 @@ export default function ClientOnlyLoader() {
       <TomiwixossSceneLoader>
         <Scene />
       </TomiwixossSceneLoader>
+
+      {/* ... Scene Loader ... */}
 
       <LrigSelector
         isOpen={phase === GamePhase.SELECTING_LRIGS} // <-- Sử dụng hằng số
@@ -206,6 +222,9 @@ export default function ClientOnlyLoader() {
           growLrigAction(card.uuid, zoneIndex);
         }}
       />
+
+      {/* Render component context menu mới */}
+      <WorldContextMenu />
     </div>
   );
 }
